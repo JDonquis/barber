@@ -17,6 +17,8 @@
 
     <div class="max-w-2xl mx-auto space-y-4" x-data="{
         rate: {{ (float) $currentRate }},
+        localCode: @js(local_currency()),
+        localSymbol: @js(local_currency_symbol()),
         search: '',
         cart: [],
         paymentCurrency: '{{ old('payment_currency', 'USD') }}',
@@ -47,7 +49,7 @@
         },
         lineTotal(item) { const p = this.productsById[item.product_id]; return p ? p.price * item.quantity : 0; },
         formatVes(value) {
-            return 'Bs. ' + Number(value || 0).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            return this.localSymbol + ' ' + Number(value || 0).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         },
         get units() { return this.cart.reduce((sum, i) => sum + i.quantity, 0); },
         get total() { return this.cart.reduce((sum, i) => sum + this.lineTotal(i), 0); },
@@ -67,7 +69,7 @@
             <!-- Barra superior -->
             <div class="flex items-center justify-between">
                 <div>
-                    <span class="block text-xs font-semibold uppercase tracking-wider text-amber-600">Módulo tienda</span>
+                    <span class="block text-xs font-semibold uppercase tracking-wider text-brand-600">Módulo tienda</span>
                     <p class="text-lg font-bold text-slate-800">Venta de Producto</p>
                 </div>
                 <div class="flex items-center gap-2 rounded-full bg-white px-3 py-1.5 shadow-sm ring-1 ring-slate-200">
@@ -84,12 +86,12 @@
                 <div class="p-4 sm:p-5 space-y-3">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-2">
-                            <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-100 text-amber-600">
+                            <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-100 text-brand-600">
                                 <x-icon name="bag" class="h-4 w-4" />
                             </span>
                             <span class="text-sm font-semibold text-slate-800">Productos en stock</span>
                         </div>
-                        <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-amber-600">
+                        <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-brand-600">
                             <span x-text="units"></span> en cesta
                         </span>
                     </div>
@@ -99,7 +101,7 @@
                             <x-icon name="search" class="h-5 w-5" />
                         </span>
                         <input type="text" x-model="search" placeholder="Buscar pomada, aceite, loción..."
-                               class="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 pl-11 pr-4 text-sm text-slate-700 placeholder:text-slate-400 focus:border-amber-500 focus:bg-white focus:ring-amber-500" />
+                               class="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 pl-11 pr-4 text-sm text-slate-700 placeholder:text-slate-400 focus:border-brand-500 focus:bg-white focus:ring-brand-500" />
                     </div>
 
                     <p class="text-xs text-slate-400">
@@ -110,10 +112,10 @@
                     <div class="flex max-h-[26rem] flex-col gap-2 overflow-y-auto pr-1">
                         <template x-for="product in filteredProducts" :key="product.id">
                             <article class="flex items-center justify-between gap-3 rounded-xl bg-slate-50 p-3 transition"
-                                     :class="inCart(product.id) ? 'ring-2 ring-amber-500 bg-amber-50' : 'hover:bg-slate-100'">
+                                     :class="inCart(product.id) ? 'ring-2 ring-brand-500 bg-brand-50' : 'hover:bg-slate-100'">
                                 <div class="flex min-w-0 items-center gap-3">
                                     <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg"
-                                          :class="inCart(product.id) ? 'bg-amber-500 text-slate-900' : 'bg-slate-200 text-slate-500'">
+                                          :class="inCart(product.id) ? 'bg-brand-500 text-white' : 'bg-slate-200 text-slate-500'">
                                         <x-icon name="box" class="h-5 w-5" />
                                     </span>
                                     <div class="min-w-0">
@@ -133,19 +135,19 @@
                                     </div>
 
                                     <button type="button" x-show="! inCart(product.id)" @click="addToCart(product.id)"
-                                            class="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-200 text-amber-600 transition hover:bg-slate-300 active:scale-90"
+                                            class="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-200 text-brand-600 transition hover:bg-slate-300 active:scale-90"
                                             :disabled="product.stock < 1">
                                         <x-icon name="plus" class="h-4 w-4" />
                                     </button>
 
-                                    <div x-show="inCart(product.id)" x-cloak class="flex items-center gap-1.5 rounded-lg bg-white p-1 shadow-sm ring-1 ring-amber-200">
+                                    <div x-show="inCart(product.id)" x-cloak class="flex items-center gap-1.5 rounded-lg bg-white p-1 shadow-sm ring-1 ring-brand-200">
                                         <button type="button" @click="decrement(product.id)"
                                                 class="flex h-7 w-7 items-center justify-center rounded-md bg-slate-100 text-slate-600 transition hover:bg-slate-200 active:scale-90">
                                             <x-icon name="minus" class="h-3.5 w-3.5" />
                                         </button>
                                         <span class="min-w-[20px] text-center text-sm font-bold text-slate-800" x-text="inCart(product.id)?.quantity"></span>
                                         <button type="button" @click="addToCart(product.id)"
-                                                class="flex h-7 w-7 items-center justify-center rounded-md bg-amber-500 text-slate-900 transition hover:bg-amber-400 active:scale-90">
+                                                class="flex h-7 w-7 items-center justify-center rounded-md bg-brand-500 text-white transition hover:bg-brand-400 active:scale-90">
                                             <x-icon name="plus" class="h-3.5 w-3.5" />
                                         </button>
                                     </div>
@@ -172,15 +174,15 @@
                             </span>
                             <span class="text-sm font-semibold text-slate-800">Método de cobro</span>
                         </div>
-                        <span class="text-xs font-semibold text-amber-600" x-text="paymentMethod || 'Selecciona uno'"></span>
+                        <span class="text-xs font-semibold text-brand-600" x-text="paymentMethod || 'Selecciona uno'"></span>
                     </div>
 
                     <div class="grid grid-cols-2 gap-2">
                         @foreach ($paymentMethods as $method)
                             <button type="button" @click="paymentMethod = @js($method)"
-                                    :class="paymentMethod === @js($method) ? 'ring-2 ring-amber-500 bg-amber-50' : 'bg-slate-50 hover:bg-slate-100'"
+                                    :class="paymentMethod === @js($method) ? 'ring-2 ring-brand-500 bg-brand-50' : 'bg-slate-50 hover:bg-slate-100'"
                                     class="flex items-center gap-2 rounded-lg p-2.5 text-left transition">
-                                <x-icon :name="$methodIcon($method)" class="h-5 w-5 shrink-0 text-amber-500" />
+                                <x-icon :name="$methodIcon($method)" class="h-5 w-5 shrink-0 text-brand-500" />
                                 <span class="truncate text-sm font-semibold text-slate-700">{{ $method }}</span>
                             </button>
                         @endforeach
@@ -192,9 +194,9 @@
                             <button type="button" @click="paymentCurrency = 'USD'"
                                     :class="paymentCurrency === 'USD' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500'"
                                     class="rounded-md px-3 py-1 text-xs font-bold uppercase tracking-wide transition">USD</button>
-                            <button type="button" @click="paymentCurrency = 'VES'"
-                                    :class="paymentCurrency === 'VES' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500'"
-                                    class="rounded-md px-3 py-1 text-xs font-bold uppercase tracking-wide transition">VES</button>
+                            <button type="button" @click="paymentCurrency = localCode"
+                                    :class="paymentCurrency === localCode ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500'"
+                                    class="rounded-md px-3 py-1 text-xs font-bold uppercase tracking-wide transition"><span x-text="localCode"></span></button>
                         </div>
                     </div>
 
@@ -216,18 +218,18 @@
             <x-card>
                 <div class="p-4 sm:p-5 space-y-3">
                     <div class="flex items-center justify-between">
-                        <span class="text-xs font-semibold uppercase tracking-wider text-amber-600">Desglose de facturación</span>
+                        <span class="text-xs font-semibold uppercase tracking-wider text-brand-600">Desglose de facturación</span>
                         <span class="text-xs text-slate-400">Tasa: {{ ves($currentRate) }} / $1</span>
                     </div>
 
                     <div class="flex flex-col gap-1">
                         <div class="flex items-baseline justify-between">
                             <span class="text-sm text-slate-500">Total a pagar:</span>
-                            <span class="text-2xl font-extrabold tracking-tight text-amber-600" x-text="'$ ' + total.toFixed(2) + ' USD'">$ 0.00 USD</span>
+                            <span class="text-2xl font-extrabold tracking-tight text-brand-600" x-text="'$ ' + total.toFixed(2) + ' USD'">$ 0.00 USD</span>
                         </div>
                         <div class="flex items-baseline justify-between">
                             <span class="text-xs text-slate-400">Equivalente:</span>
-                            <span class="text-sm font-bold text-slate-700" x-text="formatVes(totalVes)">Bs. 0,00</span>
+                            <span class="text-sm font-bold text-slate-700" x-text="formatVes(totalVes)">0,00</span>
                         </div>
                     </div>
 
@@ -241,7 +243,7 @@
             <!-- Acciones -->
             <div class="space-y-2 pt-1">
                 <button type="submit" :disabled="cart.length === 0"
-                        class="flex w-full min-h-[52px] items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-400 px-6 text-sm font-extrabold uppercase tracking-wide text-slate-900 shadow-lg shadow-amber-500/30 transition-all hover:opacity-95 active:scale-[0.985] disabled:cursor-not-allowed disabled:opacity-50">
+                        class="flex w-full min-h-[52px] items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-500 to-brand-400 px-6 text-sm font-extrabold uppercase tracking-wide text-white shadow-lg shadow-brand-500/30 transition-all hover:opacity-95 active:scale-[0.985] disabled:cursor-not-allowed disabled:opacity-50">
                     <x-icon name="check" class="h-5 w-5" />
                     <span>Registrar venta ($<span x-text="total.toFixed(2)"></span> · <span x-text="formatVes(totalVes)"></span>)</span>
                 </button>

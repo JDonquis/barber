@@ -36,7 +36,7 @@
     <div class="max-w-2xl mx-auto space-y-4">
         <!-- Volver + estado -->
         <div class="flex items-center justify-between gap-3">
-            <a href="{{ route('closings.index') }}" class="inline-flex items-center gap-1 text-sm font-semibold text-amber-600 transition hover:text-amber-700">
+            <a href="{{ route('closings.index') }}" class="inline-flex items-center gap-1 text-sm font-semibold text-brand-600 transition hover:text-brand-700">
                 <x-icon name="arrow-left" class="h-4 w-4" /> Volver a cierres
             </a>
             @if ($closing->isClosed())
@@ -44,8 +44,8 @@
                     <span class="h-2 w-2 rounded-full bg-emerald-500"></span> Cerrado
                 </span>
             @else
-                <span class="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-amber-700">
-                    <span class="h-2 w-2 animate-pulse rounded-full bg-amber-500"></span> Abierto
+                <span class="inline-flex items-center gap-1.5 rounded-full bg-brand-100 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-brand-700">
+                    <span class="h-2 w-2 animate-pulse rounded-full bg-brand-500"></span> Abierto
                 </span>
             @endif
         </div>
@@ -69,7 +69,7 @@
         </div>
 
         <!-- Banner estado -->
-        <div class="flex items-center gap-2.5 rounded-xl px-4 py-2.5 {{ $closing->isClosed() ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700' }}">
+        <div class="flex items-center gap-2.5 rounded-xl px-4 py-2.5 {{ $closing->isClosed() ? 'bg-emerald-50 text-emerald-700' : 'bg-brand-50 text-brand-700' }}">
             <x-icon name="{{ $closing->isClosed() ? 'check' : 'clock' }}" class="h-5 w-5 shrink-0" />
             <span class="text-xs font-medium">
                 @if ($isBarberClosing)
@@ -85,7 +85,7 @@
             <div class="flex flex-col justify-between rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
                 <div class="mb-2 flex items-center justify-between gap-2">
                     <span class="truncate text-xs text-slate-400">Servicios</span>
-                    <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-600">
+                    <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-brand-100 text-brand-600">
                         <x-icon name="scissors" class="h-4 w-4" />
                     </span>
                 </div>
@@ -96,7 +96,7 @@
             <div class="flex flex-col justify-between rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
                 <div class="mb-2 flex items-center justify-between gap-2">
                     <span class="truncate text-xs text-slate-400">Productos</span>
-                    <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-600">
+                    <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-brand-100 text-brand-600">
                         <x-icon name="bag" class="h-4 w-4" />
                     </span>
                 </div>
@@ -163,7 +163,7 @@
         <section class="space-y-3 rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
             <div class="flex items-center justify-between">
                 <span class="flex items-center gap-2 text-sm font-bold text-slate-800">
-                    <x-icon name="clock" class="h-5 w-5 text-amber-500" /> Resumen del período
+                    <x-icon name="clock" class="h-5 w-5 text-brand-500" /> Resumen del período
                 </span>
                 <span class="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-semibold uppercase text-slate-500">{{ $closing->period_type }}</span>
             </div>
@@ -178,23 +178,23 @@
                 </div>
                 <div class="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2">
                     <span class="text-slate-500">Tasa promedio del período</span>
-                    <span class="font-semibold text-amber-600">Bs. {{ number_format($closing->average_rate ?: $closing->exchange_rate, 2, ',', '.') }}</span>
+                    <span class="font-semibold text-brand-600">{{ local_currency_symbol() }} {{ number_format($closing->average_rate ?: $closing->exchange_rate, 2, ',', '.') }}</span>
                 </div>
                 <div class="flex items-center justify-between rounded-lg px-3 py-2">
                     <span class="text-slate-500">Tasa de cierre</span>
-                    <span class="font-semibold text-slate-600">Bs. {{ number_format($closing->exchange_rate, 2, ',', '.') }}</span>
+                    <span class="font-semibold text-slate-600">{{ local_currency_symbol() }} {{ number_format($closing->exchange_rate, 2, ',', '.') }}</span>
                 </div>
                 <div class="mt-1 rounded-lg bg-slate-100 px-3 py-2.5">
                     <div class="flex items-start justify-between">
                         <div>
                             <span class="block text-xs text-slate-400">Total recaudado</span>
-                            <span class="text-[10px] font-bold uppercase tracking-wider text-amber-600">Monto consolidado</span>
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-brand-600">Monto consolidado</span>
                         </div>
-                        <span class="text-2xl font-extrabold leading-none text-amber-600">{{ usd($closing->total_usd) }}</span>
+                        <span class="text-2xl font-extrabold leading-none text-brand-600">{{ usd($closing->total_usd) }}</span>
                     </div>
                     <div class="mt-2 space-y-1 border-t border-slate-200 pt-2 text-xs">
                         <div class="flex items-center justify-between">
-                            <span class="text-slate-500">Bs cobrados (tasa histórica)</span>
+                            <span class="text-slate-500">{{ local_currency() }} cobrados (tasa histórica)</span>
                             <span class="font-bold text-emerald-600">{{ ves($closing->total_ves) }}</span>
                         </div>
                         <div class="flex items-center justify-between">
@@ -203,7 +203,7 @@
                         </div>
                         <div class="flex items-center justify-between border-t border-slate-200 pt-2">
                             <span class="text-slate-500">{{ $isBarberClosing ? 'Comisión a pagar' : 'Comisiones barberos' }}</span>
-                            <span class="font-semibold text-amber-600">- {{ usd($closing->barber_commission_usd) }}</span>
+                            <span class="font-semibold text-brand-600">- {{ usd($closing->barber_commission_usd) }}</span>
                         </div>
                         @unless ($isBarberClosing)
                             <div class="flex items-center justify-between">
@@ -226,7 +226,7 @@
                 </div>
             @endif
             @if ($closing->reopened_at)
-                <div class="flex flex-wrap items-center justify-between gap-2 text-xs text-amber-600">
+                <div class="flex flex-wrap items-center justify-between gap-2 text-xs text-brand-600">
                     <span>Reabierto por <span class="font-semibold">{{ $closing->reopenedBy->name ?? '—' }}</span></span>
                     <span>{{ $closing->reopened_at->format('d/m/Y h:i a') }}</span>
                 </div>
@@ -253,13 +253,13 @@
                     <div class="rounded-xl bg-slate-50 p-3">
                         <div class="flex items-center justify-between">
                             <div class="flex items-center gap-2">
-                                <span class="flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold {{ $isStore ? 'bg-amber-100 text-amber-600' : 'bg-emerald-100 text-emerald-600' }}">
+                                <span class="flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold {{ $isStore ? 'bg-brand-100 text-brand-600' : 'bg-emerald-100 text-emerald-600' }}">
                                     {{ $isStore ? '—' : $initials }}
                                 </span>
                                 <div>
                                     <span class="text-sm font-semibold text-slate-700">{{ $isStore ? 'Venta tienda' : $row['name'] }}</span>
                                     @if ($isStore)
-                                        <span class="block text-[10px] font-semibold text-amber-600">Sin comisión de barbero</span>
+                                        <span class="block text-[10px] font-semibold text-brand-600">Sin comisión de barbero</span>
                                     @endif
                                 </div>
                             </div>
@@ -338,7 +338,7 @@
         <section class="space-y-3 rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
             <div class="flex items-center justify-between">
                 <span class="flex items-center gap-2 text-sm font-bold text-slate-800">
-                    <x-icon name="scissors" class="h-5 w-5 text-amber-600" /> Servicios vendidos
+                    <x-icon name="scissors" class="h-5 w-5 text-brand-600" /> Servicios vendidos
                 </span>
                 <span class="text-xs text-slate-400">{{ $services->count() }} ítems</span>
             </div>
@@ -349,7 +349,7 @@
                             <p class="text-sm font-semibold text-slate-700">{{ $row['name'] }}</p>
                             <p class="text-xs text-slate-400">{{ $row['quantity'] }} atenciones realizadas</p>
                         </div>
-                        <span class="text-sm font-bold text-amber-600">{{ usd($row['total_usd']) }}</span>
+                        <span class="text-sm font-bold text-brand-600">{{ usd($row['total_usd']) }}</span>
                     </div>
                 @empty
                     <p class="rounded-lg bg-slate-50 px-3 py-6 text-center text-xs text-slate-400">Sin servicios.</p>
@@ -361,7 +361,7 @@
         <section class="space-y-3 rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
             <div class="flex items-center justify-between">
                 <span class="flex items-center gap-2 text-sm font-bold text-slate-800">
-                    <x-icon name="bag" class="h-5 w-5 text-amber-600" /> Productos vendidos
+                    <x-icon name="bag" class="h-5 w-5 text-brand-600" /> Productos vendidos
                 </span>
                 <span class="text-xs text-slate-400">{{ $products->count() }} ítems</span>
             </div>
@@ -401,7 +401,7 @@
                       onsubmit="return confirm('{{ $isBarberClosing ? '¿Confirmas el cierre de esta liquidación?' : '¿Confirmas el cierre? Esta acción bloquea el período.' }}');">
                     @csrf
                     <textarea name="notes" rows="2" placeholder="Notas del cierre (opcional)"
-                              class="block w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-amber-500 focus:bg-white focus:ring-amber-500">{{ old('notes') }}</textarea>
+                              class="block w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-brand-500 focus:bg-white focus:ring-brand-500">{{ old('notes') }}</textarea>
                     <button type="submit"
                             class="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-rose-500 to-rose-400 text-sm font-bold text-white shadow-md transition hover:opacity-95 active:scale-[0.985]">
                         <x-icon name="lock" class="h-4 w-4" /> {{ $isBarberClosing ? 'Cerrar liquidación' : 'Cerrar y bloquear período' }}
@@ -411,7 +411,7 @@
         @else
             <section class="rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
                 <div class="flex items-center gap-2">
-                    <x-icon name="refresh" class="h-5 w-5 text-amber-500" />
+                    <x-icon name="refresh" class="h-5 w-5 text-brand-500" />
                     <span class="text-sm font-bold text-slate-800">Reabrir período</span>
                 </div>
                 <p class="mt-1 text-xs text-slate-400">Si el cierre se hizo por error, puedes reabrirlo. Los totales se recalcularán automáticamente.</p>
@@ -419,7 +419,7 @@
                       onsubmit="return confirm('¿Reabrir este período? Podrás registrar y corregir ventas de nuevo.');">
                     @csrf
                     <button type="submit"
-                            class="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-white text-sm font-semibold text-amber-700 ring-1 ring-amber-300 transition hover:bg-amber-50 active:scale-[0.985]">
+                            class="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-white text-sm font-semibold text-brand-700 ring-1 ring-brand-300 transition hover:bg-brand-50 active:scale-[0.985]">
                         <x-icon name="refresh" class="h-4 w-4" /> Reabrir período
                     </button>
                 </form>

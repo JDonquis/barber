@@ -18,6 +18,7 @@
         search: '',
         filter: 'all',
         rate: {{ (float) $currentRate }},
+        localSymbol: @js(local_currency_symbol()),
         commissionRate: {{ $commissionRate }},
         editing: null,
         priceInput: 0,
@@ -36,7 +37,7 @@
         barberCut(service) { return service.price * this.commissionRate / 100; },
         studioCut(service) { return service.price - this.barberCut(service); },
         formatVes(value) {
-            return 'Bs. ' + Number(value || 0).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            return this.localSymbol + ' ' + Number(value || 0).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         },
         openPrice(service) { this.editing = service; this.priceInput = service.price; },
         async savePrice() {
@@ -72,10 +73,10 @@
         <!-- Banner: tasa + ajustar -->
         <div class="flex items-center justify-between">
             <div class="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 shadow-sm ring-1 ring-slate-200">
-                <span class="h-2 w-2 rounded-full bg-amber-500"></span>
-                <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Tasa BCV: 1 USD = {{ ves($currentRate) }}</span>
+                <span class="h-2 w-2 rounded-full bg-brand-500"></span>
+                <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Tasa USD: 1 USD = {{ ves($currentRate) }}</span>
             </div>
-            <a href="{{ route('settings.edit') }}" class="flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-xs text-slate-500 shadow-sm ring-1 ring-slate-200 transition hover:text-amber-600">
+            <a href="{{ route('settings.edit') }}" class="flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-xs text-slate-500 shadow-sm ring-1 ring-slate-200 transition hover:text-brand-600">
                 <x-icon name="cog" class="h-3.5 w-3.5" /> Ajustar tasa
             </a>
         </div>
@@ -87,7 +88,7 @@
                 <p class="mt-0.5 text-xs text-slate-400">Control táctil de precios, comisión y catálogo en vivo</p>
             </div>
             <a href="{{ route('services.create') }}"
-               class="flex h-12 shrink-0 items-center justify-center gap-1.5 rounded-xl bg-amber-500 px-4 text-sm font-bold text-slate-900 shadow-md shadow-amber-500/25 transition hover:bg-amber-400 active:scale-95">
+               class="flex h-12 shrink-0 items-center justify-center gap-1.5 rounded-xl bg-brand-500 px-4 text-sm font-bold text-white shadow-md shadow-brand-500/25 transition hover:bg-brand-400 active:scale-95">
                 <x-icon name="plus" class="h-4 w-4" /> Nuevo
             </a>
         </div>
@@ -106,17 +107,17 @@
                 <div class="flex items-center justify-between">
                     <span class="text-[11px] text-slate-400">Corte más vendido</span>
                     @if ($stats['topPct'] > 0)
-                        <span class="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-700">{{ $stats['topPct'] }}% de las ventas</span>
+                        <span class="rounded-full bg-brand-100 px-2 py-0.5 text-[10px] font-bold text-brand-700">{{ $stats['topPct'] }}% de las ventas</span>
                     @endif
                 </div>
                 <div class="mt-1 flex items-center gap-2">
-                    <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-600">
+                    <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-brand-100 text-brand-600">
                         <x-icon name="scissors" class="h-3.5 w-3.5" />
                     </span>
                     <span class="truncate text-base font-bold text-slate-800">{{ $stats['topName'] ?? 'Sin datos' }}</span>
                 </div>
                 <div class="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
-                    <div class="h-full rounded-full bg-amber-500 transition-all duration-300" style="width: {{ $stats['topPct'] }}%"></div>
+                    <div class="h-full rounded-full bg-brand-500 transition-all duration-300" style="width: {{ $stats['topPct'] }}%"></div>
                 </div>
             </div>
         </div>
@@ -128,7 +129,7 @@
                     <x-icon name="search" class="h-5 w-5" />
                 </span>
                 <input type="text" x-model="search" placeholder="Buscar por corte, combo o técnica..."
-                       class="h-12 w-full rounded-xl border border-slate-200 bg-white pl-11 pr-10 text-sm text-slate-700 shadow-sm placeholder:text-slate-400 focus:border-amber-500 focus:ring-amber-500" />
+                       class="h-12 w-full rounded-xl border border-slate-200 bg-white pl-11 pr-10 text-sm text-slate-700 shadow-sm placeholder:text-slate-400 focus:border-brand-500 focus:ring-brand-500" />
                 <button type="button" x-show="search.length" x-cloak @click="search = ''"
                         class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 transition hover:text-slate-700" title="Limpiar">
                     <x-icon name="x" class="h-4 w-4" />
@@ -138,17 +139,17 @@
             <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
                 <button type="button" @click="filter = 'all'"
                         class="inline-flex h-8 items-center justify-center whitespace-nowrap rounded-full px-3.5 text-xs font-semibold transition active:scale-95"
-                        :class="filter === 'all' ? 'bg-amber-500 text-slate-900 shadow-sm' : 'bg-white text-slate-500 ring-1 ring-slate-200 hover:text-slate-700'">
+                        :class="filter === 'all' ? 'bg-brand-500 text-white shadow-sm' : 'bg-white text-slate-500 ring-1 ring-slate-200 hover:text-slate-700'">
                     Todos (<span x-text="services.length"></span>)
                 </button>
                 <button type="button" @click="filter = 'active'"
                         class="inline-flex h-8 items-center justify-center whitespace-nowrap rounded-full px-3.5 text-xs font-semibold transition active:scale-95"
-                        :class="filter === 'active' ? 'bg-amber-500 text-slate-900 shadow-sm' : 'bg-white text-emerald-600 ring-1 ring-slate-200 hover:text-emerald-700'">
+                        :class="filter === 'active' ? 'bg-brand-500 text-white shadow-sm' : 'bg-white text-emerald-600 ring-1 ring-slate-200 hover:text-emerald-700'">
                     Activos (<span x-text="activeCount"></span>)
                 </button>
                 <button type="button" @click="filter = 'paused'"
                         class="inline-flex h-8 items-center justify-center whitespace-nowrap rounded-full px-3.5 text-xs font-semibold transition active:scale-95"
-                        :class="filter === 'paused' ? 'bg-amber-500 text-slate-900 shadow-sm' : 'bg-white text-rose-500 ring-1 ring-slate-200 hover:text-rose-600'">
+                        :class="filter === 'paused' ? 'bg-brand-500 text-white shadow-sm' : 'bg-white text-rose-500 ring-1 ring-slate-200 hover:text-rose-600'">
                     Pausados (<span x-text="pausedCount"></span>)
                 </button>
             </div>
@@ -163,7 +164,7 @@
                     <div class="flex items-start justify-between gap-3">
                         <div class="flex min-w-0 items-start gap-3">
                             <span class="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl"
-                                  :class="service.active ? 'bg-amber-100 text-amber-600' : 'bg-slate-100 text-slate-400'">
+                                  :class="service.active ? 'bg-brand-100 text-brand-600' : 'bg-slate-100 text-slate-400'">
                                 <x-icon name="scissors" class="h-6 w-6" />
                             </span>
                             <div class="min-w-0">
@@ -194,14 +195,14 @@
                     <!-- Precios -->
                     <div class="flex items-center justify-between rounded-xl bg-slate-50 p-3">
                         <div class="flex flex-col">
-                            <span class="text-[10px] font-bold uppercase tracking-wider text-amber-600">Precio cliente</span>
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-brand-600">Precio cliente</span>
                             <div class="flex items-baseline gap-1.5">
                                 <span class="text-xl font-extrabold text-slate-800" x-text="'$' + service.price.toFixed(2)"></span>
                                 <span class="text-xs text-slate-400">USD</span>
                             </div>
                         </div>
                         <div class="flex flex-col items-end">
-                            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Equivalente BCV</span>
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Equivalente {{ local_currency() }}</span>
                             <span class="text-sm font-bold text-slate-700" x-text="formatVes(service.price * rate)"></span>
                         </div>
                     </div>
@@ -214,15 +215,15 @@
                                 Barbero (<span x-text="commissionRate"></span>%):
                                 <strong class="ml-0.5 text-slate-700" x-text="'$' + barberCut(service).toFixed(2)"></strong>
                             </span>
-                            <span class="flex items-center gap-1 text-amber-600">
-                                <span class="h-2 w-2 rounded-full bg-amber-500"></span>
+                            <span class="flex items-center gap-1 text-brand-600">
+                                <span class="h-2 w-2 rounded-full bg-brand-500"></span>
                                 Estudio (<span x-text="100 - commissionRate"></span>%):
                                 <strong class="ml-0.5 text-slate-700" x-text="'$' + studioCut(service).toFixed(2)"></strong>
                             </span>
                         </div>
                         <div class="flex h-2 w-full overflow-hidden rounded-full bg-slate-100">
                             <div class="h-full bg-emerald-500 transition-all duration-300" :style="`width: ${commissionRate}%`"></div>
-                            <div class="h-full bg-amber-500 transition-all duration-300" :style="`width: ${100 - commissionRate}%`"></div>
+                            <div class="h-full bg-brand-500 transition-all duration-300" :style="`width: ${100 - commissionRate}%`"></div>
                         </div>
                     </div>
 
@@ -230,7 +231,7 @@
                     <div class="flex items-center gap-2 pt-1">
                         <button type="button" @click="openPrice(service)"
                                 class="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-xl bg-slate-100 text-sm font-semibold text-slate-700 transition hover:bg-slate-200">
-                            <x-icon name="edit" class="h-4 w-4 text-amber-500" /> Editar precio
+                            <x-icon name="edit" class="h-4 w-4 text-brand-500" /> Editar precio
                         </button>
                         <button type="button" @click="toggleActive(service)"
                                 class="flex h-11 items-center justify-center gap-1.5 rounded-xl px-3.5 text-xs font-semibold transition"
@@ -245,13 +246,13 @@
             <!-- Sin resultados -->
             <div x-show="filteredServices.length === 0" x-cloak
                  class="flex flex-col items-center justify-center rounded-2xl bg-white px-6 py-12 text-center shadow-sm ring-1 ring-slate-200">
-                <span class="flex h-14 w-14 items-center justify-center rounded-full bg-amber-50 text-amber-500">
+                <span class="flex h-14 w-14 items-center justify-center rounded-full bg-brand-50 text-brand-500">
                     <x-icon name="search" class="h-7 w-7" />
                 </span>
                 <p class="mt-3 text-base font-bold text-slate-800">Servicio no encontrado</p>
                 <p class="mt-1 max-w-[260px] text-xs text-slate-400">Verifica el nombre o crea un nuevo tipo de corte para agregarlo al catálogo.</p>
                 <button type="button" @click="search = ''; filter = 'all'"
-                        class="mt-4 rounded-xl bg-slate-100 px-4 py-2 text-sm font-semibold text-amber-600 transition hover:bg-slate-200">
+                        class="mt-4 rounded-xl bg-slate-100 px-4 py-2 text-sm font-semibold text-brand-600 transition hover:bg-slate-200">
                     Limpiar filtros
                 </button>
             </div>
@@ -264,7 +265,7 @@
                 <div class="mx-auto h-1.5 w-12 rounded-full bg-slate-200"></div>
                 <div class="flex items-center justify-between">
                     <div>
-                        <span class="text-[10px] font-bold uppercase tracking-wider text-amber-600">Actualizar precio</span>
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-brand-600">Actualizar precio</span>
                         <h3 class="text-lg font-bold text-slate-800" x-text="editing ? editing.name : ''"></h3>
                     </div>
                     <button type="button" @click="editing = null"
@@ -276,19 +277,19 @@
                 <div class="flex flex-col gap-1">
                     <label class="text-xs font-medium text-slate-500">Precio en dólares (USD)</label>
                     <div class="relative flex items-center">
-                        <span class="pointer-events-none absolute left-4 text-lg font-bold text-amber-500">$</span>
+                        <span class="pointer-events-none absolute left-4 text-lg font-bold text-brand-500">$</span>
                         <input type="number" step="0.01" min="0" x-model.number="priceInput"
-                               class="h-14 w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-4 text-lg font-bold text-slate-800 focus:border-amber-500 focus:ring-amber-500" />
+                               class="h-14 w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-4 text-lg font-bold text-slate-800 focus:border-brand-500 focus:ring-brand-500" />
                     </div>
                 </div>
 
                 <div class="flex items-center justify-between rounded-xl bg-slate-50 p-3">
-                    <span class="text-xs text-slate-500">Equivalente BCV</span>
+                    <span class="text-xs text-slate-500">Equivalente {{ local_currency() }}</span>
                     <span class="text-sm font-bold text-emerald-600" x-text="formatVes((priceInput || 0) * rate)"></span>
                 </div>
 
                 <button type="button" @click="savePrice()"
-                        class="h-12 w-full rounded-xl bg-amber-500 text-sm font-bold text-slate-900 shadow-md transition hover:bg-amber-400 active:scale-[0.98]">
+                        class="h-12 w-full rounded-xl bg-brand-500 text-sm font-bold text-white shadow-md transition hover:bg-brand-400 active:scale-[0.98]">
                     Guardar nuevo precio
                 </button>
             </div>

@@ -14,7 +14,7 @@
                     @csrf
                     <div>
                         <x-input-label for="type" value="Tipo de movimiento" />
-                        <select id="type" name="type" x-model="type" class="mt-1 block w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-amber-500 focus:ring-amber-500">
+                        <select id="type" name="type" x-model="type" class="mt-1 block w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-brand-500 focus:ring-brand-500">
                             <option value="entrada">Entrada (sumar stock)</option>
                             <option value="salida">Salida (restar stock)</option>
                             <option value="ajuste">Ajuste (fijar stock)</option>

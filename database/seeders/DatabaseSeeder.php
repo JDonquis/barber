@@ -2,11 +2,13 @@
 
 namespace Database\Seeders;
 
+use App\Models\Company;
 use App\Models\Product;
 use App\Models\Service;
 use App\Models\Setting;
 use App\Models\StockMovement;
 use App\Models\User;
+use App\Services\TenantManager;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
@@ -17,9 +19,39 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        $tenant = app(TenantManager::class);
+
+        $company = $tenant->get()
+            ?? Company::query()->orderBy('id')->first()
+            ?? Company::create([
+                'name' => 'MyBarber Demo',
+                'slug' => 'mybarber-demo',
+                'active' => true,
+                'monthly_fee_usd' => 5,
+                'is_exempt' => false,
+                'subscription_started_at' => now()->toDateString(),
+                'next_payment_due_at' => now()->addMonth()->toDateString(),
+            ]);
+
+        $tenant->set($company);
+
+        User::updateOrCreate(
+            ['email' => env('SAAS_ADMIN_EMAIL', 'superadmin@mybarber.test')],
+            [
+                'company_id' => null,
+                'name' => 'Super Administrador',
+                'password' => Hash::make(env('SAAS_ADMIN_PASSWORD', 'password')),
+                'role' => User::ROLE_ADMIN,
+                'is_super_admin' => true,
+                'active' => true,
+                'email_verified_at' => now(),
+            ],
+        );
+
         $admin = User::updateOrCreate(
             ['email' => 'gioendryconde16@gmail.com'],
             [
+                'company_id' => $company->id,
                 'name' => 'Administrador',
                 'password' => Hash::make('180815'),
                 'role' => User::ROLE_ADMIN,
@@ -31,6 +63,7 @@ class DatabaseSeeder extends Seeder
         $admin2 = User::updateOrCreate(
             ['email' => 'juandonquis07@gmail.com'],
             [
+                'company_id' => $company->id,
                 'name' => 'Juan Donquis',
                 'password' => Hash::make('admin123'),
                 'role' => User::ROLE_ADMIN,
@@ -42,6 +75,7 @@ class DatabaseSeeder extends Seeder
         $barber = User::updateOrCreate(
             ['email' => 'barbero@yhonbarber.com'],
             [
+                'company_id' => $company->id,
                 'name' => 'Carlos Barbero',
                 'password' => Hash::make('password'),
                 'role' => User::ROLE_BARBER,
@@ -85,7 +119,7 @@ class DatabaseSeeder extends Seeder
         }
 
         foreach ([
-            'shop_name' => 'YhonBarber',
+            'shop_name' => $company->name,
             'shop_rif' => '',
             'shop_phone' => '',
             'shop_address' => '',

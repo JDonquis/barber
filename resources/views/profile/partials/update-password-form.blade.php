@@ -14,8 +14,8 @@
               return s;
           },
           get strengthLabel() { return ['', 'Débil', 'Media', 'Fuerte'][this.score] || ''; },
-          get strengthBar() { return ['bg-slate-200', 'bg-rose-500', 'bg-amber-500', 'bg-emerald-500'][this.score] || 'bg-slate-200'; },
-          get strengthText() { return ['text-slate-400', 'text-rose-500', 'text-amber-600', 'text-emerald-600'][this.score] || 'text-slate-400'; }
+          get strengthBar() { return ['bg-slate-200', 'bg-rose-500', 'bg-brand-500', 'bg-emerald-500'][this.score] || 'bg-slate-200'; },
+          get strengthText() { return ['text-slate-400', 'text-rose-500', 'text-brand-600', 'text-emerald-600'][this.score] || 'text-slate-400'; }
       }">
     @csrf
     @method('put')
@@ -30,7 +30,7 @@
             <input id="update_password_current_password" name="current_password"
                    :type="showCurrent ? 'text' : 'password'" autocomplete="current-password"
                    placeholder="••••••••••••"
-                   class="block h-12 w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-11 text-sm text-slate-700 placeholder:text-slate-400 focus:border-amber-500 focus:bg-white focus:ring-amber-500" />
+                   class="block h-12 w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-11 text-sm text-slate-700 placeholder:text-slate-400 focus:border-brand-500 focus:bg-white focus:ring-brand-500" />
             <button type="button" @click="showCurrent = ! showCurrent"
                     class="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-slate-400 transition hover:text-slate-700" title="Mostrar u ocultar">
                 <x-icon name="eye" class="h-4 w-4" x-show="! showCurrent" />
@@ -50,7 +50,7 @@
             <input id="update_password_password" name="password" x-model="password"
                    :type="showPassword ? 'text' : 'password'" autocomplete="new-password"
                    placeholder="Mínimo 8 caracteres"
-                   class="block h-12 w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-11 text-sm text-slate-700 placeholder:text-slate-400 focus:border-amber-500 focus:bg-white focus:ring-amber-500" />
+                   class="block h-12 w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-11 text-sm text-slate-700 placeholder:text-slate-400 focus:border-brand-500 focus:bg-white focus:ring-brand-500" />
             <button type="button" @click="showPassword = ! showPassword"
                     class="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-slate-400 transition hover:text-slate-700" title="Mostrar u ocultar">
                 <x-icon name="eye" class="h-4 w-4" x-show="! showPassword" />
@@ -84,7 +84,7 @@
             <input id="update_password_password_confirmation" name="password_confirmation"
                    :type="showConfirmation ? 'text' : 'password'" autocomplete="new-password"
                    placeholder="Repite tu nueva contraseña"
-                   class="block h-12 w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-11 text-sm text-slate-700 placeholder:text-slate-400 focus:border-amber-500 focus:bg-white focus:ring-amber-500" />
+                   class="block h-12 w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-11 text-sm text-slate-700 placeholder:text-slate-400 focus:border-brand-500 focus:bg-white focus:ring-brand-500" />
             <button type="button" @click="showConfirmation = ! showConfirmation"
                     class="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-slate-400 transition hover:text-slate-700" title="Mostrar u ocultar">
                 <x-icon name="eye" class="h-4 w-4" x-show="! showConfirmation" />
@@ -97,7 +97,7 @@
     <div class="flex justify-end pt-1">
         <button type="submit"
                 class="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-slate-100 px-6 text-sm font-bold uppercase tracking-wide text-slate-700 transition hover:bg-slate-200 active:scale-[0.985] sm:w-auto">
-            <x-icon name="lock" class="h-5 w-5 text-amber-500" /> Actualizar contraseña
+            <x-icon name="lock" class="h-5 w-5 text-brand-500" /> Actualizar contraseña
         </button>
     </div>
 </form>

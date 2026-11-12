@@ -65,7 +65,7 @@
         get generalCount() { return this.closings.filter((c) => ! c.isBarber).length; },
         get barberCount() { return this.closings.filter((c) => c.isBarber).length; },
         periodClass(period) {
-            if (period === 'diario') return 'bg-amber-100 text-amber-700';
+            if (period === 'diario') return 'bg-brand-100 text-brand-700';
             if (period === 'semanal') return 'bg-emerald-100 text-emerald-700';
             return 'bg-sky-100 text-sky-700';
         },
@@ -77,14 +77,14 @@
         <section class="space-y-3">
             <div class="flex items-start justify-between gap-3">
                 <div class="min-w-0">
-                    <span class="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-widest text-amber-600">
+                    <span class="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-widest text-brand-600">
                         <x-icon name="chart" class="h-4 w-4" /> Finanzas &amp; Auditoría
                     </span>
                     <h2 class="mt-1 text-xl font-extrabold tracking-tight text-slate-800">Cierres y Reportes</h2>
                     <p class="mt-0.5 text-xs leading-snug text-slate-400">Historial de liquidaciones, balances de servicios y comisiones calculadas.</p>
                 </div>
                 <button type="button" @click="open = ! open"
-                        class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-amber-500 text-slate-900 shadow-md shadow-amber-500/25 transition hover:bg-amber-400 active:scale-95"
+                        class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-brand-500 text-white shadow-md shadow-brand-500/25 transition hover:bg-brand-400 active:scale-95"
                         title="Generar cierre">
                     <x-icon name="plus" class="h-6 w-6" />
                 </button>
@@ -102,12 +102,12 @@
                     </div>
                 </div>
                 <div class="flex items-center gap-3 rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
-                    <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
+                    <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
                         <x-icon name="users" class="h-5 w-5" />
                     </span>
                     <div class="min-w-0">
                         <span class="block text-xs text-slate-400">Comisiones liq.</span>
-                        <span class="block truncate text-sm font-bold tracking-tight text-amber-600">{{ usd($monthCommission) }}</span>
+                        <span class="block truncate text-sm font-bold tracking-tight text-brand-600">{{ usd($monthCommission) }}</span>
                     </div>
                 </div>
                 <div class="flex items-center gap-3 rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
@@ -136,7 +136,7 @@
                  class="rounded-xl bg-white p-4 shadow-lg ring-1 ring-slate-200">
             <div class="mb-3 flex items-center justify-between">
                 <span class="flex items-center gap-2 text-sm font-bold text-slate-800">
-                    <x-icon name="chart" class="h-4 w-4 text-amber-500" /> Generar Cierre
+                    <x-icon name="chart" class="h-4 w-4 text-brand-500" /> Generar Cierre
                 </span>
                 <button type="button" @click="open = false" class="text-slate-400 transition hover:text-slate-700">
                     <x-icon name="x" class="h-5 w-5" />
@@ -147,7 +147,7 @@
                 <div class="space-y-1.5">
                     <label for="period_type" class="text-xs font-medium text-slate-500">Tipo de período</label>
                     <select id="period_type" name="period_type"
-                            class="block h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-700 focus:border-amber-500 focus:bg-white focus:ring-amber-500">
+                            class="block h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-700 focus:border-brand-500 focus:bg-white focus:ring-brand-500">
                         <option value="diario">Diario (corte del día)</option>
                         <option value="semanal">Semanal (7 días)</option>
                         <option value="mensual">Mensual (cierre calendario)</option>
@@ -157,12 +157,12 @@
                     <label class="text-xs font-medium text-slate-500">Ámbito del cierre</label>
                     <div class="grid grid-cols-2 gap-2">
                         <button type="button" @click="closeScope = 'general'; barberId = ''"
-                                :class="closeScope === 'general' ? 'bg-amber-500 text-slate-900 ring-2 ring-amber-500' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'"
+                                :class="closeScope === 'general' ? 'bg-brand-500 text-white ring-2 ring-brand-500' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'"
                                 class="flex h-11 items-center justify-center rounded-xl text-sm font-semibold transition active:scale-[0.98]">
                             General (tienda)
                         </button>
                         <button type="button" @click="closeScope = 'barber'"
-                                :class="closeScope === 'barber' ? 'bg-amber-500 text-slate-900 ring-2 ring-amber-500' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'"
+                                :class="closeScope === 'barber' ? 'bg-brand-500 text-white ring-2 ring-brand-500' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'"
                                 class="flex h-11 items-center justify-center rounded-xl text-sm font-semibold transition active:scale-[0.98]">
                             Barberos
                         </button>
@@ -186,14 +186,14 @@
                                             ->implode('');
                                     @endphp
                                     <button type="button" @click="barberId = '{{ $barber->id }}'"
-                                            :class="barberId === '{{ $barber->id }}' ? 'ring-2 ring-amber-500 bg-amber-50' : 'bg-white hover:bg-slate-100'"
+                                            :class="barberId === '{{ $barber->id }}' ? 'ring-2 ring-brand-500 bg-brand-50' : 'bg-white hover:bg-slate-100'"
                                             class="flex flex-col items-center gap-1.5 rounded-xl p-2.5 transition">
                                         <span class="flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold transition"
-                                              :class="barberId === '{{ $barber->id }}' ? 'bg-amber-500 text-slate-900' : 'bg-slate-200 text-slate-600'">
+                                              :class="barberId === '{{ $barber->id }}' ? 'bg-brand-500 text-white' : 'bg-slate-200 text-slate-600'">
                                             {{ $initials }}
                                         </span>
                                         <span class="w-full truncate text-center text-xs font-medium transition"
-                                              :class="barberId === '{{ $barber->id }}' ? 'text-amber-600 font-semibold' : 'text-slate-600'">
+                                              :class="barberId === '{{ $barber->id }}' ? 'text-brand-600 font-semibold' : 'text-slate-600'">
                                             {{ $barber->name }}
                                         </span>
                                     </button>
@@ -208,11 +208,11 @@
                 <div class="space-y-1.5">
                     <label for="date" class="text-xs font-medium text-slate-500">Fecha de referencia</label>
                     <input id="date" name="date" type="date" required value="{{ old('date', now()->toDateString()) }}"
-                           class="block h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-700 focus:border-amber-500 focus:bg-white focus:ring-amber-500" />
+                           class="block h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-700 focus:border-brand-500 focus:bg-white focus:ring-brand-500" />
                     <x-input-error :messages="$errors->get('date')" />
                 </div>
                 <button type="submit" :disabled="closeScope === 'barber' && ! barberId"
-                        class="flex h-[50px] w-full items-center justify-center gap-2 rounded-xl bg-amber-500 text-sm font-bold text-slate-900 shadow-md shadow-amber-500/25 transition hover:bg-amber-400 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50">
+                        class="flex h-[50px] w-full items-center justify-center gap-2 rounded-xl bg-brand-500 text-sm font-bold text-white shadow-md shadow-brand-500/25 transition hover:bg-brand-400 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50">
                     <x-icon name="chart" class="h-5 w-5" /> Calcular &amp; auditar cierre
                 </button>
             </form>
@@ -222,27 +222,27 @@
         <section class="sticky top-16 z-20 space-y-2 bg-slate-100 py-2">
             <div class="flex items-center justify-between">
                 <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Filtrar por período</span>
-                <span class="text-[11px] font-semibold text-amber-600"><span x-text="closings.length"></span> registrados</span>
+                <span class="text-[11px] font-semibold text-brand-600"><span x-text="closings.length"></span> registrados</span>
             </div>
             <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
                 <button type="button" @click="filter = 'all'"
                         class="inline-flex h-9 items-center justify-center whitespace-nowrap rounded-full px-3.5 text-xs font-semibold transition active:scale-95"
-                        :class="filter === 'all' ? 'bg-amber-500 text-slate-900 shadow-sm' : 'bg-white text-slate-500 ring-1 ring-slate-200 hover:text-slate-700'">
+                        :class="filter === 'all' ? 'bg-brand-500 text-white shadow-sm' : 'bg-white text-slate-500 ring-1 ring-slate-200 hover:text-slate-700'">
                     Todos
                 </button>
                 <button type="button" @click="filter = 'diario'"
                         class="inline-flex h-9 items-center justify-center whitespace-nowrap rounded-full px-3.5 text-xs font-semibold transition active:scale-95"
-                        :class="filter === 'diario' ? 'bg-amber-500 text-slate-900 shadow-sm' : 'bg-white text-slate-500 ring-1 ring-slate-200 hover:text-slate-700'">
+                        :class="filter === 'diario' ? 'bg-brand-500 text-white shadow-sm' : 'bg-white text-slate-500 ring-1 ring-slate-200 hover:text-slate-700'">
                     Diarios (<span x-text="dailyCount"></span>)
                 </button>
                 <button type="button" @click="filter = 'semanal'"
                         class="inline-flex h-9 items-center justify-center whitespace-nowrap rounded-full px-3.5 text-xs font-semibold transition active:scale-95"
-                        :class="filter === 'semanal' ? 'bg-amber-500 text-slate-900 shadow-sm' : 'bg-white text-slate-500 ring-1 ring-slate-200 hover:text-slate-700'">
+                        :class="filter === 'semanal' ? 'bg-brand-500 text-white shadow-sm' : 'bg-white text-slate-500 ring-1 ring-slate-200 hover:text-slate-700'">
                     Semanales (<span x-text="weeklyCount"></span>)
                 </button>
                 <button type="button" @click="filter = 'mensual'"
                         class="inline-flex h-9 items-center justify-center whitespace-nowrap rounded-full px-3.5 text-xs font-semibold transition active:scale-95"
-                        :class="filter === 'mensual' ? 'bg-amber-500 text-slate-900 shadow-sm' : 'bg-white text-slate-500 ring-1 ring-slate-200 hover:text-slate-700'">
+                        :class="filter === 'mensual' ? 'bg-brand-500 text-white shadow-sm' : 'bg-white text-slate-500 ring-1 ring-slate-200 hover:text-slate-700'">
                     Mensuales (<span x-text="monthlyCount"></span>)
                 </button>
             </div>
@@ -270,7 +270,7 @@
                     <x-icon name="search" class="h-5 w-5" />
                 </span>
                 <input type="text" x-model="search" placeholder="Buscar por período o fecha (ej. 05/10/2026)..."
-                       class="h-12 w-full rounded-xl border border-slate-200 bg-white pl-11 pr-10 text-sm text-slate-700 shadow-sm placeholder:text-slate-400 focus:border-amber-500 focus:ring-amber-500" />
+                       class="h-12 w-full rounded-xl border border-slate-200 bg-white pl-11 pr-10 text-sm text-slate-700 shadow-sm placeholder:text-slate-400 focus:border-brand-500 focus:ring-brand-500" />
                 <button type="button" x-show="search.length" x-cloak @click="search = ''"
                         class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 transition hover:text-slate-700" title="Limpiar">
                     <x-icon name="x" class="h-4 w-4" />
@@ -288,7 +288,7 @@
             <template x-for="closing in filteredClosings" :key="closing.id">
                 <article class="relative flex flex-col gap-3 overflow-hidden rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200 transition hover:shadow-md">
                     <span class="absolute left-0 top-0 h-full w-1.5"
-                          :class="closing.closed ? 'bg-emerald-500' : 'bg-amber-500 animate-pulse'"></span>
+                          :class="closing.closed ? 'bg-emerald-500' : 'bg-brand-500 animate-pulse'"></span>
 
                     <!-- Metadatos -->
                     <div class="flex items-center justify-between gap-2 pl-2">
@@ -296,8 +296,8 @@
                             <span class="rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide"
                                   :class="periodClass(closing.period)" x-text="closing.period"></span>
                             <span class="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide"
-                                  :class="closing.closed ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'">
-                                <span class="h-1.5 w-1.5 rounded-full" :class="closing.closed ? 'bg-emerald-500' : 'bg-amber-500'"></span>
+                                  :class="closing.closed ? 'bg-emerald-100 text-emerald-700' : 'bg-brand-100 text-brand-700'">
+                                <span class="h-1.5 w-1.5 rounded-full" :class="closing.closed ? 'bg-emerald-500' : 'bg-brand-500'"></span>
                                 <span x-text="closing.closed ? 'Cerrado' : 'Abierto'"></span>
                             </span>
                             <template x-if="closing.isBarber">
@@ -313,7 +313,7 @@
 
                     <!-- Rango -->
                     <div class="flex items-center gap-1.5 pl-2 text-slate-700">
-                        <x-icon name="clock" class="h-4 w-4 text-amber-500" />
+                        <x-icon name="clock" class="h-4 w-4 text-brand-500" />
                         <span class="text-sm font-semibold tracking-tight"><span x-text="closing.start"></span> — <span x-text="closing.end"></span></span>
                     </div>
 
@@ -332,7 +332,7 @@
                             </div>
                             <div class="pt-1">
                                 <span class="text-xs text-slate-400">Comisión barberos</span>
-                                <p class="text-sm font-semibold text-amber-600" x-text="formatUsd(closing.commission)"></p>
+                                <p class="text-sm font-semibold text-brand-600" x-text="formatUsd(closing.commission)"></p>
                                 <span class="text-[10px] text-slate-400">Reparto <span x-text="closing.commissionPct"></span>%</span>
                             </div>
                             <div class="pt-1">
@@ -342,7 +342,7 @@
                             </div>
                             <div class="pt-1">
                                 <span class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Total USD</span>
-                                <p class="text-xl font-extrabold leading-tight text-amber-600" x-text="formatUsd(closing.total)"></p>
+                                <p class="text-xl font-extrabold leading-tight text-brand-600" x-text="formatUsd(closing.total)"></p>
                             </div>
                             <div class="pt-1">
                                 <span class="text-[10px] font-semibold uppercase tracking-wider text-emerald-600">Ganancia tienda</span>
@@ -380,7 +380,7 @@
                     <div class="flex items-center gap-2 pl-2">
                         <a :href="closing.showUrl"
                            class="flex h-[42px] flex-1 items-center justify-center gap-1.5 rounded-lg bg-slate-100 text-xs font-semibold text-slate-700 transition hover:bg-slate-200">
-                            <x-icon name="search" class="h-4 w-4 text-amber-500" /> Ver detalle
+                            <x-icon name="search" class="h-4 w-4 text-brand-500" /> Ver detalle
                         </a>
                         <a :href="closing.printUrl" target="_blank"
                            class="flex h-[42px] items-center justify-center gap-1.5 rounded-lg bg-slate-100 px-4 text-xs font-semibold text-slate-500 transition hover:bg-slate-200">
@@ -399,7 +399,7 @@
                 <p class="mt-3 text-base font-bold text-slate-800">No hay cierres</p>
                 <p class="mt-1 max-w-xs text-xs text-slate-400">Genera un cierre con el botón + o ajusta los filtros.</p>
                 <button type="button" @click="search = ''; filter = 'all'; scope = 'all'"
-                        class="mt-4 rounded-lg bg-slate-100 px-4 py-2 text-sm font-semibold text-amber-600 transition hover:bg-slate-200">
+                        class="mt-4 rounded-lg bg-slate-100 px-4 py-2 text-sm font-semibold text-brand-600 transition hover:bg-slate-200">
                     Restablecer filtros
                 </button>
             </div>

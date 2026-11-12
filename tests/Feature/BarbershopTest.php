@@ -637,7 +637,7 @@ class BarbershopTest extends TestCase
             ->get(route('closings.print', $closing))
             ->assertOk()
             ->assertSee('logo.jpeg')
-            ->assertSee('Bs cobrados');
+            ->assertSee('VES cobrados');
     }
 
     public function test_closing_stores_historical_and_reference_bolivars(): void

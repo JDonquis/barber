@@ -20,7 +20,7 @@
                 </span>
                 <a href="{{ request()->fullUrl() }}"
                    class="inline-flex items-center gap-1.5 rounded-xl bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 shadow-sm ring-1 ring-slate-200 transition hover:bg-slate-50 active:scale-95">
-                    <x-icon name="refresh" class="h-4 w-4 text-amber-500" /> Sincronizar
+                    <x-icon name="refresh" class="h-4 w-4 text-brand-500" /> Sincronizar
                 </a>
             </div>
             <div>
@@ -45,18 +45,18 @@
             <div class="flex flex-col justify-between rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
                 <div class="mb-2 flex items-center justify-between">
                     <span class="text-xs font-medium text-slate-400">Comisión hoy</span>
-                    <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-100 text-amber-600">
+                    <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-100 text-brand-600">
                         <x-icon name="users" class="h-5 w-5" />
                     </span>
                 </div>
                 <span class="text-xl font-extrabold tracking-tight text-slate-800">{{ usd($todayCommission) }}</span>
-                <span class="mt-0.5 text-[11px] text-amber-600">{{ $isBarber ? 'Tu comisión del día' : 'Total barberos' }}</span>
+                <span class="mt-0.5 text-[11px] text-brand-600">{{ $isBarber ? 'Tu comisión del día' : 'Total barberos' }}</span>
             </div>
 
             <div class="flex flex-col justify-between rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
                 <div class="mb-2 flex items-center justify-between">
                     <span class="text-xs font-medium text-slate-400">Servicios hoy</span>
-                    <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-100 text-amber-600">
+                    <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-100 text-brand-600">
                         <x-icon name="scissors" class="h-5 w-5" />
                     </span>
                 </div>
@@ -97,14 +97,14 @@
         <section class="relative overflow-hidden rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
             <div class="mb-2 flex items-center justify-between">
                 <span class="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                    <x-icon name="refresh" class="h-4 w-4 text-amber-500" /> Tasa oficial del día
+                    <x-icon name="refresh" class="h-4 w-4 text-brand-500" /> Tasa de cambio del día
                 </span>
-                <span class="rounded-full px-2 py-0.5 text-[11px] font-bold text-amber-600 ring-1 ring-amber-200">
-                    {{ app(\App\Services\ExchangeRateService::class)->usingManual() ? 'Manual' : 'BCV' }}
+                <span class="rounded-full px-2 py-0.5 text-[11px] font-bold text-brand-600 ring-1 ring-brand-200">
+                    {{ app(\App\Services\ExchangeRateService::class)->usingManual() ? 'Manual' : strtoupper(local_currency()) }}
                 </span>
             </div>
             <div class="flex items-baseline gap-1.5">
-                <span class="text-2xl font-extrabold tracking-tight text-amber-600">{{ ves($currentRate) }}</span>
+                <span class="text-2xl font-extrabold tracking-tight text-brand-600">{{ ves($currentRate) }}</span>
                 <span class="text-xs font-semibold text-slate-400">/ 1,00 USD</span>
             </div>
             <p class="mt-1 text-[11px] text-slate-400">Cotización sincronizada automáticamente.</p>
@@ -112,7 +112,7 @@
                 <form method="POST" action="{{ route('exchange-rate.refresh') }}" class="mt-3">
                     @csrf
                     <button type="submit"
-                            class="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-100 py-2.5 text-sm font-semibold text-amber-600 transition hover:bg-slate-200 active:scale-[0.98]">
+                            class="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-100 py-2.5 text-sm font-semibold text-brand-600 transition hover:bg-slate-200 active:scale-[0.98]">
                         <x-icon name="refresh" class="h-4 w-4" /> Actualizar ahora
                     </button>
                 </form>
@@ -123,9 +123,9 @@
         <section class="space-y-2.5">
             <div class="flex items-center justify-between">
                 <span class="flex items-center gap-2 text-sm font-bold text-slate-800">
-                    <x-icon name="receipt" class="h-5 w-5 text-amber-500" /> Últimas ventas
+                    <x-icon name="receipt" class="h-5 w-5 text-brand-500" /> Últimas ventas
                 </span>
-                <a href="{{ route('sales.index') }}" class="flex items-center gap-0.5 text-xs font-bold text-amber-600 transition hover:text-amber-700">
+                <a href="{{ route('sales.index') }}" class="flex items-center gap-0.5 text-xs font-bold text-brand-600 transition hover:text-brand-700">
                     Ver todas <span class="text-base leading-none">&rsaquo;</span>
                 </a>
             </div>
@@ -138,8 +138,8 @@
                     <div class="flex items-center justify-between gap-2 rounded-xl bg-white p-3.5 shadow-sm ring-1 ring-slate-200 transition hover:bg-slate-50">
                         <div class="min-w-0">
                             <div class="mb-1 flex items-center gap-2">
-                                <span class="rounded bg-slate-100 px-2 py-0.5 text-[11px] font-bold text-amber-600">{{ $sale->code }}</span>
-                                <span class="text-[11px] font-semibold {{ $isService ? 'text-amber-600' : 'text-emerald-600' }}">
+                                <span class="rounded bg-slate-100 px-2 py-0.5 text-[11px] font-bold text-brand-600">{{ $sale->code }}</span>
+                                <span class="text-[11px] font-semibold {{ $isService ? 'text-brand-600' : 'text-emerald-600' }}">
                                     {{ $isService ? 'Corte / Servicio' : 'Tienda directa' }}
                                 </span>
                             </div>
@@ -178,7 +178,7 @@
                     <span class="flex items-center gap-2 text-sm font-bold text-slate-800">
                         <x-icon name="box" class="h-5 w-5 text-emerald-600" /> Stock bajo
                     </span>
-                    <span class="rounded-full px-2 py-0.5 text-[11px] font-bold {{ $lowStock->isEmpty() ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700' }}">
+                    <span class="rounded-full px-2 py-0.5 text-[11px] font-bold {{ $lowStock->isEmpty() ? 'bg-emerald-100 text-emerald-700' : 'bg-brand-100 text-brand-700' }}">
                         {{ $lowStock->isEmpty() ? 'Al día' : $lowStock->count().' por reponer' }}
                     </span>
                 </div>
@@ -198,7 +198,7 @@
                         @foreach ($lowStock as $product)
                             <div class="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2">
                                 <span class="truncate text-sm text-slate-700">{{ $product->name }}</span>
-                                <span class="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-bold text-amber-700">{{ $product->stock }} uds</span>
+                                <span class="rounded-full bg-brand-100 px-2 py-0.5 text-[11px] font-bold text-brand-700">{{ $product->stock }} uds</span>
                             </div>
                         @endforeach
                     </div>
@@ -210,11 +210,11 @@
                 <div class="flex items-center justify-between">
                     <div>
                         <span class="flex items-center gap-2 text-sm font-bold text-slate-800">
-                            <x-icon name="chart" class="h-5 w-5 text-amber-500" /> Ranking de barberos
+                            <x-icon name="chart" class="h-5 w-5 text-brand-500" /> Ranking de barberos
                         </span>
                         <span class="text-[11px] text-slate-400">Calculado por comisión neta generada</span>
                     </div>
-                    <span class="rounded bg-slate-100 px-2 py-0.5 text-[11px] font-bold text-amber-600">Mes en curso</span>
+                    <span class="rounded bg-slate-100 px-2 py-0.5 text-[11px] font-bold text-brand-600">Mes en curso</span>
                 </div>
 
                 <div class="space-y-2">
@@ -226,10 +226,10 @@
                             <div class="flex items-center justify-between gap-3">
                                 <div class="flex min-w-0 items-center gap-3">
                                     <div class="relative shrink-0">
-                                        <span class="flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold {{ $index === 0 ? 'bg-amber-100 text-amber-600' : 'bg-slate-100 text-slate-500' }}">
+                                        <span class="flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold {{ $index === 0 ? 'bg-brand-100 text-brand-600' : 'bg-slate-100 text-slate-500' }}">
                                             {{ $initials }}
                                         </span>
-                                        <span class="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-extrabold {{ $index === 0 ? 'bg-amber-500 text-slate-900' : 'bg-slate-200 text-slate-500' }}">
+                                        <span class="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-extrabold {{ $index === 0 ? 'bg-brand-500 text-white' : 'bg-slate-200 text-slate-500' }}">
                                             {{ $index + 1 }}
                                         </span>
                                     </div>
@@ -239,12 +239,12 @@
                                     </div>
                                 </div>
                                 <div class="shrink-0 text-right">
-                                    <span class="block text-sm font-extrabold {{ $index === 0 ? 'text-amber-600' : 'text-slate-700' }}">{{ usd($barber->commission ?? 0) }}</span>
+                                    <span class="block text-sm font-extrabold {{ $index === 0 ? 'text-brand-600' : 'text-slate-700' }}">{{ usd($barber->commission ?? 0) }}</span>
                                     <span class="text-[10px] uppercase tracking-wide text-slate-400">Comisión</span>
                                 </div>
                             </div>
                             <div class="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
-                                <div class="h-full rounded-full {{ $index === 0 ? 'bg-amber-500' : ($index === 1 ? 'bg-amber-400' : 'bg-emerald-500') }}" style="width: {{ $width }}%"></div>
+                                <div class="h-full rounded-full {{ $index === 0 ? 'bg-brand-500' : ($index === 1 ? 'bg-brand-400' : 'bg-emerald-500') }}" style="width: {{ $width }}%"></div>
                             </div>
                         </div>
                     @empty
@@ -273,7 +273,7 @@
 
         <!-- Acción rápida -->
         <a href="{{ route('sales.create-service') }}"
-           class="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-400 text-sm font-bold text-slate-900 shadow-lg shadow-amber-500/30 transition-all hover:opacity-95 active:scale-[0.985]">
+           class="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-500 to-brand-400 text-sm font-bold text-white shadow-lg shadow-brand-500/30 transition-all hover:opacity-95 active:scale-[0.985]">
             <x-icon name="plus" class="h-5 w-5" /> Registrar venta / servicio
         </a>
     </div>

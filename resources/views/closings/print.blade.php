@@ -10,7 +10,7 @@
             --muted: #64748b;
             --border: #e2e8f0;
             --soft: #f8fafc;
-            --accent: #b45309;
+            --accent: #c01c15;
             --emerald: #047857;
         }
 
@@ -215,7 +215,7 @@
         <!-- Encabezado -->
         <header class="doc-header">
             <div class="brand">
-                <img src="{{ asset('logo.jpeg') }}" alt="{{ $shopName }}" class="brand-logo">
+                <img src="{{ $companyLogo }}" alt="{{ $shopName }}" class="brand-logo">
                 <div>
                     <h1>{{ $shopName }}</h1>
                     <p class="muted">
@@ -312,11 +312,11 @@
                     </tr>
                     <tr>
                         <td class="muted">Tasa promedio del período</td>
-                        <td class="text-right strong">Bs. {{ number_format($closing->average_rate ?: $closing->exchange_rate, 2, ',', '.') }}</td>
+                        <td class="text-right strong">{{ local_currency_symbol() }} {{ number_format($closing->average_rate ?: $closing->exchange_rate, 2, ',', '.') }}</td>
                     </tr>
                     <tr>
                         <td class="muted">Tasa de cierre</td>
-                        <td class="text-right strong">Bs. {{ number_format($closing->exchange_rate, 2, ',', '.') }}</td>
+                        <td class="text-right strong">{{ local_currency_symbol() }} {{ number_format($closing->exchange_rate, 2, ',', '.') }}</td>
                     </tr>
                 </tbody>
             </table>
@@ -327,7 +327,7 @@
                     <span class="amount big">{{ usd($closing->total_usd) }}</span>
                 </div>
                 <div class="row">
-                    <span class="muted">Bs cobrados (tasa histórica del período)</span>
+                    <span class="muted">{{ local_currency() }} cobrados (tasa histórica del período)</span>
                     <span class="amount emerald">{{ ves($closing->total_ves) }}</span>
                 </div>
                 <div class="row">

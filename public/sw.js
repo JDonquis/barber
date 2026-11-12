@@ -1,20 +1,21 @@
 /*
- * Service Worker — MR Yhon Barber Studio
+ * Service Worker — MyBarber
  *
  * Estrategia:
- *  - Navegación: network-first. Nunca cachea HTML autenticado; si no hay red, muestra /offline.html.
+ *  - Navegación: el navegador la maneja de forma nativa para respetar redirects
+ *    (login, logout, OAuth, sesión expirada). Sin conexión, muestra /offline.html.
  *  - Estáticos (build, iconos, logo, fuentes): cache-first con revalidación en segundo plano.
  *  - Ignora peticiones que no sean GET y las de otros orígenes (salvo fuentes).
  *
  * Para publicar cambios: incrementa CACHE_VERSION.
  */
-const CACHE_VERSION = 'yhonbarber-v1';
+const CACHE_VERSION = 'mybarber-v4';
 const OFFLINE_URL = '/offline.html';
 
 const PRECACHE = [
     OFFLINE_URL,
     '/manifest.webmanifest',
-    '/logo.jpeg',
+    '/mybarberlogo.png',
     '/icons/icon-192.png',
     '/icons/icon-512.png',
     '/icons/apple-touch-icon.png',
@@ -50,7 +51,7 @@ function isStaticAsset(url) {
     return (
         url.pathname.startsWith('/build/') ||
         url.pathname.startsWith('/icons/') ||
-        url.pathname === '/logo.jpeg' ||
+        url.pathname === '/mybarberlogo.png' ||
         url.pathname === '/manifest.webmanifest' ||
         /\.(css|js|mjs|png|jpe?g|svg|webp|gif|ico|woff2?|ttf|eot)$/.test(url.pathname)
     );
@@ -64,6 +65,11 @@ self.addEventListener('fetch', (event) => {
     }
 
     const url = new URL(request.url);
+
+    // La PWA de clientes por barbería maneja su propio service worker.
+    if (url.pathname.startsWith('/reservar/')) {
+        return;
+    }
 
     // Fuentes externas: cache-first.
     if (url.origin !== self.location.origin) {
@@ -79,11 +85,15 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
-    // Navegación: network-first con fallback offline (sin cachear HTML autenticado).
+    // Navegación: con conexión dejamos que el navegador la maneje de forma
+    // nativa. Así puede seguir redirects (login, logout, OAuth, sesión expirada)
+    // sin que respondWith rechace una respuesta redirigida. Sin conexión,
+    // mostramos la página offline precargada.
     if (request.mode === 'navigate') {
-        event.respondWith(
-            fetch(request).catch(() => caches.match(OFFLINE_URL))
-        );
+        if (self.navigator.onLine === false) {
+            event.respondWith(caches.match(OFFLINE_URL));
+        }
+
         return;
     }
 
@@ -93,7 +103,7 @@ self.addEventListener('fetch', (event) => {
             caches.match(request).then((cached) => {
                 const network = fetch(request)
                     .then((response) => {
-                        if (response && response.status === 200 && response.type === 'basic') {
+                        if (response && response.status === 200 && response.type === 'basic' && !response.redirected) {
                             const copy = response.clone();
                             caches.open(CACHE_VERSION).then((cache) => cache.put(request, copy));
                         }

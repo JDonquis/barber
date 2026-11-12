@@ -69,8 +69,8 @@ class ServiceController extends Controller
 
     public function destroy(Service $service)
     {
-        if ($service->saleItems()->exists()) {
-            return back()->with('error', 'No puedes eliminar un corte con ventas registradas. Páusalo para ocultarlo del catálogo.');
+        if ($service->saleItems()->exists() || $service->appointments()->exists()) {
+            return back()->with('error', 'No puedes eliminar un corte con ventas o citas registradas. Páusalo para ocultarlo del catálogo.');
         }
 
         $service->delete();
@@ -113,6 +113,7 @@ class ServiceController extends Controller
             'name' => ['required', 'string', 'max:120'],
             'description' => ['nullable', 'string', 'max:255'],
             'price' => ['required', 'numeric', 'min:0'],
+            'duration_minutes' => ['required', 'integer', 'min:5', 'max:480'],
             'active' => ['nullable', 'boolean'],
         ]);
 

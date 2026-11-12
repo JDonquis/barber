@@ -29,6 +29,7 @@
         token: '{{ csrf_token() }}',
         base: '{{ url('/products') }}',
         rate: {{ (float) $currentRate }},
+        localSymbol: @js(local_currency_symbol()),
         get filteredProducts() {
             const q = this.search.toLowerCase().trim();
             return this.products.filter((product) => {
@@ -52,7 +53,7 @@
             return product.price > 0 ? 100 : 0;
         },
         formatVes(value) {
-            return 'Bs. ' + Number(value || 0).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            return this.localSymbol + ' ' + Number(value || 0).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         },
         openMovement(product, type = 'in', qty = 5) {
             this.movementProduct = product;
@@ -101,7 +102,7 @@
         <!-- Encabezado -->
         <section class="space-y-3">
             <div>
-                <span class="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-widest text-amber-600">
+                <span class="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-widest text-brand-600">
                     <x-icon name="box" class="h-4 w-4" /> Inventario &amp; Productos
                 </span>
                 <h2 class="mt-1 text-xl font-extrabold tracking-tight text-slate-800">Catálogo de Productos</h2>
@@ -117,18 +118,18 @@
                 </div>
                 <div class="rounded-xl bg-white p-3 shadow-sm ring-1 ring-slate-200">
                     <span class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Top ventas</span>
-                    <p class="mt-0.5 text-lg font-bold text-amber-600">{{ $stats['topUnits'] }} uds</p>
+                    <p class="mt-0.5 text-lg font-bold text-brand-600">{{ $stats['topUnits'] }} uds</p>
                     <span class="truncate text-[11px] text-slate-400">{{ $stats['topName'] ?? 'Sin datos' }}</span>
                 </div>
                 <div class="rounded-xl bg-white p-3 shadow-sm ring-1 ring-slate-200">
                     <span class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Atención</span>
-                    <p class="mt-0.5 text-lg font-bold text-amber-600">{{ $stats['lowStock'] }}</p>
-                    <span class="text-[11px] text-amber-600">Stock crítico</span>
+                    <p class="mt-0.5 text-lg font-bold text-brand-600">{{ $stats['lowStock'] }}</p>
+                    <span class="text-[11px] text-brand-600">Stock crítico</span>
                 </div>
             </div>
 
             <a href="{{ route('products.create') }}"
-               class="flex h-[50px] w-full items-center justify-center gap-2 rounded-xl bg-amber-500 text-sm font-bold text-slate-900 shadow-md shadow-amber-500/25 transition hover:bg-amber-400 active:scale-[0.985]">
+               class="flex h-[50px] w-full items-center justify-center gap-2 rounded-xl bg-brand-500 text-sm font-bold text-white shadow-md shadow-brand-500/25 transition hover:bg-brand-400 active:scale-[0.985]">
                 <x-icon name="plus" class="h-5 w-5" /> Nuevo producto
             </a>
         </section>
@@ -140,7 +141,7 @@
                     <x-icon name="search" class="h-5 w-5" />
                 </span>
                 <input type="text" x-model="search" placeholder="Buscar por nombre o SKU..."
-                       class="h-[50px] w-full rounded-xl border border-slate-200 bg-white pl-11 pr-10 text-sm text-slate-700 shadow-sm placeholder:text-slate-400 focus:border-amber-500 focus:ring-amber-500" />
+                       class="h-[50px] w-full rounded-xl border border-slate-200 bg-white pl-11 pr-10 text-sm text-slate-700 shadow-sm placeholder:text-slate-400 focus:border-brand-500 focus:ring-brand-500" />
                 <button type="button" x-show="search.length" x-cloak @click="search = ''"
                         class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 transition hover:text-slate-700" title="Limpiar">
                     <x-icon name="x" class="h-4 w-4" />
@@ -150,22 +151,22 @@
             <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
                 <button type="button" @click="filter = 'all'"
                         class="inline-flex h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-full px-3 text-xs font-semibold transition active:scale-95"
-                        :class="filter === 'all' ? 'bg-amber-500 text-slate-900 shadow-sm' : 'bg-white text-slate-500 ring-1 ring-slate-200 hover:text-slate-700'">
+                        :class="filter === 'all' ? 'bg-brand-500 text-white shadow-sm' : 'bg-white text-slate-500 ring-1 ring-slate-200 hover:text-slate-700'">
                     <x-icon name="box" class="h-4 w-4" /> Todos (<span x-text="products.length"></span>)
                 </button>
                 <button type="button" @click="filter = 'instock'"
                         class="inline-flex h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-full px-3 text-xs font-semibold transition active:scale-95"
-                        :class="filter === 'instock' ? 'bg-amber-500 text-slate-900 shadow-sm' : 'bg-white text-slate-500 ring-1 ring-slate-200 hover:text-slate-700'">
+                        :class="filter === 'instock' ? 'bg-brand-500 text-white shadow-sm' : 'bg-white text-slate-500 ring-1 ring-slate-200 hover:text-slate-700'">
                     <span class="h-2 w-2 rounded-full bg-emerald-500"></span> En stock (<span x-text="instockCount"></span>)
                 </button>
                 <button type="button" @click="filter = 'lowstock'"
                         class="inline-flex h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-full px-3 text-xs font-semibold transition active:scale-95"
-                        :class="filter === 'lowstock' ? 'bg-amber-500 text-slate-900 shadow-sm' : 'bg-white text-amber-600 ring-1 ring-slate-200 hover:text-amber-700'">
-                    <span class="h-2 w-2 rounded-full bg-amber-500"></span> Stock bajo (<span x-text="lowstockCount"></span>)
+                        :class="filter === 'lowstock' ? 'bg-brand-500 text-white shadow-sm' : 'bg-white text-brand-600 ring-1 ring-slate-200 hover:text-brand-700'">
+                    <span class="h-2 w-2 rounded-full bg-brand-500"></span> Stock bajo (<span x-text="lowstockCount"></span>)
                 </button>
                 <button type="button" @click="filter = 'inactive'"
                         class="inline-flex h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-full px-3 text-xs font-semibold transition active:scale-95"
-                        :class="filter === 'inactive' ? 'bg-amber-500 text-slate-900 shadow-sm' : 'bg-white text-slate-500 ring-1 ring-slate-200 hover:text-slate-700'">
+                        :class="filter === 'inactive' ? 'bg-brand-500 text-white shadow-sm' : 'bg-white text-slate-500 ring-1 ring-slate-200 hover:text-slate-700'">
                     Inactivos (<span x-text="inactiveCount"></span>)
                 </button>
             </div>
@@ -179,7 +180,7 @@
                     <div class="flex items-start justify-between gap-3">
                         <div class="flex min-w-0 items-center gap-3">
                             <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl"
-                                  :class="product.active ? (isLow(product) ? 'bg-amber-100 text-amber-600' : 'bg-amber-50 text-amber-500') : 'bg-slate-100 text-slate-400'">
+                                  :class="product.active ? (isLow(product) ? 'bg-brand-100 text-brand-600' : 'bg-brand-50 text-brand-500') : 'bg-slate-100 text-slate-400'">
                                 <x-icon name="box" class="h-6 w-6" />
                             </span>
                             <div class="min-w-0">
@@ -193,8 +194,8 @@
                         </div>
                         <div class="flex shrink-0 flex-col items-end gap-1">
                             <span class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold"
-                                  :class="isLow(product) ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'">
-                                <span class="h-1.5 w-1.5 rounded-full" :class="isLow(product) ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500'"></span>
+                                  :class="isLow(product) ? 'bg-brand-100 text-brand-700' : 'bg-emerald-100 text-emerald-700'">
+                                <span class="h-1.5 w-1.5 rounded-full" :class="isLow(product) ? 'bg-brand-500 animate-pulse' : 'bg-emerald-500'"></span>
                                 <span x-text="product.stock + ' en stock'"></span>
                             </span>
                             <span class="text-[11px] font-semibold" :class="product.active ? 'text-emerald-600' : 'text-slate-400'"
@@ -211,7 +212,7 @@
                         </div>
                         <div>
                             <span class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Precio venta</span>
-                            <p class="text-sm font-bold text-amber-600" x-text="'$' + product.price.toFixed(2)"></p>
+                            <p class="text-sm font-bold text-brand-600" x-text="'$' + product.price.toFixed(2)"></p>
                             <span class="text-[10px] text-slate-400" x-text="formatVes(product.price * rate)"></span>
                         </div>
                         <div class="text-right">
@@ -223,12 +224,12 @@
 
                     <!-- Alerta reposición -->
                     <template x-if="product.active && isLow(product)">
-                        <div class="flex items-center justify-between rounded-lg bg-amber-50 px-3 py-2">
-                            <span class="flex items-center gap-1.5 text-[11px] font-medium text-amber-700">
+                        <div class="flex items-center justify-between rounded-lg bg-brand-50 px-3 py-2">
+                            <span class="flex items-center gap-1.5 text-[11px] font-medium text-brand-700">
                                 <x-icon name="alert" class="h-4 w-4" /> Reposición recomendada
                             </span>
                             <button type="button" @click="openMovement(product, 'in', Math.max(5, product.min_stock * 2))"
-                                    class="text-[11px] font-bold uppercase tracking-wider text-amber-700 hover:text-amber-800">
+                                    class="text-[11px] font-bold uppercase tracking-wider text-brand-700 hover:text-brand-800">
                                 Añadir
                             </button>
                         </div>
@@ -238,11 +239,11 @@
                     <div class="flex items-center gap-2 pt-1">
                         <button type="button" @click="openMovement(product, 'in')"
                                 class="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-xl bg-slate-100 text-xs font-semibold text-slate-700 transition hover:bg-slate-200 active:scale-[0.98]">
-                            <x-icon name="refresh" class="h-4 w-4 text-amber-500" /> Movimiento
+                            <x-icon name="refresh" class="h-4 w-4 text-brand-500" /> Movimiento
                         </button>
                         <a :href="base + '/' + product.id + '/edit'"
                            class="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-xl bg-slate-100 text-xs font-semibold text-slate-700 transition hover:bg-slate-200 active:scale-[0.98]">
-                            <x-icon name="edit" class="h-4 w-4 text-amber-600" /> Editar
+                            <x-icon name="edit" class="h-4 w-4 text-brand-600" /> Editar
                         </a>
                         <button type="button" @click="toggleActive(product)" :title="product.active ? 'Desactivar' : 'Activar'"
                                 class="flex h-11 w-11 items-center justify-center rounded-xl transition active:scale-[0.98]"
@@ -278,7 +279,7 @@
                 <p class="mt-3 text-base font-bold text-slate-800">Sin resultados</p>
                 <p class="mt-1 max-w-xs text-xs text-slate-400">No hay productos que coincidan con la búsqueda o el filtro.</p>
                 <button type="button" @click="search = ''; filter = 'all'"
-                        class="mt-4 rounded-xl bg-slate-100 px-4 py-2 text-sm font-semibold text-amber-600 transition hover:bg-slate-200">
+                        class="mt-4 rounded-xl bg-slate-100 px-4 py-2 text-sm font-semibold text-brand-600 transition hover:bg-slate-200">
                     Restablecer filtros
                 </button>
             </div>
@@ -290,7 +291,7 @@
             <div class="relative flex w-full max-w-md flex-col gap-4 rounded-t-2xl bg-white p-5 shadow-2xl sm:rounded-2xl">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-2.5">
-                        <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-100 text-amber-600">
+                        <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-100 text-brand-600">
                             <x-icon name="refresh" class="h-5 w-5" />
                         </span>
                         <div>
@@ -317,7 +318,7 @@
                         </button>
                         <button type="button" @click="movementType = 'out'"
                                 class="flex h-11 items-center justify-center gap-1.5 rounded-xl text-xs font-semibold transition"
-                                :class="movementType === 'out' ? 'bg-amber-500 text-slate-900 shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'">
+                                :class="movementType === 'out' ? 'bg-brand-500 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'">
                             <x-icon name="minus" class="h-4 w-4" /> Salida (-stock)
                         </button>
                     </div>
@@ -329,7 +330,7 @@
                         <button type="button" @click="adjustQty(-1)"
                                 class="flex h-[50px] w-12 items-center justify-center rounded-xl bg-slate-100 text-lg font-bold text-slate-700 transition hover:bg-slate-200 active:scale-95">-</button>
                         <input type="number" min="1" x-model.number="movementQty"
-                               class="h-[50px] flex-1 rounded-xl border border-slate-200 bg-slate-50 text-center text-lg font-bold text-amber-600 focus:border-amber-500 focus:bg-white focus:ring-amber-500" />
+                               class="h-[50px] flex-1 rounded-xl border border-slate-200 bg-slate-50 text-center text-lg font-bold text-brand-600 focus:border-brand-500 focus:bg-white focus:ring-brand-500" />
                         <button type="button" @click="adjustQty(1)"
                                 class="flex h-[50px] w-12 items-center justify-center rounded-xl bg-slate-100 text-lg font-bold text-slate-700 transition hover:bg-slate-200 active:scale-95">+</button>
                     </div>
@@ -338,7 +339,7 @@
                 <div class="space-y-1.5">
                     <label class="text-xs font-medium text-slate-500">Motivo o referencia</label>
                     <input type="text" x-model="movementNote" placeholder="Ej: Compra a distribuidor / Uso en estación"
-                           class="block h-[50px] w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-700 placeholder:text-slate-400 focus:border-amber-500 focus:bg-white focus:ring-amber-500" />
+                           class="block h-[50px] w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-700 placeholder:text-slate-400 focus:border-brand-500 focus:bg-white focus:ring-brand-500" />
                 </div>
 
                 <p x-show="movementError" x-cloak class="rounded-lg bg-rose-50 px-3 py-2 text-xs text-rose-600" x-text="movementError"></p>
@@ -347,11 +348,11 @@
                     <button type="button" @click="movementProduct = null"
                             class="h-[50px] flex-1 rounded-xl bg-slate-100 text-sm font-semibold text-slate-500 transition hover:bg-slate-200">Cancelar</button>
                     <button type="button" @click="submitMovement()"
-                            class="h-[50px] flex-1 rounded-xl bg-amber-500 text-sm font-bold text-slate-900 shadow-md transition hover:bg-amber-400">Confirmar</button>
+                            class="h-[50px] flex-1 rounded-xl bg-brand-500 text-sm font-bold text-white shadow-md transition hover:bg-brand-400">Confirmar</button>
                 </div>
 
                 <a :href="movementProduct ? base + '/' + movementProduct.id + '/stock' : '#'"
-                   class="text-center text-xs font-semibold text-slate-400 transition hover:text-amber-600">Ver historial completo</a>
+                   class="text-center text-xs font-semibold text-slate-400 transition hover:text-brand-600">Ver historial completo</a>
             </div>
         </div>
     </div>

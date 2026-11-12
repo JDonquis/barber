@@ -2,8 +2,8 @@
     $isAdmin = auth()->user()->isAdmin();
     $linkClass = function (bool $active) {
         return $active
-            ? 'flex items-center gap-3 px-3 py-2 rounded-lg bg-amber-500 text-slate-900 font-semibold'
-            : 'flex items-center gap-3 px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white';
+            ? 'flex items-center gap-3 px-3 py-2 rounded-lg bg-brand-500 text-white font-semibold shadow-sm shadow-brand-500/25'
+            : 'flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 hover:bg-brand-50 hover:text-brand-700';
     };
 @endphp
 
@@ -14,11 +14,12 @@
        x-transition:leave="transition ease-in duration-200 transform"
        x-transition:leave-start="translate-x-0 opacity-100"
        x-transition:leave-end="-translate-x-full opacity-0"
-       class="fixed lg:sticky lg:top-0 lg:bottom-auto lg:h-screen inset-y-0 left-0 z-40 w-64 shrink-0 bg-slate-900 text-slate-100 flex flex-col"
+       class="fixed lg:sticky lg:top-0 lg:bottom-auto lg:h-screen inset-y-0 left-0 z-40 w-64 shrink-0 bg-white text-slate-700 flex flex-col border-r border-slate-200"
        @click.outside="sidebarOpen = false">
-    <div class="h-16 flex items-center gap-2 px-5 border-b border-slate-800">
-        <span class="inline-flex h-9 w-9 items-center justify-center rounded-full bg-amber-500 text-slate-900 font-bold">YB</span>
-        <span class="font-semibold text-lg truncate">{{ $shopName }}</span>
+    <div class="h-16 flex items-center gap-3 px-5 border-b border-slate-200">
+        <img src="{{ $companyLogo }}" alt="{{ $shopName }}"
+             class="h-10 w-10 shrink-0 rounded-lg object-contain" />
+        <span class="font-semibold text-lg truncate text-slate-800">{{ $shopName }}</span>
     </div>
 
     <nav class="flex-1 overflow-y-auto px-3 py-4 space-y-1 text-sm">
@@ -27,7 +28,7 @@
             Inicio
         </a>
 
-        <p class="px-3 pt-4 pb-1 text-xs uppercase tracking-wider text-slate-500">Ventas</p>
+        <p class="px-3 pt-4 pb-1 text-xs uppercase tracking-wider text-slate-400">Ventas</p>
         <a href="{{ route('sales.create-service') }}" class="{{ $linkClass(request()->routeIs('sales.create-service')) }}">
             <x-icon name="scissors" class="h-5 w-5" />
             Registrar corte
@@ -44,7 +45,7 @@
         </a>
 
         @if ($isAdmin)
-            <p class="px-3 pt-4 pb-1 text-xs uppercase tracking-wider text-slate-500">Administración</p>
+            <p class="px-3 pt-4 pb-1 text-xs uppercase tracking-wider text-slate-400">Administración</p>
             <a href="{{ route('services.index') }}" class="{{ $linkClass(request()->routeIs('services.*')) }}">
                 <x-icon name="tag" class="h-5 w-5" />
                 Tipos de corte
@@ -53,9 +54,17 @@
                 <x-icon name="users" class="h-5 w-5" />
                 Barberos
             </a>
+            <a href="{{ route('loans.index') }}" class="{{ $linkClass(request()->routeIs('loans.*')) }}">
+                <x-icon name="wallet" class="h-5 w-5" />
+                Préstamos
+            </a>
             <a href="{{ route('users.index') }}" class="{{ $linkClass(request()->routeIs('users.*')) }}">
                 <x-icon name="user" class="h-5 w-5" />
                 Usuarios
+            </a>
+            <a href="{{ route('customers.index') }}" class="{{ $linkClass(request()->routeIs('customers.*')) }}">
+                <x-icon name="users" class="h-5 w-5" />
+                Clientes
             </a>
             @php($pendingPasswordRequests = \App\Models\PasswordResetRequest::pending()->count())
             <a href="{{ route('password-requests.index') }}" class="{{ $linkClass(request()->routeIs('password-requests.*')) }}">
@@ -77,6 +86,14 @@
                 <x-icon name="minus" class="h-5 w-5" />
                 Gastos
             </a>
+            <a href="{{ route('appointments.index') }}" class="{{ $linkClass(request()->routeIs('appointments.*')) }}">
+                <x-icon name="clock" class="h-5 w-5" />
+                Citas
+            </a>
+            <a href="{{ route('payments.index') }}" class="{{ $linkClass(request()->routeIs('payments.*')) }}">
+                <x-icon name="card" class="h-5 w-5" />
+                Pagos
+            </a>
             <a href="{{ route('settings.edit') }}" class="{{ $linkClass(request()->routeIs('settings.*')) }}">
                 <x-icon name="cog" class="h-5 w-5" />
                 Configuración
@@ -84,19 +101,19 @@
         @endif
     </nav>
 
-    <div class="border-t border-slate-800 p-3">
+    <div class="border-t border-slate-200 p-3">
         <a href="{{ route('profile.edit') }}" class="{{ $linkClass(request()->routeIs('profile.*')) }}">
             <x-icon name="user" class="h-5 w-5" />
             Mi perfil
         </a>
     </div>
 
-    <div class="border-t border-slate-800 p-4 text-xs text-slate-400">
-        <p class="font-medium text-slate-200">{{ auth()->user()->name }}</p>
+    <div class="border-t border-slate-200 p-4 text-xs text-slate-500">
+        <p class="font-medium text-slate-700">{{ auth()->user()->name }}</p>
         <p>{{ auth()->user()->isAdmin() ? 'Administrador' : 'Barbero' }}</p>
-        <form method="POST" action="{{ route('logout') }}" class="mt-2">
+        <form method="POST" action="{{ route('logout') }}" class="mt-2" data-no-ajax>
             @csrf
-            <button type="submit" class="w-full rounded-lg bg-slate-800 px-3 py-2 text-center text-slate-200 hover:bg-slate-700">
+            <button type="submit" class="w-full rounded-lg bg-slate-100 px-3 py-2 text-center text-slate-700 hover:bg-slate-200">
                 Cerrar sesión
             </button>
         </form>

@@ -6,6 +6,7 @@ use App\Models\Product;
 use App\Models\SaleItem;
 use App\Models\StockMovement;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class ProductController extends Controller
 {
@@ -102,7 +103,14 @@ class ProductController extends Controller
     {
         $data = $request->validate([
             'name' => ['required', 'string', 'max:120'],
-            'sku' => ['nullable', 'string', 'max:60', 'unique:products,sku'.($request->route('product') ? ','.$request->route('product')->id : '')],
+            'sku' => [
+                'nullable',
+                'string',
+                'max:60',
+                Rule::unique('products', 'sku')
+                    ->where('company_id', company_id())
+                    ->ignore($request->route('product')?->id),
+            ],
             'price' => ['required', 'numeric', 'min:0'],
             'cost' => ['nullable', 'numeric', 'min:0'],
             'stock' => ['required', 'integer', 'min:0'],

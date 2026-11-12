@@ -12,7 +12,7 @@
     <div class="max-w-2xl mx-auto space-y-4">
         <!-- Encabezado -->
         <div>
-            <span class="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-widest text-amber-600">
+            <span class="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-widest text-brand-600">
                 <x-icon name="user" class="h-4 w-4" /> Configuración de usuario
             </span>
             <h2 class="mt-1 text-xl font-extrabold tracking-tight text-slate-800">Mi Perfil</h2>
@@ -21,10 +21,10 @@
 
         <!-- Hero de perfil -->
         <section class="relative overflow-hidden rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
-            <div class="pointer-events-none absolute -top-12 -right-12 h-40 w-40 rounded-full bg-amber-500/10 blur-3xl"></div>
+            <div class="pointer-events-none absolute -top-12 -right-12 h-40 w-40 rounded-full bg-brand-500/10 blur-3xl"></div>
             <div class="relative z-10 flex flex-col items-center gap-4 sm:flex-row sm:items-start">
                 <div class="relative shrink-0">
-                    <div class="flex h-24 w-24 items-center justify-center rounded-full bg-amber-100 text-3xl font-extrabold text-amber-600 shadow-[0_0_24px_rgba(245,158,11,0.25)]">
+                    <div class="flex h-24 w-24 items-center justify-center rounded-full bg-brand-100 text-3xl font-extrabold text-brand-600 shadow-[0_0_24px_rgba(245,158,11,0.25)]">
                         {{ $initials }}
                     </div>
                     <span class="absolute bottom-1 right-1 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-white ring-2 ring-white">
@@ -35,7 +35,7 @@
                 <div class="min-w-0 flex-1 text-center sm:text-left">
                     <div class="flex flex-wrap items-center justify-center gap-2 sm:justify-start">
                         <h2 class="truncate text-lg font-bold text-slate-800">{{ $user->name }}</h2>
-                        <span class="rounded-full bg-amber-100 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-700">
+                        <span class="rounded-full bg-brand-100 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-brand-700">
                             {{ $user->isAdmin() ? 'Administrador' : 'Barbero' }}
                         </span>
                     </div>
@@ -47,7 +47,7 @@
                     </div>
                     <div class="mt-3 space-y-1.5 rounded-lg bg-slate-50 p-2.5">
                         <div class="flex items-center gap-2 text-xs">
-                            <x-icon name="mail" class="h-4 w-4 shrink-0 text-amber-500" />
+                            <x-icon name="mail" class="h-4 w-4 shrink-0 text-brand-500" />
                             <span class="truncate text-slate-700">{{ $user->email }}</span>
                         </div>
                         <div class="flex items-center gap-2 text-xs">

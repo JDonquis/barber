@@ -42,7 +42,9 @@ class PasswordResetLinkController extends Controller
                     'user_id' => $user->id,
                     'status' => PasswordResetRequest::STATUS_PENDING,
                 ],
-                [],
+                [
+                    'company_id' => $user->company_id,
+                ],
             );
         }
 

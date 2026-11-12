@@ -13,23 +13,25 @@
         entry: {{ $currentPrice }},
         currency: 'USD',
         rate: {{ (float) $currentRate }},
+        localCode: @js(local_currency()),
+        localSymbol: @js(local_currency_symbol()),
         formatVes(value) {
-            return 'Bs. ' + Number(value || 0).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            return this.localSymbol + ' ' + Number(value || 0).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         },
         formatUsd(value) {
             return '$' + Number(value || 0).toFixed(2);
         },
         get usdValue() {
-            return this.currency === 'VES' ? Number(this.entry || 0) / this.rate : Number(this.entry || 0);
+            return this.currency === this.localCode ? Number(this.entry || 0) / this.rate : Number(this.entry || 0);
         },
         get equivalent() {
-            return this.currency === 'VES' ? this.formatUsd(this.usdValue) : this.formatVes(this.usdValue * this.rate);
+            return this.currency === this.localCode ? this.formatUsd(this.usdValue) : this.formatVes(this.usdValue * this.rate);
         },
         setCurrency(value) {
             if (value === this.currency) return;
             const usd = this.usdValue;
             this.currency = value;
-            this.entry = value === 'VES' ? Number((usd * this.rate).toFixed(2)) : Number(usd.toFixed(2));
+            this.entry = value === this.localCode ? Number((usd * this.rate).toFixed(2)) : Number(usd.toFixed(2));
         }
     }">
         <!-- Subcabecera: volver + tasa -->
@@ -40,14 +42,14 @@
             </a>
             <div class="flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 shadow-sm ring-1 ring-slate-200">
                 <span class="h-2 w-2 animate-pulse rounded-full bg-emerald-500"></span>
-                <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">BCV:</span>
+                <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">{{ local_currency() }}:</span>
                 <span class="text-[11px] font-bold text-emerald-600">{{ ves($currentRate) }}</span>
             </div>
         </div>
 
         <!-- Título -->
         <div>
-            <span class="text-[11px] font-semibold uppercase tracking-wider text-amber-600">Catálogo · {{ $editing ? 'Edición' : 'Registro' }}</span>
+            <span class="text-[11px] font-semibold uppercase tracking-wider text-brand-600">Catálogo · {{ $editing ? 'Edición' : 'Registro' }}</span>
             <h2 class="text-xl font-extrabold tracking-tight text-slate-800">{{ $editing ? 'Editar Tipo de Corte' : 'Nuevo Tipo de Corte' }}</h2>
             <p class="mt-0.5 text-xs text-slate-400">Configuración del servicio, precio en dualidad monetaria y estado.</p>
         </div>
@@ -66,7 +68,7 @@
                         <input id="name" name="name" type="text" required autofocus
                                value="{{ old('name', $service?->name) }}"
                                placeholder="Ej. Fade Clásico, Corte Degradado, Perfilado..."
-                               class="block h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-700 placeholder:text-slate-400 focus:border-amber-500 focus:bg-white focus:ring-amber-500" />
+                               class="block h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-700 placeholder:text-slate-400 focus:border-brand-500 focus:bg-white focus:ring-brand-500" />
                         <x-input-error :messages="$errors->get('name')" />
                     </div>
 
@@ -75,8 +77,21 @@
                         <x-input-label for="description" value="Descripción" />
                         <textarea id="description" name="description" rows="3"
                                   placeholder="Detalles o notas sobre el servicio..."
-                                  class="block w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-amber-500 focus:bg-white focus:ring-amber-500">{{ old('description', $service?->description) }}</textarea>
+                                  class="block w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-brand-500 focus:bg-white focus:ring-brand-500">{{ old('description', $service?->description) }}</textarea>
                         <x-input-error :messages="$errors->get('description')" />
+                    </div>
+
+                    <!-- Duración -->
+                    <div class="space-y-1.5">
+                        <x-input-label for="duration_minutes" value="Duración de la cita (minutos) *" />
+                        <div class="relative">
+                            <input id="duration_minutes" name="duration_minutes" type="number" step="5" min="5" max="480" required
+                                   value="{{ old('duration_minutes', $service?->duration_minutes ?? 30) }}"
+                                   class="block h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 pr-24 text-sm text-slate-700 focus:border-brand-500 focus:bg-white focus:ring-brand-500" />
+                            <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4 text-xs font-semibold text-slate-400">minutos</span>
+                        </div>
+                        <p class="text-[11px] text-slate-400">Se usa para calcular los horarios disponibles en las citas.</p>
+                        <x-input-error :messages="$errors->get('duration_minutes')" />
                     </div>
 
                     <!-- Precio -->
@@ -87,16 +102,16 @@
                                 <button type="button" @click="setCurrency('USD')"
                                         :class="currency === 'USD' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500'"
                                         class="rounded-md px-3 py-1 text-xs font-bold uppercase tracking-wide transition">USD</button>
-                                <button type="button" @click="setCurrency('VES')"
-                                        :class="currency === 'VES' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500'"
-                                        class="rounded-md px-3 py-1 text-xs font-bold uppercase tracking-wide transition">VES</button>
+                                <button type="button" @click="setCurrency(localCode)"
+                                        :class="currency === localCode ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500'"
+                                        class="rounded-md px-3 py-1 text-xs font-bold uppercase tracking-wide transition"><span x-text="localCode"></span></button>
                             </div>
                         </div>
 
                         <input type="hidden" name="price" :value="usdValue.toFixed(2)">
 
-                        <div class="relative flex items-center rounded-xl border border-slate-200 bg-slate-50 px-4 transition focus-within:border-amber-500 focus-within:bg-white">
-                            <span class="select-none pr-2 text-lg font-extrabold text-amber-500" x-text="currency === 'VES' ? 'Bs.' : '$'"></span>
+                        <div class="relative flex items-center rounded-xl border border-slate-200 bg-slate-50 px-4 transition focus-within:border-brand-500 focus-within:bg-white">
+                            <span class="select-none pr-2 text-lg font-extrabold text-brand-500" x-text="currency === localCode ? localSymbol : '$'"></span>
                             <input id="price" type="number" step="0.01" min="0" required x-ref="priceInput"
                                    x-model.number="entry"
                                    class="h-14 w-full border-0 bg-transparent p-0 text-xl font-extrabold tracking-tight text-slate-800 focus:ring-0" />
@@ -131,7 +146,7 @@
                         <label class="relative inline-flex shrink-0 cursor-pointer items-center">
                             <input type="hidden" name="active" value="0">
                             <input type="checkbox" name="active" value="1" class="peer sr-only" @checked(old('active', $service?->active ?? true))>
-                            <span class="relative h-7 w-12 rounded-full bg-slate-200 transition-colors after:absolute after:left-[2px] after:top-[2px] after:h-6 after:w-6 after:rounded-full after:bg-white after:shadow after:transition-all after:content-[''] peer-checked:bg-amber-500 peer-checked:after:translate-x-full"></span>
+                            <span class="relative h-7 w-12 rounded-full bg-slate-200 transition-colors after:absolute after:left-[2px] after:top-[2px] after:h-6 after:w-6 after:rounded-full after:bg-white after:shadow after:transition-all after:content-[''] peer-checked:bg-brand-500 peer-checked:after:translate-x-full"></span>
                         </label>
                     </div>
                 </div>
@@ -140,7 +155,7 @@
             <!-- Acciones -->
             <div class="flex flex-col gap-2 pt-1">
                 <button type="submit"
-                        class="flex h-[54px] w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-400 text-sm font-extrabold uppercase tracking-wide text-slate-900 shadow-lg shadow-amber-500/30 transition-all hover:opacity-95 active:scale-[0.985]">
+                        class="flex h-[54px] w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-500 to-brand-400 text-sm font-extrabold uppercase tracking-wide text-white shadow-lg shadow-brand-500/30 transition-all hover:opacity-95 active:scale-[0.985]">
                     <x-icon name="check" class="h-5 w-5" />
                     {{ $editing ? 'Guardar cambios' : 'Registrar corte' }}
                 </button>

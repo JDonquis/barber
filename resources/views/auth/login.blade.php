@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html class="h-full bg-[#0b1326]" lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html class="h-full bg-slate-50" lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport" />
     <meta name="csrf-token" content="{{ csrf_token() }}" />
-    <title>{{ __('Iniciar Sesión') }} | {{ config('app.name', 'MR Yhon Barber Studio') }}</title>
+    <title>{{ __('Iniciar Sesión') }} | {{ config('app.name', 'MyBarber') }}</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -15,55 +15,56 @@
     @include('partials.pwa')
 
     <style data-purpose="ambient-lighting">
-        .glow-amber-radial {
-            background: radial-gradient(circle at 50% 15%, rgba(245, 158, 11, 0.18) 0%, rgba(11, 19, 38, 0) 70%);
+        .glow-brand-radial {
+            background-color: #f8fafc;
+            background-image: radial-gradient(ellipse 120% 70% at 50% 8%, rgba(192, 28, 21, 0.055) 0%, rgba(192, 28, 21, 0.02) 45%, rgba(248, 250, 252, 0) 78%);
         }
 
-        .amber-glow-box {
-            box-shadow: 0 0 25px -5px rgba(245, 158, 11, 0.35);
+        .brand-glow-box {
+            box-shadow: 0 0 30px -8px rgba(192, 28, 21, 0.30);
         }
 
-        .amber-btn-shadow {
-            box-shadow: 0 8px 24px -4px rgba(245, 158, 11, 0.45);
+        .brand-btn-shadow {
+            box-shadow: 0 8px 24px -6px rgba(192, 28, 21, 0.45);
         }
     </style>
 </head>
 
 <body
-    class="h-full bg-[#0b1326] text-[#f8fafc] font-sans antialiased selection:bg-amber-500/30 selection:text-amber-200"
+    class="h-full min-h-screen bg-slate-50 glow-brand-radial text-slate-800 font-sans antialiased selection:bg-brand-500/20 selection:text-brand-700"
     style="font-family: 'Inter', system-ui, -apple-system, sans-serif;">
     <!-- BEGIN: MainContainer -->
     <main
-        class="min-h-full flex flex-col justify-between relative overflow-hidden px-4 py-6 sm:px-6 glow-amber-radial max-w-[430px] mx-auto"
+        class="min-h-full flex flex-col justify-between relative px-4 py-6 sm:px-6 max-w-[430px] mx-auto"
         data-purpose="mobile-viewport-wrapper">
         <!-- Top Decorative Subtle Spotlight -->
         <div aria-hidden="true"
-            class="pointer-events-none absolute -top-24 left-1/2 -translate-x-1/2 w-80 h-80 rounded-full bg-amber-500/10 blur-3xl"></div>
+            class="pointer-events-none absolute -top-24 left-1/2 -translate-x-1/2 w-80 h-80 rounded-full bg-brand-500/5 blur-3xl"></div>
 
         <!-- BEGIN: HeaderSection -->
         <header class="w-full pt-4 pb-2 flex flex-col items-center text-center relative z-10" data-purpose="brand-header">
             <!-- Role Badge / Environment Status -->
             <div
-                class="mb-4 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#1e293b]/90 border border-amber-500/25 shadow-sm">
-                <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
-                <span class="text-[11px] font-semibold tracking-wider uppercase text-amber-300">Acceso Dueño &amp; Equipo</span>
+                class="mb-4 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-brand-500/25 shadow-sm">
+                <span class="w-2 h-2 rounded-full bg-brand-500 animate-pulse"></span>
+                <span class="text-[11px] font-semibold tracking-wider uppercase text-brand-600">Acceso Dueño &amp; Equipo</span>
             </div>
 
             <!-- Brand Logo Container -->
             <div
-                class="relative mb-3 flex items-center justify-center p-1 rounded-2xl bg-gradient-to-b from-amber-500/40 via-[#1e293b] to-[#0b1326] amber-glow-box">
+                class="relative mb-3 flex items-center justify-center p-1 rounded-2xl bg-white brand-glow-box">
                 <div
-                    class="w-20 h-20 bg-[#0f172a] rounded-[14px] flex items-center justify-center overflow-hidden p-1.5 border border-amber-500/30">
-                    <img alt="MR Yhon Barber Studio Logo" class="w-full h-full object-contain" height="80"
-                        src="{{ asset('logo.jpeg') }}" width="80" />
+                    class="w-24 h-24 bg-white rounded-[14px] flex items-center justify-center overflow-hidden p-1.5 border border-brand-500/20">
+                    <img alt="MyBarber Logo" class="w-full h-full object-contain" height="96"
+                        src="{{ asset('mybarberlogo.png') }}" width="96" />
                 </div>
             </div>
 
             <!-- Studio Title & Subtitle -->
-            <h1 class="text-xl font-extrabold tracking-tight text-[#f8fafc] flex items-center justify-center gap-1.5">
-                MR YHON <span class="text-amber-400 font-black">BARBER STUDIO</span>
+            <h1 class="text-xl font-extrabold tracking-tight text-slate-900">
+                MY<span class="text-brand-600 font-black">BARBER</span>
             </h1>
-            <p class="text-xs text-[#94a3b8] mt-1 font-medium tracking-wide">
+            <p class="text-xs text-slate-500 mt-1 font-medium tracking-wide">
                 Plataforma de Control &amp; Gestión Integral
             </p>
         </header>
@@ -72,16 +73,16 @@
         <!-- BEGIN: LoginFormSection -->
         <section class="w-full my-auto py-2 z-10" data-purpose="login-card-container">
             <div
-                class="bg-[#131b2e]/90 backdrop-blur-md border border-slate-700/60 rounded-3xl p-5 shadow-2xl shadow-black/60">
+                class="bg-white border border-slate-200 rounded-3xl p-5 shadow-xl shadow-slate-200/60">
 
                 @if (session('status'))
-                    <div class="mb-4 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3.5 py-2.5 text-xs text-emerald-300">
+                    <div class="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-3.5 py-2.5 text-xs text-emerald-700">
                         {{ session('status') }}
                     </div>
                 @endif
 
                 @if (session('error'))
-                    <div class="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 px-3.5 py-2.5 text-xs text-red-300">
+                    <div class="mb-4 rounded-xl border border-red-200 bg-red-50 px-3.5 py-2.5 text-xs text-red-700">
                         {{ session('error') }}
                     </div>
                 @endif
@@ -91,35 +92,35 @@
 
                     <!-- Email Input Group -->
                     <div class="space-y-1.5">
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300" for="email">
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600" for="email">
                             Correo Electrónico
                         </label>
                         <div class="relative rounded-xl shadow-sm">
                             <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                                <svg class="h-5 w-5 text-amber-500/70" fill="currentColor" viewBox="0 0 20 20"
+                                <svg class="h-5 w-5 text-brand-500" fill="currentColor" viewBox="0 0 20 20"
                                     xmlns="http://www.w3.org/2000/svg">
                                     <path d="M3 4a2 2 0 00-2 2v1.161l8.441 4.221a1.25 1.25 0 001.118 0L19 7.161V6a2 2 0 00-2-2H3z"></path>
                                     <path d="M19 8.839l-7.77 3.885a2.75 2.75 0 01-2.46 0L1 8.839V14a2 2 0 002 2h14a2 2 0 002-2V8.839z"></path>
                                 </svg>
                             </div>
                             <input autocomplete="email"
-                                class="block w-full pl-10 pr-3.5 py-3.5 text-sm rounded-xl bg-[#1e293b]/90 border border-slate-700 text-[#f8fafc] placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-colors @error('email') border-red-500/70 @enderror"
-                                id="email" name="email" placeholder="barber@mryhonbarber.com" required autofocus
+                                class="block w-full pl-10 pr-3.5 py-3.5 text-sm rounded-xl bg-slate-50 border border-slate-300 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 focus:bg-white transition-colors @error('email') border-red-400 @enderror"
+                                id="email" name="email" placeholder="barber@mybarber.com" required autofocus
                                 value="{{ old('email') }}" type="email" />
                         </div>
                         @error('email')
-                            <p class="text-xs text-red-400">{{ $message }}</p>
+                            <p class="text-xs text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
 
                     <!-- Password Input Group with Toggle Visibility -->
                     <div class="space-y-1.5">
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300" for="password">
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600" for="password">
                             Contraseña
                         </label>
                         <div class="relative rounded-xl shadow-sm">
                             <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                                <svg class="h-5 w-5 text-amber-500/70" fill="currentColor" viewBox="0 0 20 20"
+                                <svg class="h-5 w-5 text-brand-500" fill="currentColor" viewBox="0 0 20 20"
                                     xmlns="http://www.w3.org/2000/svg">
                                     <path clip-rule="evenodd"
                                         d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z"
@@ -127,10 +128,10 @@
                                 </svg>
                             </div>
                             <input autocomplete="current-password"
-                                class="block w-full pl-10 pr-11 py-3.5 text-sm rounded-xl bg-[#1e293b]/90 border border-slate-700 text-[#f8fafc] placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-colors @error('password') border-red-500/70 @enderror"
+                                class="block w-full pl-10 pr-11 py-3.5 text-sm rounded-xl bg-slate-50 border border-slate-300 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 focus:bg-white transition-colors @error('password') border-red-400 @enderror"
                                 id="password" name="password" placeholder="••••••••••••" required type="password" />
                             <button aria-label="Mostrar u ocultar contraseña"
-                                class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-amber-400 focus:outline-none"
+                                class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-brand-500 focus:outline-none"
                                 id="togglePassword" type="button">
                                 <svg class="h-5 w-5" fill="none" id="eyeIcon" stroke="currentColor" stroke-width="1.5"
                                     viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -149,7 +150,7 @@
                             </button>
                         </div>
                         @error('password')
-                            <p class="text-xs text-red-400">{{ $message }}</p>
+                            <p class="text-xs text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
 
@@ -157,12 +158,12 @@
                     <div class="flex items-center justify-between pt-1">
                         <label class="flex items-center gap-2.5 cursor-pointer">
                             <input
-                                class="w-4 h-4 rounded border-slate-700 bg-[#1e293b] text-amber-500 focus:ring-amber-500 focus:ring-offset-0 focus:ring-1"
+                                class="w-4 h-4 rounded border-slate-300 bg-white text-brand-500 focus:ring-brand-500 focus:ring-offset-0 focus:ring-1"
                                 id="remember_me" name="remember" type="checkbox" />
-                            <span class="text-xs font-medium text-slate-300 select-none">Recordarme</span>
+                            <span class="text-xs font-medium text-slate-600 select-none">Recordarme</span>
                         </label>
                         @if (Route::has('password.request'))
-                            <a class="text-xs font-semibold text-amber-400 hover:text-amber-300 transition-colors"
+                            <a class="text-xs font-semibold text-brand-600 hover:text-brand-500 transition-colors"
                                 href="{{ route('password.request') }}">
                                 ¿Olvidaste tu contraseña?
                             </a>
@@ -171,10 +172,10 @@
 
                     <!-- Primary Submit CTA Button (50px+ min touch target height) -->
                     <button
-                        class="w-full min-h-[50px] py-3.5 px-4 mt-2 flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 via-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 active:scale-[0.99] text-slate-950 font-black text-sm tracking-wider uppercase transition-all amber-btn-shadow"
+                        class="w-full min-h-[50px] py-3.5 px-4 mt-2 flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-500 via-brand-500 to-brand-600 hover:from-brand-400 hover:to-brand-500 active:scale-[0.99] text-white font-black text-sm tracking-wider uppercase transition-all brand-btn-shadow"
                         type="submit">
                         <span>Iniciar Sesión</span>
-                        <svg class="w-5 h-5 text-slate-950" fill="currentColor" viewBox="0 0 20 20"
+                        <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20"
                             xmlns="http://www.w3.org/2000/svg">
                             <path clip-rule="evenodd"
                                 d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z"
@@ -184,9 +185,9 @@
 
                     <!-- Divider -->
                     <div class="relative flex items-center justify-center pt-2 pb-1">
-                        <div class="w-full border-t border-slate-700/80"></div>
+                        <div class="w-full border-t border-slate-200"></div>
                         <span
-                            class="absolute px-3 bg-[#131b2e] text-[11px] font-medium text-slate-400 uppercase tracking-widest">
+                            class="absolute px-3 bg-white text-[11px] font-medium text-slate-400 uppercase tracking-widest">
                             o continúa con
                         </span>
                     </div>
@@ -195,7 +196,7 @@
                     @php($googleUrl = (Route::has('auth.google') && config('services.google.client_id')) ? route('auth.google') : null)
                     <a href="{{ $googleUrl ?? '#' }}"
                         @unless ($googleUrl) aria-disabled="true" onclick="return false;" @endunless
-                        class="w-full min-h-[46px] py-2.5 px-4 flex items-center justify-center gap-3 rounded-xl border border-slate-700 bg-[#1e293b]/70 hover:bg-[#1e293b] active:scale-[0.99] text-slate-100 font-semibold text-sm tracking-wide transition-all @unless ($googleUrl) cursor-not-allowed opacity-60 @endunless"
+                        class="w-full min-h-[46px] py-2.5 px-4 flex items-center justify-center gap-3 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 active:scale-[0.99] text-slate-700 font-semibold text-sm tracking-wide transition-all @unless ($googleUrl) cursor-not-allowed opacity-60 @endunless"
                         data-purpose="google-oauth-action">
                         <svg class="w-5 h-5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                             <path fill="#4285F4"
@@ -216,17 +217,17 @@
         <!-- END: LoginFormSection -->
 
         <!-- BEGIN: FooterSection -->
-        <footer class="w-full pb-3 pt-2 text-center text-xs text-[#94a3b8] space-y-1.5 relative z-10"
+        <footer class="w-full pb-3 pt-2 text-center text-xs text-slate-500 space-y-1.5 relative z-10"
             data-purpose="app-footer">
             <div>
                 <span>¿Necesitas asistencia técnica? </span>
-                <a class="text-amber-400 hover:text-amber-300 font-medium underline underline-offset-2"
+                <a class="text-brand-600 hover:text-brand-500 font-medium underline underline-offset-2"
                    href="mailto:juandonquis07@gmail.com">
                     juandonquis07@gmail.com
                 </a>
             </div>
-            <div class="text-[11px] text-slate-500 font-medium">
-                v4.0 · MR Yhon Barber Studio Management
+            <div class="text-[11px] text-slate-400 font-medium">
+                v4.0 · MyBarber Management
             </div>
         </footer>
         <!-- END: FooterSection -->

@@ -27,7 +27,7 @@
                 <p class="mt-0.5 text-xs leading-snug text-slate-400">Registra los gastos operativos que se descuentan de la ganancia de la tienda.</p>
             </div>
             <a href="{{ route('expenses.create') }}"
-               class="flex h-12 shrink-0 items-center justify-center gap-1.5 rounded-xl bg-amber-500 px-4 text-sm font-bold text-slate-900 shadow-md shadow-amber-500/25 transition hover:bg-amber-400 active:scale-95">
+               class="flex h-12 shrink-0 items-center justify-center gap-1.5 rounded-xl bg-brand-500 px-4 text-sm font-bold text-white shadow-md shadow-brand-500/25 transition hover:bg-brand-400 active:scale-95">
                 <x-icon name="plus" class="h-4 w-4" /> Nuevo
             </a>
         </div>
@@ -63,7 +63,7 @@
                 @foreach (['hoy' => 'Hoy', 'semana' => 'Semana', 'mes' => 'Mes', 'all' => 'Todos'] as $key => $label)
                     <a href="{{ route('expenses.index', array_merge($preserve, ['period' => $key])) }}"
                        class="inline-flex h-9 items-center justify-center whitespace-nowrap rounded-full px-3.5 text-xs font-semibold transition active:scale-95
-                              {{ $period === $key ? 'bg-amber-500 text-slate-900 shadow-sm' : 'bg-white text-slate-500 ring-1 ring-slate-200 hover:text-slate-700' }}">
+                              {{ $period === $key ? 'bg-brand-500 text-white shadow-sm' : 'bg-white text-slate-500 ring-1 ring-slate-200 hover:text-slate-700' }}">
                         {{ $label }}
                     </a>
                 @endforeach
@@ -76,7 +76,7 @@
                         <x-icon name="search" class="h-5 w-5" />
                     </span>
                     <input type="text" name="search" value="{{ $search }}" placeholder="Buscar por concepto o nota..."
-                           class="h-12 w-full rounded-xl border border-slate-200 bg-white pl-11 pr-10 text-sm text-slate-700 shadow-sm placeholder:text-slate-400 focus:border-amber-500 focus:ring-amber-500" />
+                           class="h-12 w-full rounded-xl border border-slate-200 bg-white pl-11 pr-10 text-sm text-slate-700 shadow-sm placeholder:text-slate-400 focus:border-brand-500 focus:ring-brand-500" />
                     @if ($search)
                         <a href="{{ route('expenses.index', ['period' => $period]) }}"
                            class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 transition hover:text-slate-700" title="Limpiar">
@@ -91,7 +91,7 @@
         <section class="space-y-2.5">
             <div class="flex items-center justify-between px-1">
                 <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Gastos registrados</span>
-                <span class="text-[11px] font-semibold text-amber-600">Moneda: USD ($)</span>
+                <span class="text-[11px] font-semibold text-brand-600">Moneda: USD ($)</span>
             </div>
 
             <div class="space-y-2">
@@ -156,7 +156,7 @@
                 @if ($expenses->hasMorePages())
                     <a href="{{ $expenses->nextPageUrl() }}"
                        class="flex w-full items-center justify-center gap-2 rounded-xl bg-white py-3 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-slate-200 transition hover:bg-slate-50">
-                        <x-icon name="chevron-down" class="h-4 w-4 text-amber-500" />
+                        <x-icon name="chevron-down" class="h-4 w-4 text-brand-500" />
                         Cargar gastos anteriores
                     </a>
                 @endif

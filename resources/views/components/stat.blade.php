@@ -3,7 +3,7 @@
 @php
     $tones = [
         'slate' => 'bg-slate-100 text-slate-600',
-        'amber' => 'bg-amber-100 text-amber-700',
+        'brand' => 'bg-brand-100 text-brand-700',
         'emerald' => 'bg-emerald-100 text-emerald-700',
         'sky' => 'bg-sky-100 text-sky-700',
         'rose' => 'bg-rose-100 text-rose-700',

@@ -16,8 +16,12 @@ class SettingService
      */
     public function all(): array
     {
+        if (app(TenantManager::class)->id() === null) {
+            return [];
+        }
+
         if ($this->values === null) {
-            $this->values = Cache::rememberForever(self::CACHE_KEY, function () {
+            $this->values = Cache::rememberForever($this->cacheKey(), function () {
                 return Setting::query()->pluck('value', 'key')->all();
             });
         }
@@ -34,7 +38,10 @@ class SettingService
 
     public function set(string $key, mixed $value): void
     {
-        Setting::query()->updateOrCreate(['key' => $key], ['value' => $value]);
+        Setting::query()->updateOrCreate(
+            ['key' => $key],
+            ['company_id' => app(TenantManager::class)->id(), 'value' => $value],
+        );
 
         $this->forget();
     }
@@ -42,7 +49,10 @@ class SettingService
     public function setMany(array $values): void
     {
         foreach ($values as $key => $value) {
-            Setting::query()->updateOrCreate(['key' => $key], ['value' => $value]);
+            Setting::query()->updateOrCreate(
+                ['key' => $key],
+                ['company_id' => app(TenantManager::class)->id(), 'value' => $value],
+            );
         }
 
         $this->forget();
@@ -50,8 +60,21 @@ class SettingService
 
     public function forget(): void
     {
-        $this->values = null;
+        $this->resetMemory();
 
-        Cache::forget(self::CACHE_KEY);
+        Cache::forget($this->cacheKey());
+    }
+
+    /**
+     * Drop the in-memory values only, keeping the persistent cache intact.
+     */
+    public function resetMemory(): void
+    {
+        $this->values = null;
+    }
+
+    protected function cacheKey(): string
+    {
+        return self::CACHE_KEY.'.'.(app(TenantManager::class)->id() ?? 'central');
     }
 }

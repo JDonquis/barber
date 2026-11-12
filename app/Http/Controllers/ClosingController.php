@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Services\ClosingService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class ClosingController extends Controller
 {
@@ -33,7 +34,7 @@ class ClosingController extends Controller
         $data = $request->validate([
             'period_type' => ['required', 'in:diario,semanal,mensual'],
             'date' => ['required', 'date'],
-            'barber_id' => ['nullable', 'integer', 'exists:users,id'],
+            'barber_id' => ['nullable', 'integer', Rule::exists('users', 'id')->where('company_id', company_id())],
         ]);
 
         $barber = null;

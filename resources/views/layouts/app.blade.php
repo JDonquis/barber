@@ -16,7 +16,7 @@
 
         @include('partials.pwa')
     </head>
-    <body class="font-sans antialiased bg-slate-100 text-slate-800">
+    <body class="font-sans antialiased bg-slate-100 text-slate-800" data-ajax-saves>
         <div x-data="{ sidebarOpen: false }" class="min-h-screen lg:flex">
             @include('layouts.navigation')
 
@@ -30,7 +30,7 @@
                  x-transition:leave-end="opacity-0"
                  class="fixed inset-0 z-30 bg-slate-900/50 backdrop-blur-sm lg:hidden"></div>
 
-            <div class="flex-1 min-w-0 flex flex-col">
+            <div class="flex-1 min-w-0 flex flex-col" data-ajax-region>
                 <header class="sticky top-0 z-30 h-16 bg-white border-b border-slate-200 flex items-center justify-between gap-4 px-4 sm:px-6">
                     <div class="flex items-center gap-3 min-w-0">
                         <button type="button" @click="sidebarOpen = true" class="lg:hidden inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-100">
@@ -66,21 +66,21 @@
 
                 <main class="flex-1 p-4 sm:p-6 lg:p-8">
                     @if (session('status'))
-                        <div class="mb-5 flex items-start gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+                        <div class="mb-5 flex items-start gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800" data-flash-status>
                             <x-icon name="check" class="h-5 w-5 shrink-0" />
                             <span>{{ session('status') }}</span>
                         </div>
                     @endif
 
                     @if (session('error'))
-                        <div class="mb-5 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+                        <div class="mb-5 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" data-flash-error>
                             <x-icon name="alert" class="h-5 w-5 shrink-0" />
                             <span>{{ session('error') }}</span>
                         </div>
                     @endif
 
                     @if ($errors->any())
-                        <div class="mb-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+                        <div class="mb-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" data-flash-error>
                             <p class="font-medium">Revisa los siguientes errores:</p>
                             <ul class="mt-1 list-inside list-disc">
                                 @foreach ($errors->all() as $error)
@@ -94,5 +94,7 @@
                 </main>
             </div>
         </div>
+
+        <div data-ajax-toast class="pointer-events-none fixed right-4 top-4 z-50 hidden max-w-sm rounded-xl px-4 py-3 text-sm font-semibold text-white shadow-lg"></div>
     </body>
 </html>

@@ -83,11 +83,11 @@
                 <span class="text-xs text-slate-400">Registro en tiempo real</span>
             </div>
             <div class="flex items-center gap-2">
-                <a href="{{ request()->fullUrl() }}" class="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-slate-500 shadow-sm ring-1 ring-slate-200 transition hover:text-amber-600" title="Actualizar">
+                <a href="{{ request()->fullUrl() }}" class="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-slate-500 shadow-sm ring-1 ring-slate-200 transition hover:text-brand-600" title="Actualizar">
                     <x-icon name="refresh" class="h-5 w-5" />
                 </a>
                 <a href="{{ route('dashboard') }}" class="flex h-10 items-center gap-1.5 rounded-xl bg-white px-3 text-sm font-semibold text-slate-600 shadow-sm ring-1 ring-slate-200 transition hover:bg-slate-50">
-                    <x-icon name="home" class="h-4 w-4 text-amber-500" />
+                    <x-icon name="home" class="h-4 w-4 text-brand-500" />
                     <span class="hidden sm:inline">Panel</span>
                 </a>
             </div>
@@ -100,25 +100,25 @@
                     <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
                     <span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
                 </span>
-                <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Tasa BCV:</span>
+                <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Tasa USD:</span>
                 <span class="text-xs font-bold text-slate-700">{{ ves($currentRate) }} / $1</span>
             </div>
             <span class="flex items-center gap-1 text-xs text-slate-400">
-                <x-icon name="clock" class="h-3.5 w-3.5 text-amber-500" /> Turno activo
+                <x-icon name="clock" class="h-3.5 w-3.5 text-brand-500" /> Turno activo
             </span>
         </div>
 
         <!-- Accesos rápidos -->
         <div class="grid {{ auth()->user()->isAdmin() ? 'grid-cols-2' : 'grid-cols-1' }} gap-3">
             <a href="{{ route('sales.create-service') }}"
-               class="flex h-[50px] items-center justify-center gap-2 rounded-xl bg-amber-500 px-3 text-sm font-bold text-slate-900 shadow-md shadow-amber-500/25 transition hover:bg-amber-400 active:scale-95">
+               class="flex h-[50px] items-center justify-center gap-2 rounded-xl bg-brand-500 px-3 text-sm font-bold text-white shadow-md shadow-brand-500/25 transition hover:bg-brand-400 active:scale-95">
                 <x-icon name="scissors" class="h-5 w-5" />
                 <span class="truncate">+ Registrar corte</span>
             </a>
             @if (auth()->user()->isAdmin())
                 <a href="{{ route('sales.create-product') }}"
-                   class="flex h-[50px] items-center justify-center gap-2 rounded-xl bg-slate-900 px-3 text-sm font-bold text-white shadow-sm transition hover:bg-slate-800 active:scale-95">
-                    <x-icon name="bag" class="h-5 w-5 text-amber-400" />
+                   class="flex h-[50px] items-center justify-center gap-2 rounded-xl bg-white px-3 text-sm font-bold text-brand-600 ring-1 ring-brand-200 shadow-sm transition hover:bg-brand-50 active:scale-95">
+                    <x-icon name="bag" class="h-5 w-5 text-brand-500" />
                     <span class="truncate">+ Venta retail</span>
                 </a>
             @endif
@@ -134,7 +134,7 @@
                 </div>
                 <p class="mt-1.5 text-xs font-medium text-slate-500">Ventas brutas</p>
                 <div class="mt-0.5 flex items-baseline gap-1.5">
-                    <span class="text-2xl font-extrabold tracking-tight text-amber-600">{{ usd($kpiUsd) }}</span>
+                    <span class="text-2xl font-extrabold tracking-tight text-brand-600">{{ usd($kpiUsd) }}</span>
                     <span class="text-[11px] text-slate-400">USD</span>
                 </div>
                 <div class="mt-1 flex items-center justify-between gap-2 text-[11px] text-slate-400">
@@ -167,7 +167,7 @@
             <!-- Servicios -->
             <div class="rounded-xl bg-white p-3.5 shadow-sm ring-1 ring-slate-200">
                 <div class="flex items-center justify-between">
-                    <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-100 text-amber-600">
+                    <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-brand-100 text-brand-600">
                         <x-icon name="scissors" class="h-4 w-4" />
                     </span>
                     <span class="text-xs font-medium text-slate-400">{{ (int) $summary->service_count }} cortes</span>
@@ -210,12 +210,12 @@
                     <x-icon name="search" class="h-5 w-5" />
                 </span>
                 <input type="text" name="search" x-model="query" @input.debounce.400ms="runSearch()" placeholder="Buscar por código, barbero, nota..."
-                       class="h-12 w-full rounded-xl border border-slate-200 bg-white pl-11 pr-12 text-sm text-slate-700 shadow-sm placeholder:text-slate-400 focus:border-amber-500 focus:ring-amber-500" />
-                <span x-show="searching" x-cloak class="absolute inset-y-0 right-10 flex items-center text-amber-500">
+                       class="h-12 w-full rounded-xl border border-slate-200 bg-white pl-11 pr-12 text-sm text-slate-700 shadow-sm placeholder:text-slate-400 focus:border-brand-500 focus:ring-brand-500" />
+                <span x-show="searching" x-cloak class="absolute inset-y-0 right-10 flex items-center text-brand-500">
                     <x-icon name="refresh" class="h-4 w-4 animate-spin" />
                 </span>
                 <button type="button" onclick="document.getElementById('sales-range-form').classList.toggle('hidden')"
-                        class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 transition hover:text-amber-600" title="Filtros">
+                        class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 transition hover:text-brand-600" title="Filtros">
                     <x-icon name="filter" class="h-5 w-5" />
                 </button>
             </div>
@@ -233,14 +233,14 @@
             <div>
                 <label for="from" class="text-xs font-medium text-slate-500">Desde</label>
                 <input type="date" id="from" name="from" value="{{ $from }}"
-                       class="mt-1 block w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-amber-500 focus:ring-amber-500" />
+                       class="mt-1 block w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-brand-500 focus:ring-brand-500" />
             </div>
             <div>
                 <label for="to" class="text-xs font-medium text-slate-500">Hasta</label>
                 <input type="date" id="to" name="to" value="{{ $to }}"
-                       class="mt-1 block w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-amber-500 focus:ring-amber-500" />
+                       class="mt-1 block w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-brand-500 focus:ring-brand-500" />
             </div>
-            <button class="inline-flex items-center justify-center gap-2 rounded-lg bg-amber-500 px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-amber-400">
+            <button class="inline-flex items-center justify-center gap-2 rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-400">
                 <x-icon name="check" class="h-4 w-4" /> Aplicar
             </button>
             <a href="{{ $q(['from' => null, 'to' => null, 'period' => null]) }}"
@@ -254,13 +254,13 @@
                     @php($isActive = $activePeriod === $key)
                     <a href="{{ $isActive ? $q(['period' => 'all', 'from' => null, 'to' => null]) : $q(['period' => $key, 'from' => null, 'to' => null]) }}"
                        class="inline-flex h-8 items-center justify-center whitespace-nowrap rounded-full px-3.5 text-xs font-semibold transition active:scale-95
-                              {{ $isActive ? 'bg-amber-500 text-slate-900 shadow-sm' : 'bg-white text-slate-500 ring-1 ring-slate-200 hover:text-slate-700' }}">
+                              {{ $isActive ? 'bg-brand-500 text-white shadow-sm' : 'bg-white text-slate-500 ring-1 ring-slate-200 hover:text-slate-700' }}">
                         {{ $label }}
                     </a>
                 @endforeach
                 <button type="button" onclick="document.getElementById('sales-range-form').classList.remove('hidden')"
                         class="flex h-8 items-center gap-1 whitespace-nowrap rounded-full px-3 text-xs font-semibold transition active:scale-95
-                               {{ $rangeActive ? 'bg-amber-500 text-slate-900 shadow-sm' : 'bg-white text-slate-500 ring-1 ring-slate-200 hover:text-amber-600' }}">
+                               {{ $rangeActive ? 'bg-brand-500 text-white shadow-sm' : 'bg-white text-slate-500 ring-1 ring-slate-200 hover:text-brand-600' }}">
                     <x-icon name="clock" class="h-4 w-4" /> Rango
                 </button>
             </div>
@@ -269,7 +269,7 @@
                 <a href="{{ $q(['type' => null]) }}"
                    class="flex h-7 items-center gap-1.5 whitespace-nowrap rounded-lg px-2.5 text-[11px] font-semibold
                           {{ ! $selectedType ? 'bg-slate-800 text-white' : 'bg-white text-slate-500 ring-1 ring-slate-200 hover:text-slate-700' }}">
-                    <span class="h-1.5 w-1.5 rounded-full {{ ! $selectedType ? 'bg-amber-400' : 'bg-slate-300' }}"></span>
+                    <span class="h-1.5 w-1.5 rounded-full {{ ! $selectedType ? 'bg-brand-400' : 'bg-slate-300' }}"></span>
                     Todos ({{ (int) $summary->count }})
                 </a>
                 <a href="{{ $q(['type' => \App\Models\Sale::TYPE_SERVICE]) }}"
@@ -288,13 +288,13 @@
                 <div class="flex items-center gap-2 overflow-x-auto no-scrollbar pb-0.5">
                     <a href="{{ $q(['barber_id' => null]) }}"
                        class="flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold transition
-                              {{ ! request('barber_id') ? 'bg-amber-100 text-amber-700' : 'bg-white text-slate-500 ring-1 ring-slate-200 hover:text-slate-700' }}">
+                              {{ ! request('barber_id') ? 'bg-brand-100 text-brand-700' : 'bg-white text-slate-500 ring-1 ring-slate-200 hover:text-slate-700' }}">
                         <x-icon name="users" class="h-4 w-4" /> Todos
                     </a>
                     @foreach ($barbers as $barber)
                         <a href="{{ $q(['barber_id' => $barber->id]) }}"
                            class="flex shrink-0 items-center gap-1.5 rounded-full px-2 py-1 text-xs transition
-                                  {{ (int) request('barber_id') === $barber->id ? 'bg-amber-100 font-semibold text-amber-700' : 'bg-white text-slate-500 ring-1 ring-slate-200 hover:text-slate-700' }}">
+                                  {{ (int) request('barber_id') === $barber->id ? 'bg-brand-100 font-semibold text-brand-700' : 'bg-white text-slate-500 ring-1 ring-slate-200 hover:text-slate-700' }}">
                             <span class="flex h-5 w-5 items-center justify-center rounded-full bg-slate-200 text-[10px] font-bold text-slate-600">
                                 {{ mb_strtoupper(mb_substr($barber->name, 0, 1)) }}
                             </span>
@@ -310,7 +310,7 @@
         <div id="sales-results" class="space-y-3">
             <div class="flex items-center justify-between px-1">
                 <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Transacciones · {{ $periodLabel }}</span>
-                <span class="text-[11px] font-semibold text-amber-600">Más recientes</span>
+                <span class="text-[11px] font-semibold text-brand-600">Más recientes</span>
             </div>
 
             @forelse ($sales as $sale)
@@ -318,15 +318,15 @@
                 <div class="space-y-2.5 rounded-xl bg-white p-3.5 shadow-sm ring-1 ring-slate-200 transition hover:shadow-md">
                     <div class="flex items-center justify-between gap-2">
                         <div class="flex min-w-0 items-center gap-2">
-                            <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg {{ $isServiceSale ? 'bg-amber-100 text-amber-600' : 'bg-emerald-100 text-emerald-600' }}">
+                            <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg {{ $isServiceSale ? 'bg-brand-100 text-brand-600' : 'bg-emerald-100 text-emerald-600' }}">
                                 <x-icon :name="$isServiceSale ? 'scissors' : 'bag'" class="h-4 w-4" />
                             </span>
                             <div class="min-w-0">
                                 <div class="flex items-center gap-1.5">
-                                    <a href="{{ route('sales.show', $sale) }}" class="text-sm font-bold text-slate-700 hover:text-amber-600">{{ $sale->code }}</a>
+                                    <a href="{{ route('sales.show', $sale) }}" class="text-sm font-bold text-slate-700 hover:text-brand-600">{{ $sale->code }}</a>
                                     <span class="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-500">{{ $sale->sold_at->diffForHumans() }}</span>
                                 </div>
-                                <p class="truncate text-xs font-medium {{ $isServiceSale ? 'text-amber-600' : 'text-emerald-600' }}">
+                                <p class="truncate text-xs font-medium {{ $isServiceSale ? 'text-brand-600' : 'text-emerald-600' }}">
                                     {{ $sale->items->map(fn ($item) => $item->name.($item->quantity > 1 ? ' (x'.$item->quantity.')' : ''))->join(', ') }}
                                 </p>
                             </div>
@@ -376,7 +376,7 @@
                 @if ($sales->hasMorePages())
                     <a href="{{ $sales->nextPageUrl() }}" data-load-more
                        class="flex w-full items-center justify-center gap-2 rounded-xl bg-white py-3 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-slate-200 transition hover:bg-slate-50">
-                        <x-icon name="chevron-down" class="h-4 w-4 text-amber-500" />
+                        <x-icon name="chevron-down" class="h-4 w-4 text-brand-500" />
                         Cargar transacciones anteriores
                     </a>
                 @endif

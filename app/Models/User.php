@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Models\Concerns\BelongsToCompany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -12,7 +13,7 @@ use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
+    use BelongsToCompany, HasApiTokens, HasFactory, Notifiable, SoftDeletes;
 
     public const ROLE_ADMIN = 'admin';
 
@@ -24,10 +25,12 @@ class User extends Authenticatable
      * @var array<int, string>
      */
     protected $fillable = [
+        'company_id',
         'name',
         'email',
         'password',
         'role',
+        'is_super_admin',
         'commission_rate',
         'active',
         'phone',
@@ -54,6 +57,7 @@ class User extends Authenticatable
         'password' => 'hashed',
         'commission_rate' => 'decimal:2',
         'active' => 'boolean',
+        'is_super_admin' => 'boolean',
     ];
 
     protected static function booted(): void
@@ -69,6 +73,11 @@ class User extends Authenticatable
                 $user->saveQuietly();
             }
         });
+    }
+
+    public function isSuperAdmin(): bool
+    {
+        return (bool) $this->is_super_admin;
     }
 
     public function isAdmin(): bool
@@ -104,6 +113,22 @@ class User extends Authenticatable
     public function barberSales(): HasMany
     {
         return $this->hasMany(Sale::class, 'barber_id');
+    }
+
+    /**
+     * Loans advanced to this barber.
+     */
+    public function loans(): HasMany
+    {
+        return $this->hasMany(Loan::class, 'barber_id');
+    }
+
+    /**
+     * Loans registered by this user.
+     */
+    public function createdLoans(): HasMany
+    {
+        return $this->hasMany(Loan::class, 'created_by');
     }
 
     public function passwordResetRequests(): HasMany

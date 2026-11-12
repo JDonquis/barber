@@ -24,7 +24,7 @@ return new class extends Migration
             $table->decimal('barber_commission_usd', 12, 2)->default(0);
             $table->decimal('shop_amount_usd', 12, 2)->default(0);
             $table->string('payment_method')->nullable();
-            $table->enum('payment_currency', ['USD', 'VES'])->default('USD');
+            $table->enum('payment_currency', ['USD', 'VES', 'COP'])->default('USD');
             $table->enum('status', ['completada', 'anulada'])->default('completada');
             $table->text('notes')->nullable();
             $table->dateTime('sold_at');

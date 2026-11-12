@@ -3,12 +3,14 @@
 namespace Database\Seeders;
 
 use App\Models\Closing;
+use App\Models\Company;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\Service;
 use App\Models\StockMovement;
 use App\Models\User;
+use App\Services\TenantManager;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -61,6 +63,12 @@ class SalesHistorySeeder extends Seeder
         }
 
         static::$running = true;
+
+        $tenant = app(TenantManager::class);
+
+        if (! $tenant->check() && ($company = Company::query()->orderBy('id')->first())) {
+            $tenant->set($company);
+        }
 
         if (app()->environment('production')) {
             $this->command?->warn('SalesHistorySeeder no se ejecuta en el entorno de producción.');

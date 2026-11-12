@@ -20,7 +20,7 @@ class ExchangeRateController extends Controller
             return back()->with('error', 'No se pudo obtener la tasa del dólar. Se mantiene la última conocida.');
         }
 
-        return back()->with('status', 'Tasa actualizada: Bs. '.number_format($rate, 2, ',', '.').' por $1.');
+        return back()->with('status', 'Tasa actualizada: '.local_currency_symbol().' '.number_format($rate, 2, ',', '.').' por $1.');
     }
 
     public function clearManual()

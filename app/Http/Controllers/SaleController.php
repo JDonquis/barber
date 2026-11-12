@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Services\SaleService;
 use App\Services\SettingService;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use RuntimeException;
 
 class SaleController extends Controller
@@ -121,12 +122,12 @@ class SaleController extends Controller
     public function storeService(Request $request)
     {
         $data = $request->validate([
-            'service_id' => ['required', 'exists:services,id'],
-            'barber_id' => ['nullable', 'exists:users,id'],
+            'service_id' => ['required', Rule::exists('services', 'id')->where('company_id', company_id())],
+            'barber_id' => ['nullable', Rule::exists('users', 'id')->where('company_id', company_id())],
             'price' => ['nullable', 'numeric', 'min:0.01', 'max:99999.99'],
             'update_service_price' => ['nullable', 'boolean'],
             'payment_method' => ['nullable', 'string', 'max:60'],
-            'payment_currency' => ['required', 'in:USD,VES'],
+            'payment_currency' => ['required', 'in:USD,VES,COP'],
             'notes' => ['nullable', 'string', 'max:255'],
         ]);
 
@@ -162,10 +163,10 @@ class SaleController extends Controller
     {
         $data = $request->validate([
             'items' => ['required', 'array', 'min:1'],
-            'items.*.product_id' => ['required', 'exists:products,id'],
+            'items.*.product_id' => ['required', Rule::exists('products', 'id')->where('company_id', company_id())],
             'items.*.quantity' => ['required', 'integer', 'min:1'],
             'payment_method' => ['nullable', 'string', 'max:60'],
-            'payment_currency' => ['required', 'in:USD,VES'],
+            'payment_currency' => ['required', 'in:USD,VES,COP'],
             'notes' => ['nullable', 'string', 'max:255'],
         ]);
 

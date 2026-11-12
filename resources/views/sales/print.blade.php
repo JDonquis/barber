@@ -101,7 +101,7 @@
     <div class="ticket">
         <!-- Encabezado -->
         <div class="center">
-            <img src="{{ asset('logo.jpeg') }}" alt="{{ $shopName }}" class="logo">
+            <img src="{{ $companyLogo }}" alt="{{ $shopName }}" class="logo">
             <div class="shop-name">{{ $shopName }}</div>
             @if (setting('shop_rif'))<div class="muted">RIF: {{ setting('shop_rif') }}</div>@endif
             @if (setting('shop_phone'))<div class="muted">Tel: {{ setting('shop_phone') }}</div>@endif
@@ -150,8 +150,8 @@
         <!-- Totales -->
         <div class="row"><span class="label">Artículos</span><span>{{ $sale->items->sum('quantity') }}</span></div>
         <div class="row total-row"><span>TOTAL USD</span><span>{{ usd($sale->total_usd) }}</span></div>
-        <div class="row"><span class="label">TOTAL Bs</span><span>{{ ves($sale->total_ves) }}</span></div>
-        <div class="row"><span class="label">Tasa aplicada</span><span>Bs. {{ number_format($sale->exchange_rate, 2, ',', '.') }} / $1</span></div>
+        <div class="row"><span class="label">TOTAL {{ local_currency() }}</span><span>{{ ves($sale->total_ves) }}</span></div>
+        <div class="row"><span class="label">Tasa aplicada</span><span>{{ local_currency_symbol() }} {{ number_format($sale->exchange_rate, 2, ',', '.') }} / $1</span></div>
 
         <div class="sep"></div>
 

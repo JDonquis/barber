@@ -18,7 +18,7 @@
     <div class="max-w-md mx-auto space-y-3.5">
         <!-- Barra superior -->
         <div class="flex items-center justify-between gap-3">
-            <a href="{{ route('sales.index') }}" class="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 -ml-2 text-xs font-semibold text-slate-500 transition hover:bg-slate-100 hover:text-amber-600 active:scale-95">
+            <a href="{{ route('sales.index') }}" class="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 -ml-2 text-xs font-semibold text-slate-500 transition hover:bg-slate-100 hover:text-brand-600 active:scale-95">
                 <x-icon name="arrow-left" class="h-4 w-4" /> Historial
             </a>
 
@@ -37,7 +37,7 @@
         <!-- Subtítulo -->
         <div class="flex items-center justify-between px-1">
             <span class="text-[11px] font-semibold uppercase tracking-widest text-slate-400">{{ $shopName }}</span>
-            <span class="font-mono text-[11px] font-semibold text-amber-600">{{ $sale->code }}</span>
+            <span class="font-mono text-[11px] font-semibold text-brand-600">{{ $sale->code }}</span>
         </div>
 
         <!-- Banner de estado -->
@@ -61,7 +61,7 @@
         <section class="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
             <div class="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-4 py-3.5">
                 <div class="flex items-center gap-2.5">
-                    <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-600">
+                    <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-100 text-brand-600">
                         <x-icon name="receipt" class="h-5 w-5" />
                     </span>
                     <div>
@@ -89,7 +89,7 @@
                                 <div class="min-w-0">
                                     <div class="flex items-center gap-2">
                                         <span class="truncate text-xs font-semibold text-slate-700">{{ $item->name }}</span>
-                                        <span class="rounded border px-1.5 py-0.5 text-[10px] font-medium {{ $itemService ? 'border-amber-200 bg-amber-50 text-amber-600' : 'border-emerald-200 bg-emerald-50 text-emerald-600' }}">
+                                        <span class="rounded border px-1.5 py-0.5 text-[10px] font-medium {{ $itemService ? 'border-brand-200 bg-brand-50 text-brand-600' : 'border-emerald-200 bg-emerald-50 text-emerald-600' }}">
                                             {{ $itemService ? 'Servicio' : 'Producto' }}
                                         </span>
                                     </div>
@@ -109,14 +109,14 @@
                 </div>
 
                 <!-- Total -->
-                <div class="flex items-center justify-between rounded-xl border border-amber-200 bg-amber-50 p-4">
+                <div class="flex items-center justify-between rounded-xl border border-brand-200 bg-brand-50 p-4">
                     <div>
-                        <span class="block text-xs font-medium text-amber-700">Total a pagar</span>
+                        <span class="block text-xs font-medium text-brand-700">Total a pagar</span>
                         <span class="mt-0.5 block text-[11px] text-slate-400">Equivalente tasa aplicada</span>
-                        <span class="font-mono text-[11px] font-medium text-amber-700">{{ ves($sale->total_ves) }}</span>
+                        <span class="font-mono text-[11px] font-medium text-brand-700">{{ ves($sale->total_ves) }}</span>
                     </div>
                     <div class="text-right">
-                        <span class="font-mono text-3xl font-extrabold tracking-tight text-amber-600">{{ usd($sale->total_usd) }}</span>
+                        <span class="font-mono text-3xl font-extrabold tracking-tight text-brand-600">{{ usd($sale->total_usd) }}</span>
                     </div>
                 </div>
 
@@ -126,7 +126,7 @@
                         <span class="flex items-center gap-2 text-slate-400">
                             <x-icon name="refresh" class="h-4 w-4 shrink-0" /> Tasa aplicada
                         </span>
-                        <span class="font-mono font-medium text-slate-600">Bs. {{ number_format($sale->exchange_rate, 2, ',', '.') }} / $1</span>
+                        <span class="font-mono font-medium text-slate-600">{{ local_currency_symbol() }} {{ number_format($sale->exchange_rate, 2, ',', '.') }} / $1</span>
                     </div>
                     <div class="flex items-center justify-between border-t border-slate-100 py-1">
                         <span class="flex items-center gap-2 text-slate-400">
@@ -136,9 +136,9 @@
                     </div>
                     <div class="flex items-center justify-between border-t border-slate-100 py-1">
                         <span class="flex items-center gap-2 text-slate-400">
-                            <x-icon name="dollar" class="h-4 w-4 shrink-0 text-amber-500" /> Monto estudio ({{ rtrim(rtrim(number_format($studioPct, 2, ',', '.'), '0'), ',') }}%)
+                            <x-icon name="dollar" class="h-4 w-4 shrink-0 text-brand-500" /> Monto estudio ({{ rtrim(rtrim(number_format($studioPct, 2, ',', '.'), '0'), ',') }}%)
                         </span>
-                        <span class="font-mono font-bold text-amber-600">{{ usd($sale->shop_amount_usd) }}</span>
+                        <span class="font-mono font-bold text-brand-600">{{ usd($sale->shop_amount_usd) }}</span>
                     </div>
                 </div>
 
@@ -154,7 +154,7 @@
         <!-- Información de la operación -->
         <section class="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
             <div class="mb-3 flex items-center gap-2 border-b border-slate-100 pb-2.5">
-                <x-icon name="check" class="h-4 w-4 shrink-0 text-amber-500" />
+                <x-icon name="check" class="h-4 w-4 shrink-0 text-brand-500" />
                 <h3 class="text-[11px] font-bold uppercase tracking-wider text-slate-600">Información de la operación</h3>
             </div>
             <div class="space-y-2 text-xs">
@@ -164,8 +164,8 @@
                 </div>
                 <div class="flex items-center justify-between rounded-lg border border-slate-100 bg-slate-50 p-2">
                     <span class="flex items-center gap-2 text-slate-400"><x-icon name="user" class="h-4 w-4 shrink-0" /> Barbero</span>
-                    <span class="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-700">
-                        <span class="h-1.5 w-1.5 rounded-full bg-amber-500"></span>
+                    <span class="inline-flex items-center gap-1.5 rounded-full border border-brand-200 bg-brand-50 px-2.5 py-0.5 text-xs font-semibold text-brand-700">
+                        <span class="h-1.5 w-1.5 rounded-full bg-brand-500"></span>
                         {{ $sale->barber->name ?? 'Venta tienda' }}
                     </span>
                 </div>
@@ -182,7 +182,7 @@
                 </div>
                 <div class="flex items-center justify-between rounded-lg border border-slate-100 bg-slate-50 p-2">
                     <span class="flex items-center gap-2 text-slate-400"><x-icon name="dollar" class="h-4 w-4 shrink-0" /> Moneda de cobro</span>
-                    <span class="rounded border border-slate-200 bg-white px-2.5 py-0.5 font-mono text-xs font-bold text-amber-600">{{ $sale->payment_currency }}</span>
+                    <span class="rounded border border-slate-200 bg-white px-2.5 py-0.5 font-mono text-xs font-bold text-brand-600">{{ $sale->payment_currency }}</span>
                 </div>
             </div>
         </section>
@@ -190,7 +190,7 @@
         <!-- Acciones -->
         <div class="space-y-2.5 pt-1">
             <a href="{{ route('sales.print', $sale) }}" target="_blank" rel="noopener"
-               class="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-400 text-sm font-bold text-slate-900 shadow-lg shadow-amber-500/25 transition-all hover:opacity-95 active:scale-[0.985]">
+               class="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-500 to-brand-400 text-sm font-bold text-white shadow-lg shadow-brand-500/25 transition-all hover:opacity-95 active:scale-[0.985]">
                 <x-icon name="printer" class="h-5 w-5" /> Imprimir comprobante
             </a>
             <a href="https://wa.me/?text={{ $waText }}" target="_blank" rel="noopener noreferrer"

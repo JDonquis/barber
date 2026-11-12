@@ -29,6 +29,11 @@ class ResetSystem extends Command
      * @var array<int, string>
      */
     protected array $tables = [
+        'reminder_logs',
+        'push_subscriptions',
+        'reminder_subscriptions',
+        'appointments',
+        'customers',
         'sale_items',
         'stock_movements',
         'sales',

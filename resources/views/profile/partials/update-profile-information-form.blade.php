@@ -18,7 +18,7 @@
             <input id="name" name="name" type="text" required autocomplete="name"
                    value="{{ old('name', $user->name) }}"
                    placeholder="Tu nombre y apellido"
-                   class="block h-12 w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-4 text-sm text-slate-700 placeholder:text-slate-400 focus:border-amber-500 focus:bg-white focus:ring-amber-500" />
+                   class="block h-12 w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-4 text-sm text-slate-700 placeholder:text-slate-400 focus:border-brand-500 focus:bg-white focus:ring-brand-500" />
         </div>
         <x-input-error :messages="$errors->get('name')" />
     </div>
@@ -38,7 +38,7 @@
             <input id="email" name="email" type="email" required autocomplete="username"
                    value="{{ old('email', $user->email) }}"
                    placeholder="ejemplo@estudio.com"
-                   class="block h-12 w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-10 text-sm text-slate-700 placeholder:text-slate-400 focus:border-amber-500 focus:bg-white focus:ring-amber-500" />
+                   class="block h-12 w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-10 text-sm text-slate-700 placeholder:text-slate-400 focus:border-brand-500 focus:bg-white focus:ring-brand-500" />
             <x-icon name="check" class="pointer-events-none absolute inset-y-0 right-3.5 my-auto h-4 w-4 text-emerald-500" />
         </div>
         <x-input-error :messages="$errors->get('email')" />
@@ -47,7 +47,7 @@
             <div class="mt-2">
                 <p class="text-sm text-slate-600">
                     Tu correo no está verificado.
-                    <button form="send-verification" class="rounded-md font-medium text-amber-600 underline hover:text-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-500">
+                    <button form="send-verification" class="rounded-md font-medium text-brand-600 underline hover:text-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500">
                         Reenviar correo de verificación
                     </button>
                 </p>
@@ -68,14 +68,14 @@
             <input id="phone" name="phone" type="tel" autocomplete="tel"
                    value="{{ old('phone', $user->phone) }}"
                    placeholder="+58 000 000 0000"
-                   class="block h-12 w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-4 text-sm text-slate-700 placeholder:text-slate-400 focus:border-amber-500 focus:bg-white focus:ring-amber-500" />
+                   class="block h-12 w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-4 text-sm text-slate-700 placeholder:text-slate-400 focus:border-brand-500 focus:bg-white focus:ring-brand-500" />
         </div>
         <x-input-error :messages="$errors->get('phone')" />
     </div>
 
     <div class="flex justify-end pt-1">
         <button type="submit"
-                class="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-400 px-6 text-sm font-bold uppercase tracking-wide text-slate-900 shadow-lg shadow-amber-500/25 transition-all hover:opacity-95 active:scale-[0.985] sm:w-auto">
+                class="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-500 to-brand-400 px-6 text-sm font-bold uppercase tracking-wide text-white shadow-lg shadow-brand-500/25 transition-all hover:opacity-95 active:scale-[0.985] sm:w-auto">
             <x-icon name="check" class="h-5 w-5" /> Guardar cambios
         </button>
     </div>

@@ -3,7 +3,9 @@
 namespace App\Providers;
 
 use App\Services\ExchangeRateService;
+use App\Services\PlatformSettingService;
 use App\Services\SettingService;
+use App\Services\TenantManager;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
@@ -14,7 +16,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        $this->app->singleton(TenantManager::class);
         $this->app->singleton(SettingService::class);
+        $this->app->singleton(PlatformSettingService::class);
         $this->app->singleton(ExchangeRateService::class);
     }
 
@@ -24,8 +28,11 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         View::composer('*', function ($view) {
-            $view->with('shopName', setting('shop_name', config('app.name')));
-            $view->with('currentRate', exchange_rate());
+            $company = app(TenantManager::class)->get();
+
+            $view->with('shopName', $company?->name ?? setting('shop_name', config('app.name')));
+            $view->with('companyLogo', $company?->logo_url ?? asset('logo.jpeg'));
+            $view->with('currentRate', $company ? exchange_rate() : 0);
         });
     }
 }
