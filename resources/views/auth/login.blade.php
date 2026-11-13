@@ -15,6 +15,8 @@
     @include('partials.pwa')
 
     <style data-purpose="ambient-lighting">
+        [x-cloak] { display: none !important; }
+
         .glow-brand-radial {
             background-color: #f8fafc;
             background-image: radial-gradient(ellipse 120% 70% at 50% 8%, rgba(192, 28, 21, 0.055) 0%, rgba(192, 28, 21, 0.02) 45%, rgba(248, 250, 252, 0) 78%);
@@ -213,6 +215,53 @@
                     <!-- END: Google OAuth Access -->
                 </form>
             </div>
+
+            <!-- Instalar aplicación (PWA) -->
+            <div class="mt-4" x-data="clientInstall()" x-init="init()">
+                <button type="button" @click="install()" x-show="! installed" x-cloak
+                    class="w-full min-h-[48px] px-4 py-3 flex items-center justify-center gap-2.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 active:scale-[0.99] text-slate-700 font-semibold text-sm tracking-wide transition-all">
+                    <svg class="w-5 h-5 text-brand-500" fill="none" stroke="currentColor" stroke-width="1.8"
+                        viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                        <path d="M12 3v12m0 0 4-4m-4 4-4-4" stroke-linecap="round" stroke-linejoin="round"></path>
+                        <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" stroke-linecap="round"></path>
+                    </svg>
+                    <span>Descargar la app</span>
+                </button>
+                <p x-show="installed" x-cloak class="flex items-center justify-center gap-2 py-3 text-xs font-semibold text-emerald-600">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="m5 13 4 4L19 7" stroke-linecap="round" stroke-linejoin="round"></path>
+                    </svg>
+                    App instalada
+                </p>
+
+                <!-- Instrucciones para navegadores sin instalación automática -->
+                <div x-show="help" x-cloak class="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
+                    <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" @click="help = false"></div>
+                    <div class="relative w-full max-w-sm rounded-t-3xl bg-white p-5 shadow-2xl sm:rounded-2xl">
+                        <div class="flex items-center gap-3">
+                            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-100 text-brand-600">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M12 3v12m0 0 4-4m-4 4-4-4" stroke-linecap="round" stroke-linejoin="round"></path>
+                                    <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" stroke-linecap="round"></path>
+                                </svg>
+                            </span>
+                            <div>
+                                <h2 class="text-base font-bold text-slate-800">Instalar MyBarber</h2>
+                                <p class="text-xs text-slate-400">Añádela a tu pantalla de inicio</p>
+                            </div>
+                        </div>
+                        <div class="mt-4 space-y-2 text-xs text-slate-600">
+                            <p class="rounded-lg bg-slate-50 px-3 py-2"><strong class="text-slate-800">iPhone / iPad:</strong> en Safari, toca Compartir y luego “Añadir a pantalla de inicio”.</p>
+                            <p class="rounded-lg bg-slate-50 px-3 py-2"><strong class="text-slate-800">Android:</strong> abre el menú del navegador y elige “Instalar app” o “Añadir a pantalla principal”.</p>
+                            <p class="rounded-lg bg-slate-50 px-3 py-2"><strong class="text-slate-800">Computadora:</strong> usa el icono de instalar en la barra de direcciones del navegador.</p>
+                        </div>
+                        <button type="button" @click="help = false"
+                            class="mt-4 h-11 w-full rounded-xl bg-slate-100 text-sm font-semibold text-slate-600 transition hover:bg-slate-200">
+                            Entendido
+                        </button>
+                    </div>
+                </div>
+            </div>
         </section>
         <!-- END: LoginFormSection -->
 
@@ -233,6 +282,41 @@
         <!-- END: FooterSection -->
     </main>
     <!-- END: MainContainer -->
+
+    <!-- PWA install prompt -->
+    <script data-purpose="pwa-install">
+        window.clientInstall = function () {
+            return {
+                deferred: null,
+                installed: false,
+                help: false,
+                init() {
+                    this.installed = window.matchMedia('(display-mode: standalone)').matches
+                        || window.navigator.standalone === true;
+
+                    window.addEventListener('beforeinstallprompt', (event) => {
+                        event.preventDefault();
+                        this.deferred = event;
+                    });
+
+                    window.addEventListener('appinstalled', () => {
+                        this.installed = true;
+                        this.deferred = null;
+                    });
+                },
+                async install() {
+                    if (this.deferred) {
+                        this.deferred.prompt();
+                        await this.deferred.userChoice;
+                        this.deferred = null;
+                        return;
+                    }
+
+                    this.help = true;
+                },
+            };
+        };
+    </script>
 
     <!-- Interactive script for password visibility toggle -->
     <script data-purpose="password-toggle">

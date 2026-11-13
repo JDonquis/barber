@@ -31,6 +31,8 @@ class PwaTest extends TestCase
         $this->get('/login')
             ->assertOk()
             ->assertSee('manifest.webmanifest')
-            ->assertSee('apple-touch-icon');
+            ->assertSee('apple-touch-icon')
+            ->assertSee('Descargar la app')
+            ->assertSee('clientInstall');
     }
 }
