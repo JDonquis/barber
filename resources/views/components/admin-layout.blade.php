@@ -42,6 +42,10 @@
                        class="rounded-lg px-3 py-2 transition {{ request()->routeIs('admin.settings.*') ? 'bg-brand-50 text-brand-700' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700' }}">
                         Configuración
                     </a>
+                    <a href="{{ route('admin.profile.edit') }}"
+                       class="rounded-lg px-3 py-2 transition {{ request()->routeIs('admin.profile.*') ? 'bg-brand-50 text-brand-700' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700' }}">
+                        Mi perfil
+                    </a>
                 </nav>
 
                 <div class="flex items-center gap-3">
@@ -72,6 +76,10 @@
                     <a href="{{ route('admin.settings.edit') }}"
                        class="whitespace-nowrap rounded-lg px-3 py-2 transition {{ request()->routeIs('admin.settings.*') ? 'bg-brand-50 text-brand-700' : 'text-slate-500 hover:bg-slate-100' }}">
                         Configuración
+                    </a>
+                    <a href="{{ route('admin.profile.edit') }}"
+                       class="whitespace-nowrap rounded-lg px-3 py-2 transition {{ request()->routeIs('admin.profile.*') ? 'bg-brand-50 text-brand-700' : 'text-slate-500 hover:bg-slate-100' }}">
+                        Mi perfil
                     </a>
                 </nav>
             </div>

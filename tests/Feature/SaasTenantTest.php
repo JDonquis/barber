@@ -134,4 +134,35 @@ class SaasTenantTest extends TestCase
 
         $this->actingAs($orphan)->get(route('dashboard'))->assertRedirect(route('login'));
     }
+
+    public function test_super_admin_can_update_their_password_from_their_profile(): void
+    {
+        $super = User::create([
+            'company_id' => null,
+            'name' => 'Super Admin',
+            'email' => 'super-profile@example.com',
+            'password' => Hash::make('password'),
+            'role' => User::ROLE_ADMIN,
+            'is_super_admin' => true,
+            'active' => true,
+        ]);
+
+        $this->actingAs($super)
+            ->get(route('admin.profile.edit'))
+            ->assertOk()
+            ->assertSee('Mi perfil')
+            ->assertSee('Contraseña actual');
+
+        $this->actingAs($super)
+            ->from(route('admin.profile.edit'))
+            ->put(route('admin.profile.password.update'), [
+                'current_password' => 'password',
+                'password' => 'new-password',
+                'password_confirmation' => 'new-password',
+            ])
+            ->assertSessionHasNoErrors()
+            ->assertRedirect(route('admin.profile.edit'));
+
+        $this->assertTrue(Hash::check('new-password', $super->refresh()->password));
+    }
 }
