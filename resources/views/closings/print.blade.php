@@ -176,7 +176,9 @@
         .totals .row .amount { font-weight: 700; }
         .totals .row .amount.big { font-size: 18px; color: var(--accent); }
 
-        .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+        .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+        .two-col > section:first-child { padding-right: 24px; }
+        .two-col > section + section { border-left: 1px solid var(--border); padding-left: 24px; }
 
         /* Footer */
         .doc-footer {
@@ -195,6 +197,8 @@
             .doc-meta { text-align: left; }
             .kpis { grid-template-columns: 1fr 1fr; }
             .two-col { grid-template-columns: 1fr; }
+            .two-col > section:first-child { padding-right: 0; }
+            .two-col > section + section { border-left: none; padding-left: 0; }
         }
 
         @media print {
@@ -243,6 +247,9 @@
             $services = collect($closing->details['servicios'] ?? []);
             $products = collect($closing->details['productos'] ?? []);
             $expenses = collect($closing->details['gastos'] ?? []);
+            $barbers = collect($closing->details['barberos'] ?? [])
+                ->reject(fn ($row) => in_array($row['name'] ?? '', ['Sin barbero', 'Venta tienda'], true))
+                ->values();
             $isBarberClosing = $closing->barber_id !== null;
             $barberName = $closing->barber->name ?? 'Barbero';
             $serviceQty = (int) $services->sum('quantity');
@@ -351,23 +358,71 @@
             </div>
         </section>
 
+        <!-- Servicios / productos vendidos -->
+        <div class="two-col">
+            <section>
+                <div class="section-head">
+                    <h2>Servicios vendidos</h2>
+                    <span>{{ $services->count() }} ítems</span>
+                </div>
+                <table>
+                    <thead>
+                        <tr><th>Servicio</th><th class="text-right">Cant.</th><th class="text-right">Total</th></tr>
+                    </thead>
+                    <tbody>
+                        @forelse ($services as $row)
+                            <tr>
+                                <td>{{ $row['name'] }}</td>
+                                <td class="text-right">{{ $row['quantity'] }}</td>
+                                <td class="text-right strong">{{ usd($row['total_usd']) }}</td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="3" class="empty">Sin servicios.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </section>
+
+            <section>
+                <div class="section-head">
+                    <h2>Productos vendidos</h2>
+                    <span>{{ $products->count() }} ítems</span>
+                </div>
+                <table>
+                    <thead>
+                        <tr><th>Producto</th><th class="text-right">Cant.</th><th class="text-right">Total</th></tr>
+                    </thead>
+                    <tbody>
+                        @forelse ($products as $row)
+                            <tr>
+                                <td>{{ $row['name'] }}</td>
+                                <td class="text-right">{{ $row['quantity'] }}</td>
+                                <td class="text-right strong">{{ usd($row['total_usd']) }}</td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="3" class="empty">Sin productos.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </section>
+        </div>
+
         <!-- Por barbero / método de pago -->
         <div class="two-col">
             @unless ($isBarberClosing)
             <section>
                 <div class="section-head">
                     <h2>Por barbero</h2>
-                    <span>{{ count($closing->details['barberos'] ?? []) }} responsables</span>
+                    <span>{{ $barbers->count() }} responsables</span>
                 </div>
                 <table>
                     <thead>
                         <tr><th>Barbero</th><th class="text-right">Tickets</th><th class="text-right">Comisión</th></tr>
                     </thead>
                     <tbody>
-                        @forelse ($closing->details['barberos'] ?? [] as $row)
-                            @php($isStore = in_array($row['name'] ?? '', ['Sin barbero', 'Venta tienda'], true))
+                        @forelse ($barbers as $row)
                             <tr>
-                                <td>{{ $isStore ? 'Venta tienda' : $row['name'] }}</td>
+                                <td>{{ $row['name'] }}</td>
                                 <td class="text-right">{{ $row['tickets'] }}</td>
                                 <td class="text-right strong">{{ usd($row['commission_usd']) }}</td>
                             </tr>
@@ -429,55 +484,6 @@
             </table>
         </section>
         @endunless
-
-        <!-- Servicios / productos vendidos -->
-        <div class="two-col">
-            <section>
-                <div class="section-head">
-                    <h2>Servicios vendidos</h2>
-                    <span>{{ $services->count() }} ítems</span>
-                </div>
-                <table>
-                    <thead>
-                        <tr><th>Servicio</th><th class="text-right">Cant.</th><th class="text-right">Total</th></tr>
-                    </thead>
-                    <tbody>
-                        @forelse ($services as $row)
-                            <tr>
-                                <td>{{ $row['name'] }}</td>
-                                <td class="text-right">{{ $row['quantity'] }}</td>
-                                <td class="text-right strong">{{ usd($row['total_usd']) }}</td>
-                            </tr>
-                        @empty
-                            <tr><td colspan="3" class="empty">Sin servicios.</td></tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </section>
-
-            <section>
-                <div class="section-head">
-                    <h2>Productos vendidos</h2>
-                    <span>{{ $products->count() }} ítems</span>
-                </div>
-                <table>
-                    <thead>
-                        <tr><th>Producto</th><th class="text-right">Cant.</th><th class="text-right">Total</th></tr>
-                    </thead>
-                    <tbody>
-                        @forelse ($products as $row)
-                            <tr>
-                                <td>{{ $row['name'] }}</td>
-                                <td class="text-right">{{ $row['quantity'] }}</td>
-                                <td class="text-right strong">{{ usd($row['total_usd']) }}</td>
-                            </tr>
-                        @empty
-                            <tr><td colspan="3" class="empty">Sin productos.</td></tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </section>
-        </div>
 
         @if ($closing->notes)
             <section>

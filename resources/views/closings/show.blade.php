@@ -1,7 +1,9 @@
 @php
     $services = collect($closing->details['servicios'] ?? []);
     $products = collect($closing->details['productos'] ?? []);
-    $barbers = collect($closing->details['barberos'] ?? []);
+    $barbers = collect($closing->details['barberos'] ?? [])
+        ->reject(fn ($row) => in_array($row['name'] ?? '', ['Sin barbero', 'Venta tienda'], true))
+        ->values();
     $methods = collect($closing->details['metodos_pago'] ?? []);
     $expenses = collect($closing->details['gastos'] ?? []);
     $expensesTotal = (float) $closing->total_expenses_usd;
@@ -236,6 +238,60 @@
             @endif
         </section>
 
+        <!-- Servicios y productos vendidos -->
+        <section class="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-slate-200">
+            <div class="grid grid-cols-1 md:grid-cols-2">
+                <!-- Servicios vendidos -->
+                <div class="space-y-3 p-4">
+                    <div class="flex items-center justify-between gap-2">
+                        <span class="flex items-center gap-2 text-sm font-bold text-slate-800">
+                            <x-icon name="scissors" class="h-5 w-5 text-brand-600" /> Servicios vendidos
+                        </span>
+                        <span class="shrink-0 text-xs text-slate-400">{{ $services->count() }} ítems</span>
+                    </div>
+                    <div class="space-y-1.5">
+                        @forelse ($services as $row)
+                            <div class="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2.5">
+                                <div class="min-w-0">
+                                    <p class="truncate text-sm font-semibold text-slate-700">{{ $row['name'] }}</p>
+                                    <p class="text-xs text-slate-400">{{ $row['quantity'] }} atenciones</p>
+                                </div>
+                                <span class="shrink-0 text-sm font-bold text-brand-600">{{ usd($row['total_usd']) }}</span>
+                            </div>
+                        @empty
+                            <p class="rounded-lg bg-slate-50 px-3 py-6 text-center text-xs text-slate-400">Sin servicios.</p>
+                        @endforelse
+                    </div>
+                </div>
+
+                <!-- Productos vendidos -->
+                <div class="space-y-3 border-t border-slate-200 p-4 md:border-l md:border-t-0">
+                    <div class="flex items-center justify-between gap-2">
+                        <span class="flex items-center gap-2 text-sm font-bold text-slate-800">
+                            <x-icon name="bag" class="h-5 w-5 text-brand-600" /> Productos vendidos
+                        </span>
+                        <span class="shrink-0 text-xs text-slate-400">{{ $products->count() }} ítems</span>
+                    </div>
+                    <div class="space-y-1.5">
+                        @forelse ($products as $row)
+                            <div class="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2">
+                                <div class="flex min-w-0 items-center gap-2.5">
+                                    <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-white text-xs font-bold text-slate-400 ring-1 ring-slate-200">{{ $loop->iteration }}</span>
+                                    <span class="truncate text-sm text-slate-700">{{ $row['name'] }}</span>
+                                </div>
+                                <div class="flex shrink-0 items-center gap-3">
+                                    <span class="text-xs text-slate-400">{{ $row['quantity'] }} cant</span>
+                                    <span class="text-sm font-bold text-slate-700">{{ usd($row['total_usd']) }}</span>
+                                </div>
+                            </div>
+                        @empty
+                            <p class="rounded-lg bg-slate-50 px-3 py-6 text-center text-xs text-slate-400">Sin productos.</p>
+                        @endforelse
+                    </div>
+                </div>
+            </div>
+        </section>
+
         @unless ($isBarberClosing)
         <!-- Por barbero -->
         <section class="space-y-3 rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
@@ -247,29 +303,19 @@
             </div>
             <div class="space-y-2">
                 @forelse ($barbers as $row)
-                    @php($isStore = in_array($row['name'] ?? '', ['Sin barbero', 'Venta tienda'], true))
                     @php($words = preg_split('/\s+/', trim($row['name'] ?? '')))
                     @php($initials = mb_strtoupper(mb_substr($words[0] ?? '', 0, 1).mb_substr($words[1] ?? '', 0, 1)))
                     <div class="rounded-xl bg-slate-50 p-3">
                         <div class="flex items-center justify-between">
                             <div class="flex items-center gap-2">
-                                <span class="flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold {{ $isStore ? 'bg-brand-100 text-brand-600' : 'bg-emerald-100 text-emerald-600' }}">
-                                    {{ $isStore ? '—' : $initials }}
-                                </span>
-                                <div>
-                                    <span class="text-sm font-semibold text-slate-700">{{ $isStore ? 'Venta tienda' : $row['name'] }}</span>
-                                    @if ($isStore)
-                                        <span class="block text-[10px] font-semibold text-brand-600">Sin comisión de barbero</span>
-                                    @endif
-                                </div>
+                                <span class="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-600">{{ $initials }}</span>
+                                <span class="text-sm font-semibold text-slate-700">{{ $row['name'] }}</span>
                             </div>
                             <span class="rounded-full bg-white px-2 py-0.5 text-[11px] font-semibold text-slate-500 ring-1 ring-slate-200">{{ $row['tickets'] }} tickets</span>
                         </div>
                         <div class="mt-1.5 flex items-center justify-between text-xs">
                             <span class="text-slate-400">Producción: <strong class="font-bold text-slate-600">{{ usd($row['total_usd']) }}</strong></span>
-                            <span class="font-semibold text-emerald-600">
-                                {{ $isStore ? '100% Estudio' : 'Comisión '.usd($row['commission_usd']) }}
-                            </span>
+                            <span class="font-semibold text-emerald-600">Comisión {{ usd($row['commission_usd']) }}</span>
                         </div>
                     </div>
                 @empty
@@ -333,55 +379,6 @@
             @endif
         </section>
         @endunless
-
-        <!-- Servicios vendidos -->
-        <section class="space-y-3 rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
-            <div class="flex items-center justify-between">
-                <span class="flex items-center gap-2 text-sm font-bold text-slate-800">
-                    <x-icon name="scissors" class="h-5 w-5 text-brand-600" /> Servicios vendidos
-                </span>
-                <span class="text-xs text-slate-400">{{ $services->count() }} ítems</span>
-            </div>
-            <div class="space-y-1.5">
-                @forelse ($services as $row)
-                    <div class="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2.5">
-                        <div>
-                            <p class="text-sm font-semibold text-slate-700">{{ $row['name'] }}</p>
-                            <p class="text-xs text-slate-400">{{ $row['quantity'] }} atenciones realizadas</p>
-                        </div>
-                        <span class="text-sm font-bold text-brand-600">{{ usd($row['total_usd']) }}</span>
-                    </div>
-                @empty
-                    <p class="rounded-lg bg-slate-50 px-3 py-6 text-center text-xs text-slate-400">Sin servicios.</p>
-                @endforelse
-            </div>
-        </section>
-
-        <!-- Productos vendidos -->
-        <section class="space-y-3 rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
-            <div class="flex items-center justify-between">
-                <span class="flex items-center gap-2 text-sm font-bold text-slate-800">
-                    <x-icon name="bag" class="h-5 w-5 text-brand-600" /> Productos vendidos
-                </span>
-                <span class="text-xs text-slate-400">{{ $products->count() }} ítems</span>
-            </div>
-            <div class="space-y-1.5">
-                @forelse ($products as $row)
-                    <div class="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2">
-                        <div class="flex min-w-0 items-center gap-2.5">
-                            <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-white text-xs font-bold text-slate-400 ring-1 ring-slate-200">{{ $loop->iteration }}</span>
-                            <span class="truncate text-sm text-slate-700">{{ $row['name'] }}</span>
-                        </div>
-                        <div class="flex shrink-0 items-center gap-3">
-                            <span class="text-xs text-slate-400">{{ $row['quantity'] }} cant</span>
-                            <span class="text-sm font-bold text-slate-700">{{ usd($row['total_usd']) }}</span>
-                        </div>
-                    </div>
-                @empty
-                    <p class="rounded-lg bg-slate-50 px-3 py-6 text-center text-xs text-slate-400">Sin productos.</p>
-                @endforelse
-            </div>
-        </section>
 
         <!-- Cerrar / Reabrir -->
         @unless ($closing->isClosed())

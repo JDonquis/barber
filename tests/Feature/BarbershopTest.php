@@ -640,6 +640,41 @@ class BarbershopTest extends TestCase
             ->assertSee('VES cobrados');
     }
 
+    public function test_closing_report_hides_store_sale_from_barber_section(): void
+    {
+        $this->setting('commission_rate', 40);
+        $service = $this->service(10);
+        $product = Product::create(['name' => 'Cera', 'price' => 5, 'stock' => 10, 'active' => true]);
+        $admin = $this->admin();
+        $barber = $this->barber();
+
+        $this->actingAs($admin)->post(route('sales.store-service'), [
+            'service_id' => $service->id,
+            'barber_id' => $barber->id,
+            'payment_currency' => 'USD',
+        ]);
+
+        $this->actingAs($admin)->post(route('sales.store-product'), [
+            'items' => [['product_id' => $product->id, 'quantity' => 1]],
+            'payment_currency' => 'USD',
+        ]);
+
+        $this->actingAs($admin)->post(route('closings.generate'), [
+            'period_type' => 'diario',
+            'date' => now()->toDateString(),
+        ]);
+
+        $closing = Closing::firstOrFail();
+
+        $this->actingAs($admin)
+            ->get(route('closings.show', $closing))
+            ->assertOk()
+            ->assertSee('Servicios vendidos')
+            ->assertSee('Productos vendidos')
+            ->assertSee('Por barbero')
+            ->assertDontSee('Venta tienda');
+    }
+
     public function test_closing_stores_historical_and_reference_bolivars(): void
     {
         $this->setting('commission_rate', 40);
