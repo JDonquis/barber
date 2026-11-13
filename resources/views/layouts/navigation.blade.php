@@ -29,10 +29,12 @@
         </a>
 
         <p class="px-3 pt-4 pb-1 text-xs uppercase tracking-wider text-slate-400">Ventas</p>
-        <a href="{{ route('sales.create-service') }}" class="{{ $linkClass(request()->routeIs('sales.create-service')) }}">
-            <x-icon name="scissors" class="h-5 w-5" />
-            Registrar corte
-        </a>
+        @if (auth()->user()->canRegisterSales())
+            <a href="{{ route('sales.create-service') }}" class="{{ $linkClass(request()->routeIs('sales.create-service')) }}">
+                <x-icon name="scissors" class="h-5 w-5" />
+                Registrar corte
+            </a>
+        @endif
         @if ($isAdmin)
             <a href="{{ route('sales.create-product') }}" class="{{ $linkClass(request()->routeIs('sales.create-product')) }}">
                 <x-icon name="cart" class="h-5 w-5" />

@@ -43,6 +43,7 @@ class BarberController extends Controller
             'phone' => ['nullable', 'string', 'max:30'],
             'password' => ['required', 'confirmed', Password::min(8)],
             'active' => ['nullable', 'boolean'],
+            'can_register_sales' => ['nullable', 'boolean'],
         ]);
 
         User::create([
@@ -52,6 +53,7 @@ class BarberController extends Controller
             'password' => Hash::make($data['password']),
             'role' => User::ROLE_BARBER,
             'active' => $request->boolean('active', true),
+            'can_register_sales' => $request->boolean('can_register_sales', true),
         ]);
 
         return redirect()->route('barbers.index')->with('status', 'Barbero registrado.');
@@ -70,6 +72,7 @@ class BarberController extends Controller
             'phone' => ['nullable', 'string', 'max:30'],
             'password' => ['nullable', 'confirmed', Password::min(8)],
             'active' => ['nullable', 'boolean'],
+            'can_register_sales' => ['nullable', 'boolean'],
         ]);
 
         $barber->fill([
@@ -77,6 +80,7 @@ class BarberController extends Controller
             'email' => $data['email'],
             'phone' => $data['phone'] ?? null,
             'active' => $request->boolean('active'),
+            'can_register_sales' => $request->boolean('can_register_sales'),
         ]);
 
         if (! empty($data['password'])) {

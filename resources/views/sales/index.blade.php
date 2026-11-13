@@ -110,11 +110,13 @@
 
         <!-- Accesos rápidos -->
         <div class="grid {{ auth()->user()->isAdmin() ? 'grid-cols-2' : 'grid-cols-1' }} gap-3">
-            <a href="{{ route('sales.create-service') }}"
-               class="flex h-[50px] items-center justify-center gap-2 rounded-xl bg-brand-500 px-3 text-sm font-bold text-white shadow-md shadow-brand-500/25 transition hover:bg-brand-400 active:scale-95">
-                <x-icon name="scissors" class="h-5 w-5" />
-                <span class="truncate">+ Registrar corte</span>
-            </a>
+            @if (auth()->user()->canRegisterSales())
+                <a href="{{ route('sales.create-service') }}"
+                   class="flex h-[50px] items-center justify-center gap-2 rounded-xl bg-brand-500 px-3 text-sm font-bold text-white shadow-md shadow-brand-500/25 transition hover:bg-brand-400 active:scale-95">
+                    <x-icon name="scissors" class="h-5 w-5" />
+                    <span class="truncate">+ Registrar corte</span>
+                </a>
+            @endif
             @if (auth()->user()->isAdmin())
                 <a href="{{ route('sales.create-product') }}"
                    class="flex h-[50px] items-center justify-center gap-2 rounded-xl bg-white px-3 text-sm font-bold text-brand-600 ring-1 ring-brand-200 shadow-sm transition hover:bg-brand-50 active:scale-95">

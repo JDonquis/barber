@@ -728,4 +728,41 @@ class BarbershopTest extends TestCase
             ->assertOk()
             ->assertSee('Ganancia neta');
     }
+
+    public function test_barber_without_permission_cannot_register_a_service_sale(): void
+    {
+        $service = $this->service(10);
+        $barber = $this->barber();
+        $barber->update(['can_register_sales' => false]);
+
+        $this->actingAs($barber)->get(route('sales.create-service'))->assertForbidden();
+        $this->actingAs($barber)->post(route('sales.store-service'), [
+            'service_id' => $service->id,
+            'payment_currency' => 'USD',
+        ])->assertForbidden();
+
+        $this->assertDatabaseCount('sales', 0);
+    }
+
+    public function test_admin_can_grant_and_revoke_a_barbers_register_permission(): void
+    {
+        $admin = $this->admin();
+        $barber = $this->barber();
+
+        $this->actingAs($admin)->put(route('barbers.update', $barber), [
+            'name' => $barber->name,
+            'email' => $barber->email,
+            'can_register_sales' => '0',
+        ])->assertRedirect(route('barbers.index'));
+
+        $this->assertFalse($barber->fresh()->can_register_sales);
+
+        $this->actingAs($admin)->put(route('barbers.update', $barber), [
+            'name' => $barber->name,
+            'email' => $barber->email,
+            'can_register_sales' => '1',
+        ])->assertRedirect(route('barbers.index'));
+
+        $this->assertTrue($barber->fresh()->can_register_sales);
+    }
 }

@@ -272,9 +272,11 @@
         @endunless
 
         <!-- Acción rápida -->
-        <a href="{{ route('sales.create-service') }}"
-           class="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-500 to-brand-400 text-sm font-bold text-white shadow-lg shadow-brand-500/30 transition-all hover:opacity-95 active:scale-[0.985]">
-            <x-icon name="plus" class="h-5 w-5" /> Registrar venta / servicio
-        </a>
+        @if (auth()->user()->canRegisterSales())
+            <a href="{{ route('sales.create-service') }}"
+               class="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-500 to-brand-400 text-sm font-bold text-white shadow-lg shadow-brand-500/30 transition-all hover:opacity-95 active:scale-[0.985]">
+                <x-icon name="plus" class="h-5 w-5" /> Registrar venta / servicio
+            </a>
+        @endif
     </div>
 </x-app-layout>

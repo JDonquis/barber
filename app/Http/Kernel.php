@@ -4,6 +4,7 @@ namespace App\Http;
 
 use App\Http\Middleware\Authenticate;
 use App\Http\Middleware\EncryptCookies;
+use App\Http\Middleware\EnsureCanRegisterSales;
 use App\Http\Middleware\EnsureSuperAdmin;
 use App\Http\Middleware\EnsureTenant;
 use App\Http\Middleware\EnsureUserHasRole;
@@ -88,6 +89,7 @@ class Kernel extends HttpKernel
         'can' => Authorize::class,
         'guest' => RedirectIfAuthenticated::class,
         'role' => EnsureUserHasRole::class,
+        'can-register-sales' => EnsureCanRegisterSales::class,
         'superadmin' => EnsureSuperAdmin::class,
         'tenant' => EnsureTenant::class,
         'password.confirm' => RequirePassword::class,

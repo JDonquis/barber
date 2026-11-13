@@ -96,6 +96,22 @@
                         <x-input-error :messages="$errors->get('active')" />
                     </div>
 
+                    <!-- Permiso para registrar cortes -->
+                    <div class="space-y-1.5">
+                        <div class="flex items-center justify-between py-1">
+                            <div class="pr-3">
+                                <span class="text-sm font-semibold text-slate-700">Puede registrar cortes</span>
+                                <span class="block text-xs text-slate-400">Permitir el acceso al módulo de registro de cortes</span>
+                            </div>
+                            <label class="relative inline-flex shrink-0 cursor-pointer items-center">
+                                <input type="hidden" name="can_register_sales" value="0">
+                                <input type="checkbox" name="can_register_sales" value="1" class="peer sr-only" @checked(old('can_register_sales', $barber?->can_register_sales ?? true))>
+                                <span class="relative h-7 w-12 rounded-full bg-slate-200 transition-colors after:absolute after:left-[2px] after:top-[2px] after:h-6 after:w-6 after:rounded-full after:bg-white after:shadow after:transition-all after:content-[''] peer-checked:bg-brand-500 peer-checked:after:translate-x-full"></span>
+                            </label>
+                        </div>
+                        <x-input-error :messages="$errors->get('can_register_sales')" />
+                    </div>
+
                     <div class="h-px w-full bg-slate-100"></div>
 
                     <!-- Contraseña -->

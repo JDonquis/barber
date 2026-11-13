@@ -33,6 +33,7 @@ class User extends Authenticatable
         'is_super_admin',
         'commission_rate',
         'active',
+        'can_register_sales',
         'phone',
         'google_id',
     ];
@@ -57,6 +58,7 @@ class User extends Authenticatable
         'password' => 'hashed',
         'commission_rate' => 'decimal:2',
         'active' => 'boolean',
+        'can_register_sales' => 'boolean',
         'is_super_admin' => 'boolean',
     ];
 
@@ -88,6 +90,18 @@ class User extends Authenticatable
     public function isBarber(): bool
     {
         return $this->role === self::ROLE_BARBER;
+    }
+
+    /**
+     * Whether this user is allowed to register service sales.
+     */
+    public function canRegisterSales(): bool
+    {
+        if ($this->isAdmin()) {
+            return true;
+        }
+
+        return $this->can_register_sales !== false;
     }
 
     /**

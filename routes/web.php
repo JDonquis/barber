@@ -73,8 +73,10 @@ Route::middleware(['auth', 'tenant'])->group(function () {
 
     // Ventas (disponible para administradores y barberos)
     Route::get('/sales', [SaleController::class, 'index'])->name('sales.index');
-    Route::get('/sales/service/create', [SaleController::class, 'createService'])->name('sales.create-service');
-    Route::post('/sales/service', [SaleController::class, 'storeService'])->name('sales.store-service');
+    Route::middleware('can-register-sales')->group(function () {
+        Route::get('/sales/service/create', [SaleController::class, 'createService'])->name('sales.create-service');
+        Route::post('/sales/service', [SaleController::class, 'storeService'])->name('sales.store-service');
+    });
     Route::get('/sales/{sale}', [SaleController::class, 'show'])->name('sales.show');
     Route::get('/sales/{sale}/print', [SaleController::class, 'print'])->name('sales.print');
 
