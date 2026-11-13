@@ -45,39 +45,17 @@
         </a>
 
         @if ($isAdmin)
-            <p class="px-3 pt-4 pb-1 text-xs uppercase tracking-wider text-slate-400">Administración</p>
-            <a href="{{ route('services.index') }}" class="{{ $linkClass(request()->routeIs('services.*')) }}">
-                <x-icon name="tag" class="h-5 w-5" />
-                Tipos de corte
-            </a>
-            <a href="{{ route('barbers.index') }}" class="{{ $linkClass(request()->routeIs('barbers.*')) }}">
-                <x-icon name="users" class="h-5 w-5" />
-                Barberos
-            </a>
-            <a href="{{ route('loans.index') }}" class="{{ $linkClass(request()->routeIs('loans.*')) }}">
-                <x-icon name="wallet" class="h-5 w-5" />
-                Préstamos
-            </a>
-            <a href="{{ route('users.index') }}" class="{{ $linkClass(request()->routeIs('users.*')) }}">
-                <x-icon name="user" class="h-5 w-5" />
-                Usuarios
+            <p class="px-3 pt-4 pb-1 text-xs uppercase tracking-wider text-slate-400">Agenda</p>
+            <a href="{{ route('appointments.index') }}" class="{{ $linkClass(request()->routeIs('appointments.*')) }}">
+                <x-icon name="clock" class="h-5 w-5" />
+                Citas
             </a>
             <a href="{{ route('customers.index') }}" class="{{ $linkClass(request()->routeIs('customers.*')) }}">
                 <x-icon name="users" class="h-5 w-5" />
                 Clientes
             </a>
-            @php($pendingPasswordRequests = \App\Models\PasswordResetRequest::pending()->count())
-            <a href="{{ route('password-requests.index') }}" class="{{ $linkClass(request()->routeIs('password-requests.*')) }}">
-                <x-icon name="key" class="h-5 w-5" />
-                <span>Solicitudes</span>
-                @if ($pendingPasswordRequests > 0)
-                    <span class="ml-auto inline-flex min-w-[20px] items-center justify-center rounded-full bg-rose-500 px-1.5 py-0.5 text-[11px] font-bold text-white">{{ $pendingPasswordRequests }}</span>
-                @endif
-            </a>
-            <a href="{{ route('products.index') }}" class="{{ $linkClass(request()->routeIs('products.*')) }}">
-                <x-icon name="box" class="h-5 w-5" />
-                Productos
-            </a>
+
+            <p class="px-3 pt-4 pb-1 text-xs uppercase tracking-wider text-slate-400">Finanzas</p>
             <a href="{{ route('closings.index') }}" class="{{ $linkClass(request()->routeIs('closings.*')) }}">
                 <x-icon name="chart" class="h-5 w-5" />
                 Cierres
@@ -86,13 +64,39 @@
                 <x-icon name="minus" class="h-5 w-5" />
                 Gastos
             </a>
-            <a href="{{ route('appointments.index') }}" class="{{ $linkClass(request()->routeIs('appointments.*')) }}">
-                <x-icon name="clock" class="h-5 w-5" />
-                Citas
+            <a href="{{ route('loans.index') }}" class="{{ $linkClass(request()->routeIs('loans.*')) }}">
+                <x-icon name="wallet" class="h-5 w-5" />
+                Préstamos
             </a>
             <a href="{{ route('payments.index') }}" class="{{ $linkClass(request()->routeIs('payments.*')) }}">
                 <x-icon name="card" class="h-5 w-5" />
                 Pagos
+            </a>
+
+            <p class="px-3 pt-4 pb-1 text-xs uppercase tracking-wider text-slate-400">Configuración</p>
+            <a href="{{ route('services.index') }}" class="{{ $linkClass(request()->routeIs('services.*')) }}">
+                <x-icon name="tag" class="h-5 w-5" />
+                Tipos de corte
+            </a>
+            <a href="{{ route('barbers.index') }}" class="{{ $linkClass(request()->routeIs('barbers.*')) }}">
+                <x-icon name="users" class="h-5 w-5" />
+                Barberos
+            </a>
+            <a href="{{ route('products.index') }}" class="{{ $linkClass(request()->routeIs('products.*')) }}">
+                <x-icon name="box" class="h-5 w-5" />
+                Productos
+            </a>
+            <a href="{{ route('users.index') }}" class="{{ $linkClass(request()->routeIs('users.*')) }}">
+                <x-icon name="user" class="h-5 w-5" />
+                Usuarios
+            </a>
+            @php($pendingPasswordRequests = \App\Models\PasswordResetRequest::pending()->count())
+            <a href="{{ route('password-requests.index') }}" class="{{ $linkClass(request()->routeIs('password-requests.*')) }}">
+                <x-icon name="key" class="h-5 w-5" />
+                <span>Solicitudes</span>
+                @if ($pendingPasswordRequests > 0)
+                    <span class="ml-auto inline-flex min-w-[20px] items-center justify-center rounded-full bg-rose-500 px-1.5 py-0.5 text-[11px] font-bold text-white">{{ $pendingPasswordRequests }}</span>
+                @endif
             </a>
             <a href="{{ route('settings.edit') }}" class="{{ $linkClass(request()->routeIs('settings.*')) }}">
                 <x-icon name="cog" class="h-5 w-5" />
