@@ -9,7 +9,7 @@
  *
  * Para publicar cambios: incrementa CACHE_VERSION.
  */
-const CACHE_VERSION = 'mybarber-v4';
+const CACHE_VERSION = 'mybarber-v5';
 const OFFLINE_URL = '/offline.html';
 
 const PRECACHE = [
