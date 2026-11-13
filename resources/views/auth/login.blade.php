@@ -73,7 +73,7 @@
         <!-- END: HeaderSection -->
 
         <!-- BEGIN: LoginFormSection -->
-        <section class="w-full my-auto py-2 z-10" data-purpose="login-card-container">
+        <section class="w-full my-auto py-2 z-20" data-purpose="login-card-container">
             <div
                 class="bg-white border border-slate-200 rounded-3xl p-5 shadow-xl shadow-slate-200/60">
 
