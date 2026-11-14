@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport" />
     <meta name="csrf-token" content="{{ csrf_token() }}" />
-    <title>{{ __('Iniciar Sesión') }} | {{ config('app.name', 'MyBarber') }}</title>
+    <title>{{ __('Iniciar Sesión') }} | {{ config('app.name', 'DonBarber') }}</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -57,14 +57,14 @@
                 class="relative mb-3 flex items-center justify-center p-1 rounded-2xl bg-white brand-glow-box">
                 <div
                     class="w-24 h-24 bg-white rounded-[14px] flex items-center justify-center overflow-hidden p-1.5 border border-brand-500/20">
-                    <img alt="MyBarber Logo" class="w-full h-full object-contain" height="96"
-                        src="{{ asset('mybarberlogo.png') }}" width="96" />
+                    <img alt="DonBarber Logo" class="w-full h-full object-contain" height="96"
+                        src="{{ asset('donbarberlogo.png') }}" width="96" />
                 </div>
             </div>
 
             <!-- Studio Title & Subtitle -->
             <h1 class="text-xl font-extrabold tracking-tight text-slate-900">
-                MY<span class="text-brand-600 font-black">BARBER</span>
+                DON<span class="text-brand-600 font-black">BARBER</span>
             </h1>
             <p class="text-xs text-slate-500 mt-1 font-medium tracking-wide">
                 Plataforma de Control &amp; Gestión Integral
@@ -107,7 +107,7 @@
                             </div>
                             <input autocomplete="email"
                                 class="block w-full pl-10 pr-3.5 py-3.5 text-sm rounded-xl bg-slate-50 border border-slate-300 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 focus:bg-white transition-colors @error('email') border-red-400 @enderror"
-                                id="email" name="email" placeholder="barber@mybarber.com" required autofocus
+                                id="email" name="email" placeholder="barber@donbarber.com" required autofocus
                                 value="{{ old('email') }}" type="email" />
                         </div>
                         @error('email')
@@ -246,7 +246,7 @@
                                 </svg>
                             </span>
                             <div>
-                                <h2 class="text-base font-bold text-slate-800">Instalar MyBarber</h2>
+                                <h2 class="text-base font-bold text-slate-800">Instalar DonBarber</h2>
                                 <p class="text-xs text-slate-400">Añádela a tu pantalla de inicio</p>
                             </div>
                         </div>
@@ -276,7 +276,7 @@
                 </a>
             </div>
             <div class="text-[11px] text-slate-400 font-medium">
-                v4.0 · MyBarber Management
+                v4.0 · DonBarber Management
             </div>
         </footer>
         <!-- END: FooterSection -->

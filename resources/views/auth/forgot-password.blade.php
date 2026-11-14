@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport" />
     <meta name="csrf-token" content="{{ csrf_token() }}" />
-    <title>{{ __('Recuperar contraseña') }} | {{ config('app.name', 'MyBarber') }}</title>
+    <title>{{ __('Recuperar contraseña') }} | {{ config('app.name', 'DonBarber') }}</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -35,8 +35,8 @@
             <div class="mb-3 flex items-center justify-center p-1 rounded-2xl bg-white"
                 style="box-shadow: 0 0 25px -8px rgba(192, 28, 21, 0.30);">
                 <div class="w-20 h-20 bg-white rounded-[14px] flex items-center justify-center overflow-hidden p-1.5 border border-brand-500/20">
-                    <img alt="MyBarber Logo" class="w-full h-full object-contain" height="80"
-                        src="{{ asset('mybarberlogo.png') }}" width="80" />
+                    <img alt="DonBarber Logo" class="w-full h-full object-contain" height="80"
+                        src="{{ asset('donbarberlogo.png') }}" width="80" />
                 </div>
             </div>
             <h1 class="text-lg font-extrabold tracking-tight text-slate-900">
@@ -75,7 +75,7 @@
                             </div>
                             <input autocomplete="email"
                                 class="block w-full pl-10 pr-3.5 py-3.5 text-sm rounded-xl bg-slate-50 border border-slate-300 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 focus:bg-white transition-colors @error('email') border-red-400 @enderror"
-                                id="email" name="email" placeholder="barber@mybarber.com" required autofocus
+                                id="email" name="email" placeholder="barber@donbarber.com" required autofocus
                                 value="{{ old('email') }}" type="email" />
                         </div>
                         @error('email')

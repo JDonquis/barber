@@ -24,8 +24,8 @@ class DatabaseSeeder extends Seeder
         $company = $tenant->get()
             ?? Company::query()->orderBy('id')->first()
             ?? Company::create([
-                'name' => 'MyBarber Demo',
-                'slug' => 'mybarber-demo',
+                'name' => 'DonBarber Demo',
+                'slug' => 'donbarber-demo',
                 'active' => true,
                 'monthly_fee_usd' => 5,
                 'is_exempt' => false,
@@ -36,7 +36,7 @@ class DatabaseSeeder extends Seeder
         $tenant->set($company);
 
         User::updateOrCreate(
-            ['email' => env('SAAS_ADMIN_EMAIL', 'superadmin@mybarber.test')],
+            ['email' => env('SAAS_ADMIN_EMAIL', 'superadmin@donbarber.test')],
             [
                 'company_id' => null,
                 'name' => 'Super Administrador',

@@ -233,7 +233,7 @@
                 <x-icon name="lock" class="h-5 w-5" />
             </span>
             <div>
-                <p class="text-sm font-semibold text-slate-800">Políticas de seguridad MyBarber</p>
+                <p class="text-sm font-semibold text-slate-800">Políticas de seguridad DonBarber</p>
                 <p class="mt-0.5 text-xs leading-relaxed text-slate-500">
                     Las contraseñas temporales generadas se muestran una sola vez. Anótalas y entrégalas al usuario;
                     pueden cambiarla luego desde "Mi perfil".

@@ -21,6 +21,8 @@ class PwaTest extends TestCase
 
         $manifest = json_decode(file_get_contents(public_path('manifest.webmanifest')), true);
 
+        $this->assertSame('DonBarber', $manifest['name']);
+        $this->assertSame('DonBarber', $manifest['short_name']);
         $this->assertSame('standalone', $manifest['display']);
         $this->assertSame('/', $manifest['start_url']);
         $this->assertNotEmpty($manifest['icons']);

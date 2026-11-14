@@ -59,7 +59,7 @@
                             </span>
                             <input id="email" name="email" type="email" required
                                    value="{{ old('email', $barber?->email) }}"
-                                   placeholder="ejemplo@mybarber.com"
+                                   placeholder="ejemplo@donbarber.com"
                                    class="block h-12 w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-4 text-sm text-slate-700 placeholder:text-slate-400 focus:border-brand-500 focus:bg-white focus:ring-brand-500" />
                         </div>
                         <x-input-error :messages="$errors->get('email')" />

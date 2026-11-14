@@ -1,5 +1,5 @@
 /*
- * Service Worker — MyBarber
+ * Service Worker — DonBarber
  *
  * Estrategia:
  *  - Navegación: el navegador la maneja de forma nativa para respetar redirects
@@ -9,13 +9,13 @@
  *
  * Para publicar cambios: incrementa CACHE_VERSION.
  */
-const CACHE_VERSION = 'mybarber-v5';
+const CACHE_VERSION = 'donbarber-v7';
 const OFFLINE_URL = '/offline.html';
 
 const PRECACHE = [
     OFFLINE_URL,
     '/manifest.webmanifest',
-    '/mybarberlogo.png',
+    '/donbarberlogo.png',
     '/icons/icon-192.png',
     '/icons/icon-512.png',
     '/icons/apple-touch-icon.png',
@@ -51,7 +51,7 @@ function isStaticAsset(url) {
     return (
         url.pathname.startsWith('/build/') ||
         url.pathname.startsWith('/icons/') ||
-        url.pathname === '/mybarberlogo.png' ||
+        url.pathname === '/donbarberlogo.png' ||
         url.pathname === '/manifest.webmanifest' ||
         /\.(css|js|mjs|png|jpe?g|svg|webp|gif|ico|woff2?|ttf|eot)$/.test(url.pathname)
     );
