@@ -16,7 +16,7 @@
 
     <div class="max-w-2xl mx-auto space-y-4" x-data="{
         serviceId: '{{ old('service_id') }}',
-        barberId: '{{ old('barber_id', auth()->user()->isBarber() ? auth()->id() : '') }}',
+        barberId: '{{ old('barber_id', ($singleBarberMode || auth()->user()->isBarber()) ? auth()->id() : '') }}',
         amountEntry: {{ (float) old('price', 0) }},
         paymentCurrency: '{{ old('payment_currency', 'USD') }}',
         paymentMethod: '{{ old('payment_method', '') }}',
@@ -101,20 +101,20 @@
             <x-card>
                 <div class="p-4 sm:p-5 space-y-3">
                     <div class="flex items-center justify-between">
-                        <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">1. Seleccionar barbero</span>
+                        <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">{{ $singleBarberMode ? '1. Barbero' : '1. Seleccionar barbero' }}</span>
                         <span class="flex items-center gap-1 text-xs font-semibold text-brand-600">
                             <x-icon name="users" class="h-4 w-4" /> En silla
                         </span>
                     </div>
 
-                    @if (auth()->user()->isBarber())
+                    @if ($singleBarberMode || auth()->user()->isBarber())
                         <div class="flex items-center gap-3 rounded-xl bg-brand-50 p-3 ring-1 ring-brand-200">
                             <span class="flex h-10 w-10 items-center justify-center rounded-full bg-brand-500 text-sm font-bold text-white">
                                 {{ mb_strtoupper(mb_substr(auth()->user()->name, 0, 2)) }}
                             </span>
                             <div>
                                 <p class="text-sm font-semibold text-slate-700">{{ auth()->user()->name }}</p>
-                                <p class="text-xs text-brand-600">Registrando tu propio corte</p>
+                                <p class="text-xs text-brand-600">{{ $singleBarberMode ? 'Registrando a tu nombre' : 'Registrando tu propio corte' }}</p>
                             </div>
                         </div>
                     @else

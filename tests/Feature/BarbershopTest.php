@@ -779,6 +779,47 @@ class BarbershopTest extends TestCase
         $this->assertDatabaseCount('sales', 0);
     }
 
+    public function test_admin_can_enable_single_person_mode_from_settings(): void
+    {
+        $admin = $this->admin();
+
+        $this->actingAs($admin)
+            ->get(route('settings.edit'))
+            ->assertOk()
+            ->assertSee('Barbería de una sola persona');
+
+        $this->actingAs($admin)->put(route('settings.update'), [
+            'shop_name' => 'DonBarber Solo',
+            'commission_rate' => 40,
+            'dolar_api_source' => 'oficial',
+            'single_barber_mode' => '1',
+        ])->assertRedirect(route('settings.edit'));
+
+        $this->assertSame('1', Setting::query()->where('key', 'single_barber_mode')->value('value'));
+    }
+
+    public function test_single_person_shop_registers_a_cut_without_selecting_a_barber(): void
+    {
+        $this->setting('commission_rate', 40);
+        $this->setting('single_barber_mode', '1');
+        $service = $this->service(10);
+        $admin = $this->admin();
+
+        $this->actingAs($admin)
+            ->get(route('sales.create-service'))
+            ->assertOk()
+            ->assertSee('Registrando a tu nombre')
+            ->assertDontSee('Seleccionar barbero');
+
+        $this->actingAs($admin)->post(route('sales.store-service'), [
+            'service_id' => $service->id,
+            'payment_currency' => 'USD',
+        ])->assertRedirect();
+
+        $sale = Sale::firstOrFail();
+        $this->assertSame($admin->id, $sale->barber_id);
+    }
+
     public function test_admin_can_grant_and_revoke_a_barbers_register_permission(): void
     {
         $admin = $this->admin();

@@ -41,6 +41,16 @@ if (! function_exists('setting')) {
     }
 }
 
+if (! function_exists('single_barber_mode')) {
+    /**
+     * Whether the shop is operated by a single person (the administrator acts as the barber).
+     */
+    function single_barber_mode(): bool
+    {
+        return (string) setting('single_barber_mode', '0') === '1';
+    }
+}
+
 if (! function_exists('exchange_rate')) {
     function exchange_rate(): float
     {
@@ -59,7 +69,6 @@ if (! function_exists('usd')) {
         return $symbol ? '$ '.$formatted : $formatted;
     }
 }
-
 
 if (! function_exists('company_timezone')) {
     function company_timezone(?Company $company = null): string

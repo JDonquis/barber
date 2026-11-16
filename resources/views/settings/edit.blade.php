@@ -101,6 +101,33 @@
             @csrf
             @method('PUT')
 
+            <!-- Modo de operación -->
+            <section class="space-y-4 rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+                <div class="flex items-center gap-3">
+                    <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-100 text-brand-600">
+                        <x-icon name="user" class="h-5 w-5" />
+                    </span>
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-800">Modo de operación</h3>
+                        <p class="text-xs text-slate-400">Define cómo se registran los cortes en el estudio</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between gap-3 rounded-xl bg-slate-50 p-3 ring-1 ring-slate-100">
+                    <div class="pr-3">
+                        <span class="text-sm font-semibold text-slate-700">Barbería de una sola persona</span>
+                        <span class="block text-xs text-slate-400">El administrador es el barbero. Al registrar un corte no se pedirá seleccionar barbero.</span>
+                    </div>
+                    <label class="relative inline-flex shrink-0 cursor-pointer items-center">
+                        <input type="hidden" name="single_barber_mode" value="0">
+                        <input type="checkbox" name="single_barber_mode" value="1" class="peer sr-only"
+                               @checked((string) old('single_barber_mode', $values['single_barber_mode'] ?? '0') === '1')>
+                        <span class="relative h-7 w-12 rounded-full bg-slate-200 transition-colors after:absolute after:left-[2px] after:top-[2px] after:h-6 after:w-6 after:rounded-full after:bg-white after:shadow after:transition-all after:content-[''] peer-checked:bg-brand-500 peer-checked:after:translate-x-full"></span>
+                    </label>
+                </div>
+                <x-input-error :messages="$errors->get('single_barber_mode')" />
+            </section>
+
             <!-- Ficha del establecimiento -->
             <section class="space-y-4 rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
                 <div class="flex items-center gap-3">

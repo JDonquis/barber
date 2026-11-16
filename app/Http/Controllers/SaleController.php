@@ -103,19 +103,27 @@ class SaleController extends Controller
         return view('sales.index', compact('sales', 'barbers', 'summary', 'from', 'to', 'period', 'expensesUsd'));
     }
 
-    public function createService()
+    public function createService(Request $request)
     {
+        $user = $request->user();
+        $singleBarberMode = $user->isAdmin() && single_barber_mode();
         $commissionRate = (float) app(SettingService::class)->get('commission_rate', 0);
         $barbers = User::query()->active()->barbers()->orderBy('name')->get();
+        $barberRates = $barbers
+            ->mapWithKeys(fn (User $barber) => [$barber->id => $barber->effectiveCommissionRate($commissionRate)])
+            ->all();
+
+        if ($singleBarberMode) {
+            $barberRates[$user->id] = $user->effectiveCommissionRate($commissionRate);
+        }
 
         return view('sales.create-service', [
             'services' => Service::query()->active()->orderBy('name')->get(),
             'barbers' => $barbers,
-            'barberRates' => $barbers
-                ->mapWithKeys(fn (User $barber) => [$barber->id => $barber->effectiveCommissionRate($commissionRate)])
-                ->all(),
+            'barberRates' => $barberRates,
             'paymentMethods' => payment_methods(),
             'commissionRate' => $commissionRate,
+            'singleBarberMode' => $singleBarberMode,
         ]);
     }
 
@@ -131,7 +139,7 @@ class SaleController extends Controller
             'notes' => ['nullable', 'string', 'max:255'],
         ]);
 
-        if ($request->user()->isBarber()) {
+        if ($request->user()->isBarber() || ($request->user()->isAdmin() && single_barber_mode())) {
             $data['barber_id'] = $request->user()->id;
         }
 

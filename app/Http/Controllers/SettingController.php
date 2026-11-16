@@ -53,6 +53,7 @@ class SettingController extends Controller
             'barber_id' => ['nullable', 'integer', Rule::exists('users', 'id')->where('company_id', company_id())],
             'barber_commission_rate' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'barber_use_base' => ['nullable', 'boolean'],
+            'single_barber_mode' => ['nullable', 'boolean'],
         ]);
 
         $previousCurrency = $this->settings->get('local_currency', 'VES');
@@ -81,6 +82,7 @@ class SettingController extends Controller
             'dolar_api_source' => $data['dolar_api_source'],
             'exchange_rate_manual' => $data['exchange_rate_manual'] ?? '',
             'exchange_rate_fallback' => $data['exchange_rate_fallback'] ?? '',
+            'single_barber_mode' => $request->boolean('single_barber_mode') ? '1' : '0',
         ]);
 
         if ($company && $company->name !== $data['shop_name']) {
