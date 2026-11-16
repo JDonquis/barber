@@ -65,17 +65,119 @@
             try {
                 const response = await fetch(url.toString(), { headers: { 'X-Requested-With': 'XMLHttpRequest', Accept: 'text/html' } });
                 const doc = new DOMParser().parseFromString(await response.text(), 'text/html');
-                ['sales-summary', 'sales-filters', 'sales-results'].forEach((id) => {
+                ['sales-summary', 'sales-filters', 'sales-results', 'sales-pagination'].forEach((id) => {
                     const next = doc.getElementById(id);
                     const current = document.getElementById(id);
                     if (next && current) current.innerHTML = next.innerHTML;
                 });
+                this.syncRangeForm(doc);
                 window.history.replaceState({}, '', url.toString());
             } finally {
                 this.searching = false;
             }
+        },
+        syncRangeForm(doc) {
+            const nextRange = doc.getElementById('sales-range-form');
+            const currentRange = document.getElementById('sales-range-form');
+
+            if (! nextRange || ! currentRange) {
+                return;
+            }
+
+            currentRange.className = nextRange.className;
+
+            ['type', 'barber_id'].forEach((name) => {
+                let input = currentRange.querySelector(`input[type=hidden][name=${name}]`);
+                const nextInput = nextRange.querySelector(`input[type=hidden][name=${name}]`);
+
+                if (nextInput) {
+                    if (! input) {
+                        input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = name;
+                        currentRange.prepend(input);
+                    }
+
+                    input.value = nextInput.value;
+                } else if (input) {
+                    input.remove();
+                }
+            });
+
+            ['from', 'to'].forEach((id) => {
+                const nextInput = doc.getElementById(id);
+                const currentInput = document.getElementById(id);
+                if (nextInput && currentInput) currentInput.value = nextInput.value;
+            });
+
+            const nextClear = nextRange.querySelector('a[data-ajax-filter]');
+            const currentClear = currentRange.querySelector('a[data-ajax-filter]');
+            if (nextClear && currentClear) currentClear.href = nextClear.href;
+        },
+        onFilterClick(event) {
+            if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) {
+                return;
+            }
+
+            const link = event.target.closest('a[data-ajax-filter]');
+
+            if (! link) {
+                return;
+            }
+
+            event.preventDefault();
+            this.navigate(link.href);
+        },
+        submitRange() {
+            const form = this.$refs.rangeForm;
+
+            if (! form) {
+                return;
+            }
+
+            const url = new URL(form.action);
+
+            new FormData(form).forEach((value, key) => {
+                if (value === null || String(value) === '') {
+                    url.searchParams.delete(key);
+                } else {
+                    url.searchParams.set(key, value);
+                }
+            });
+
+            url.searchParams.delete('page');
+            this.navigate(url.toString());
+        },
+        async navigate(url) {
+            this.searching = true;
+            try {
+                const response = await fetch(url, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest', Accept: 'text/html' },
+                    credentials: 'same-origin',
+                });
+
+                if (! response.ok) {
+                    window.location.href = url;
+                    return;
+                }
+
+                const doc = new DOMParser().parseFromString(await response.text(), 'text/html');
+
+                ['sales-summary', 'sales-filters', 'sales-results', 'sales-pagination'].forEach((id) => {
+                    const next = doc.getElementById(id);
+                    const current = document.getElementById(id);
+                    if (next && current) current.innerHTML = next.innerHTML;
+                });
+
+                this.syncRangeForm(doc);
+                window.history.pushState({ ajax: true }, '', url);
+            } catch (error) {
+                window.location.href = url;
+            } finally {
+                this.searching = false;
+            }
         }
-    }">
+    }" @click="onFilterClick($event)">
         <!-- Encabezado -->
         <div class="flex items-center justify-between gap-3">
             <div>
@@ -121,7 +223,7 @@
                 <a href="{{ route('sales.create-product') }}"
                    class="flex h-[50px] items-center justify-center gap-2 rounded-xl bg-white px-3 text-sm font-bold text-brand-600 ring-1 ring-brand-200 shadow-sm transition hover:bg-brand-50 active:scale-95">
                     <x-icon name="bag" class="h-5 w-5 text-brand-500" />
-                    <span class="truncate">+ Venta retail</span>
+                    <span class="truncate">+ Venta de producto</span>
                 </a>
             @endif
         </div>
@@ -194,7 +296,7 @@
         <!-- Buscador y filtros (fijos al hacer scroll) -->
         <div class="sticky top-16 z-20 space-y-3 bg-slate-100 pb-2 pt-2">
         <!-- Búsqueda -->
-        <form method="GET" action="{{ route('sales.index') }}">
+        <form method="GET" action="{{ route('sales.index') }}" @submit.prevent="runSearch()">
             @foreach (['type', 'barber_id', 'period'] as $key)
                 @if (request()->filled($key))
                     <input type="hidden" name="{{ $key }}" value="{{ request($key) }}">
@@ -224,7 +326,7 @@
         </form>
 
         <!-- Rango de fechas -->
-        <form method="GET" action="{{ route('sales.index') }}" id="sales-range-form"
+        <form method="GET" action="{{ route('sales.index') }}" id="sales-range-form" x-ref="rangeForm" @submit.prevent="submitRange()"
               class="grid grid-cols-2 gap-3 rounded-xl bg-white p-3 shadow-sm ring-1 ring-slate-200 @unless ($rangeActive) hidden @endunless">
             <input type="hidden" name="search" :value="query">
             @foreach (['type', 'barber_id'] as $key)
@@ -245,7 +347,7 @@
             <button class="inline-flex items-center justify-center gap-2 rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-400">
                 <x-icon name="check" class="h-4 w-4" /> Aplicar
             </button>
-            <a href="{{ $q(['from' => null, 'to' => null, 'period' => null]) }}"
+            <a href="{{ $q(['from' => null, 'to' => null, 'period' => null]) }}" data-ajax-filter
                class="inline-flex items-center justify-center rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50">Limpiar</a>
         </form>
 
@@ -254,7 +356,7 @@
             <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
                 @foreach (['hoy' => 'Hoy', 'ayer' => 'Ayer', 'semana' => 'Esta semana', 'mes' => 'Este mes'] as $key => $label)
                     @php($isActive = $activePeriod === $key)
-                    <a href="{{ $isActive ? $q(['period' => 'all', 'from' => null, 'to' => null]) : $q(['period' => $key, 'from' => null, 'to' => null]) }}"
+                    <a href="{{ $isActive ? $q(['period' => 'all', 'from' => null, 'to' => null]) : $q(['period' => $key, 'from' => null, 'to' => null]) }}" data-ajax-filter
                        class="inline-flex h-8 items-center justify-center whitespace-nowrap rounded-full px-3.5 text-xs font-semibold transition active:scale-95
                               {{ $isActive ? 'bg-brand-500 text-white shadow-sm' : 'bg-white text-slate-500 ring-1 ring-slate-200 hover:text-slate-700' }}">
                         {{ $label }}
@@ -268,18 +370,18 @@
             </div>
 
             <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
-                <a href="{{ $q(['type' => null]) }}"
+                <a href="{{ $q(['type' => null]) }}" data-ajax-filter
                    class="flex h-7 items-center gap-1.5 whitespace-nowrap rounded-lg px-2.5 text-[11px] font-semibold
                           {{ ! $selectedType ? 'bg-slate-800 text-white' : 'bg-white text-slate-500 ring-1 ring-slate-200 hover:text-slate-700' }}">
                     <span class="h-1.5 w-1.5 rounded-full {{ ! $selectedType ? 'bg-brand-400' : 'bg-slate-300' }}"></span>
                     Todos ({{ (int) $summary->count }})
                 </a>
-                <a href="{{ $q(['type' => \App\Models\Sale::TYPE_SERVICE]) }}"
+                <a href="{{ $q(['type' => \App\Models\Sale::TYPE_SERVICE]) }}" data-ajax-filter
                    class="flex h-7 items-center gap-1.5 whitespace-nowrap rounded-lg px-2.5 text-[11px] font-semibold
                           {{ $isService ? 'bg-slate-800 text-white' : 'bg-white text-slate-500 ring-1 ring-slate-200 hover:text-slate-700' }}">
                     <x-icon name="scissors" class="h-3.5 w-3.5" /> Cortes ({{ (int) $summary->service_count }})
                 </a>
-                <a href="{{ $q(['type' => \App\Models\Sale::TYPE_PRODUCT]) }}"
+                <a href="{{ $q(['type' => \App\Models\Sale::TYPE_PRODUCT]) }}" data-ajax-filter
                    class="flex h-7 items-center gap-1.5 whitespace-nowrap rounded-lg px-2.5 text-[11px] font-semibold
                           {{ $isProduct ? 'bg-slate-800 text-white' : 'bg-white text-slate-500 ring-1 ring-slate-200 hover:text-slate-700' }}">
                     <x-icon name="bag" class="h-3.5 w-3.5" /> Productos ({{ (int) $summary->product_count }})
@@ -288,13 +390,13 @@
 
             @unless (auth()->user()->isBarber())
                 <div class="flex items-center gap-2 overflow-x-auto no-scrollbar pb-0.5">
-                    <a href="{{ $q(['barber_id' => null]) }}"
+                    <a href="{{ $q(['barber_id' => null]) }}" data-ajax-filter
                        class="flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold transition
                               {{ ! request('barber_id') ? 'bg-brand-100 text-brand-700' : 'bg-white text-slate-500 ring-1 ring-slate-200 hover:text-slate-700' }}">
                         <x-icon name="users" class="h-4 w-4" /> Todos
                     </a>
                     @foreach ($barbers as $barber)
-                        <a href="{{ $q(['barber_id' => $barber->id]) }}"
+                        <a href="{{ $q(['barber_id' => $barber->id]) }}" data-ajax-filter
                            class="flex shrink-0 items-center gap-1.5 rounded-full px-2 py-1 text-xs transition
                                   {{ (int) request('barber_id') === $barber->id ? 'bg-brand-100 font-semibold text-brand-700' : 'bg-white text-slate-500 ring-1 ring-slate-200 hover:text-slate-700' }}">
                             <span class="flex h-5 w-5 items-center justify-center rounded-full bg-slate-200 text-[10px] font-bold text-slate-600">
@@ -370,20 +472,22 @@
         </div>
 
         <!-- Paginación -->
-        @if ($sales->hasPages() || $sales->total() > 0)
-            <div class="flex flex-col items-center gap-2 pb-2">
-                <span class="text-xs text-slate-400">
-                    Mostrando {{ $sales->firstItem() }}-{{ $sales->lastItem() }} de {{ $sales->total() }} ventas
-                </span>
-                @if ($sales->hasMorePages())
-                    <a href="{{ $sales->nextPageUrl() }}" data-load-more
-                       class="flex w-full items-center justify-center gap-2 rounded-xl bg-white py-3 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-slate-200 transition hover:bg-slate-50">
-                        <x-icon name="chevron-down" class="h-4 w-4 text-brand-500" />
-                        Cargar transacciones anteriores
-                    </a>
-                @endif
-            </div>
-        @endif
+        <div id="sales-pagination">
+            @if ($sales->hasPages() || $sales->total() > 0)
+                <div class="flex flex-col items-center gap-2 pb-2">
+                    <span class="text-xs text-slate-400">
+                        Mostrando {{ $sales->firstItem() }}-{{ $sales->lastItem() }} de {{ $sales->total() }} ventas
+                    </span>
+                    @if ($sales->hasMorePages())
+                        <a href="{{ $sales->nextPageUrl() }}" data-load-more
+                           class="flex w-full items-center justify-center gap-2 rounded-xl bg-white py-3 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-slate-200 transition hover:bg-slate-50">
+                            <x-icon name="chevron-down" class="h-4 w-4 text-brand-500" />
+                            Cargar transacciones anteriores
+                        </a>
+                    @endif
+                </div>
+            @endif
+        </div>
         </div>
     </div>
 
