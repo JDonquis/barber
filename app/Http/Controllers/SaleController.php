@@ -79,6 +79,8 @@ class SaleController extends Controller
             ->selectRaw('COALESCE(SUM(total_ves), 0) as total_ves')
             ->selectRaw('COALESCE(SUM(shop_amount_usd), 0) as shop_usd')
             ->selectRaw('COALESCE(SUM(barber_commission_usd), 0) as commission_usd')
+            ->selectRaw('COALESCE(SUM(tip_usd), 0) as tips_usd')
+            ->selectRaw('COALESCE(SUM(barber_commission_usd + tip_usd), 0) as earnings_usd')
             ->selectRaw('COALESCE(SUM(CASE WHEN type = ? THEN total_usd ELSE 0 END), 0) as service_usd', [Sale::TYPE_SERVICE])
             ->selectRaw('COALESCE(SUM(CASE WHEN type = ? THEN total_ves ELSE 0 END), 0) as service_ves', [Sale::TYPE_SERVICE])
             ->selectRaw('COALESCE(SUM(CASE WHEN type = ? THEN shop_amount_usd ELSE 0 END), 0) as service_shop_usd', [Sale::TYPE_SERVICE])
@@ -133,6 +135,7 @@ class SaleController extends Controller
             'service_id' => ['required', Rule::exists('services', 'id')->where('company_id', company_id())],
             'barber_id' => ['nullable', Rule::exists('users', 'id')->where('company_id', company_id())],
             'price' => ['nullable', 'numeric', 'min:0.01', 'max:99999.99'],
+            'tip_usd' => ['nullable', 'numeric', 'min:0', 'max:99999.99'],
             'update_service_price' => ['nullable', 'boolean'],
             'payment_method' => ['nullable', 'string', 'max:60'],
             'payment_currency' => ['required', 'in:USD,VES,COP'],

@@ -70,6 +70,12 @@
                 <x-icon name="wallet" class="h-5 w-5" />
                 Préstamos
             </a>
+            @if ((string) setting('retentions_enabled', '0') === '1')
+                <a href="{{ route('retentions.index') }}" class="{{ $linkClass(request()->routeIs('retentions.*')) }}">
+                    <x-icon name="shield-check" class="h-5 w-5" />
+                    Retenciones
+                </a>
+            @endif
             <a href="{{ route('payments.index') }}" class="{{ $linkClass(request()->routeIs('payments.*')) }}">
                 <x-icon name="card" class="h-5 w-5" />
                 Pagos

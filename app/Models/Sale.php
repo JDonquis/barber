@@ -32,6 +32,7 @@ class Sale extends Model
         'total_usd',
         'total_ves',
         'barber_commission_usd',
+        'tip_usd',
         'shop_amount_usd',
         'payment_method',
         'payment_currency',
@@ -46,6 +47,7 @@ class Sale extends Model
         'total_usd' => 'decimal:2',
         'total_ves' => 'decimal:2',
         'barber_commission_usd' => 'decimal:2',
+        'tip_usd' => 'decimal:2',
         'shop_amount_usd' => 'decimal:2',
         'sold_at' => 'datetime',
     ];
@@ -78,5 +80,13 @@ class Sale extends Model
     public function isCancelled(): bool
     {
         return $this->status === self::STATUS_CANCELLED;
+    }
+
+    /**
+     * Total earnings for the barber: commission plus tips.
+     */
+    public function barberEarningsUsd(): float
+    {
+        return round((float) $this->barber_commission_usd + (float) $this->tip_usd, 2);
     }
 }

@@ -6,6 +6,7 @@
     $waText = urlencode(
         "Recibo {$sale->code}\n".
         $items->map(fn ($item) => "{$item->name} x{$item->quantity}: ".usd($item->line_total_usd))->join("\n").
+        ((float) $sale->tip_usd > 0 ? "\nPropina: ".usd($sale->tip_usd) : '').
         "\nTotal: ".usd($sale->total_usd).' ('.ves($sale->total_ves).')'
     );
 @endphp
@@ -134,6 +135,20 @@
                         </span>
                         <span class="font-mono font-bold text-emerald-600">{{ usd($sale->barber_commission_usd) }}</span>
                     </div>
+                    @if ((float) $sale->tip_usd > 0)
+                        <div class="flex items-center justify-between border-t border-slate-100 py-1">
+                            <span class="flex items-center gap-2 text-slate-400">
+                                <x-icon name="dollar" class="h-4 w-4 shrink-0 text-emerald-500" /> Propina
+                            </span>
+                            <span class="font-mono font-bold text-emerald-600">{{ usd($sale->tip_usd) }}</span>
+                        </div>
+                        <div class="flex items-center justify-between border-t border-slate-100 py-1">
+                            <span class="flex items-center gap-2 text-slate-400">
+                                <x-icon name="check" class="h-4 w-4 shrink-0 text-emerald-600" /> Ganancia barbero
+                            </span>
+                            <span class="font-mono font-bold text-emerald-700">{{ usd($sale->barberEarningsUsd()) }}</span>
+                        </div>
+                    @endif
                     <div class="flex items-center justify-between border-t border-slate-100 py-1">
                         <span class="flex items-center gap-2 text-slate-400">
                             <x-icon name="dollar" class="h-4 w-4 shrink-0 text-brand-500" /> Monto estudio ({{ rtrim(rtrim(number_format($studioPct, 2, ',', '.'), '0'), ',') }}%)

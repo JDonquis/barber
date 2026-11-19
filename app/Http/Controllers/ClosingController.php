@@ -7,6 +7,7 @@ use App\Models\Expense;
 use App\Models\Sale;
 use App\Models\User;
 use App\Services\ClosingService;
+use App\Services\RetentionService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -23,10 +24,26 @@ class ClosingController extends Controller
         $monthStart = now()->startOfMonth();
         $monthRevenue = (float) Sale::query()->completed()->where('sold_at', '>=', $monthStart)->sum('total_usd');
         $monthCommission = (float) Sale::query()->completed()->where('sold_at', '>=', $monthStart)->sum('barber_commission_usd');
+        $monthTips = (float) Sale::query()->completed()->where('sold_at', '>=', $monthStart)->sum('tip_usd');
         $monthExpenses = (float) Expense::query()->betweenDates($monthStart, now()->endOfMonth())->sum('amount_usd');
-        $monthShopAmount = round($monthRevenue - $monthCommission - $monthExpenses, 2);
 
-        return view('closings.index', compact('closings', 'barbers', 'monthRevenue', 'monthCommission', 'monthExpenses', 'monthShopAmount'));
+        $retentionService = app(RetentionService::class);
+        $monthRetentions = 0.0;
+        $monthBarberIds = Sale::query()
+            ->completed()
+            ->where('sold_at', '>=', $monthStart)
+            ->whereNotNull('barber_id')
+            ->distinct()
+            ->pluck('barber_id');
+
+        foreach (User::query()->whereIn('id', $monthBarberIds)->get() as $monthBarber) {
+            $monthRetentions += $retentionService->forBarber($monthBarber, $monthStart, now()->endOfDay())['total_usd'];
+        }
+
+        $monthRetentions = round($monthRetentions, 2);
+        $monthShopAmount = round($monthRevenue - $monthCommission - $monthTips + $monthRetentions - $monthExpenses, 2);
+
+        return view('closings.index', compact('closings', 'barbers', 'monthRevenue', 'monthCommission', 'monthTips', 'monthRetentions', 'monthExpenses', 'monthShopAmount'));
     }
 
     public function generate(Request $request)

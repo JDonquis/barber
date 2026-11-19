@@ -54,6 +54,7 @@ class SettingController extends Controller
             'barber_commission_rate' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'barber_use_base' => ['nullable', 'boolean'],
             'single_barber_mode' => ['nullable', 'boolean'],
+            'retentions_enabled' => ['nullable', 'boolean'],
         ]);
 
         $previousCurrency = $this->settings->get('local_currency', 'VES');
@@ -83,6 +84,7 @@ class SettingController extends Controller
             'exchange_rate_manual' => $data['exchange_rate_manual'] ?? '',
             'exchange_rate_fallback' => $data['exchange_rate_fallback'] ?? '',
             'single_barber_mode' => $request->boolean('single_barber_mode') ? '1' : '0',
+            'retentions_enabled' => $request->boolean('retentions_enabled') ? '1' : '0',
         ]);
 
         if ($company && $company->name !== $data['shop_name']) {

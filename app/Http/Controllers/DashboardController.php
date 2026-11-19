@@ -65,12 +65,18 @@ class DashboardController extends Controller
         $monthExpenses = (float) Expense::query()->betweenDates($monthStart, $monthEnd)->sum('amount_usd');
 
         $todayShopGross = (float) (clone $todaySales)->sum('shop_amount_usd');
-        $monthShopGross = (float) (clone $monthQuery)->sum('total_usd') - (float) (clone $monthQuery)->sum('barber_commission_usd');
+        $monthShopGross = (float) (clone $monthQuery)->sum('shop_amount_usd');
+        $todayCommission = (float) (clone $todaySales)->sum('barber_commission_usd');
+        $todayTips = (float) (clone $todaySales)->sum('tip_usd');
+        $monthCommission = (float) (clone $monthQuery)->sum('barber_commission_usd');
+        $monthTips = (float) (clone $monthQuery)->sum('tip_usd');
 
         return view('dashboard', [
             'isBarber' => $isBarber,
             'todayTotal' => (clone $todaySales)->sum('total_usd'),
-            'todayCommission' => (clone $todaySales)->sum('barber_commission_usd'),
+            'todayCommission' => $todayCommission,
+            'todayTips' => $todayTips,
+            'todayEarnings' => round($todayCommission + $todayTips, 2),
             'todayShopAmount' => round($todayShopGross - $todayExpenses, 2),
             'todayExpenses' => $todayExpenses,
             'todayTickets' => (clone $todaySales)->count(),
@@ -79,7 +85,9 @@ class DashboardController extends Controller
             'productTotal' => $productTotal,
             'productCount' => (int) $productCount,
             'monthTotal' => (clone $monthQuery)->sum('total_usd'),
-            'monthCommission' => (clone $monthQuery)->sum('barber_commission_usd'),
+            'monthCommission' => $monthCommission,
+            'monthTips' => $monthTips,
+            'monthEarnings' => round($monthCommission + $monthTips, 2),
             'monthShopAmount' => round($monthShopGross - $monthExpenses, 2),
             'monthExpenses' => $monthExpenses,
             'lowStock' => $isBarber ? collect() : Product::query()->active()->lowStock()->orderBy('name')->get(),
@@ -94,8 +102,11 @@ class DashboardController extends Controller
         return User::query()->barbers()
             ->withCount(['barberSales as tickets' => fn ($q) => $q->completed()->whereBetween('sold_at', [$monthStart, $monthEnd])])
             ->withSum(['barberSales as commission' => fn ($q) => $q->completed()->whereBetween('sold_at', [$monthStart, $monthEnd])], 'barber_commission_usd')
-            ->orderByDesc('commission')
+            ->withSum(['barberSales as tips' => fn ($q) => $q->completed()->whereBetween('sold_at', [$monthStart, $monthEnd])], 'tip_usd')
+            ->get()
+            ->each(fn (User $barber) => $barber->earnings = round((float) $barber->commission + (float) $barber->tips, 2))
+            ->sortByDesc('earnings')
             ->take(5)
-            ->get();
+            ->values();
     }
 }

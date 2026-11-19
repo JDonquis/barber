@@ -4,6 +4,8 @@ namespace App\Services;
 
 use App\Models\Closing;
 use App\Models\Expense;
+use App\Models\Loan;
+use App\Models\LoanPayment;
 use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\User;
@@ -12,7 +14,10 @@ use Illuminate\Support\Collection;
 
 class ClosingService
 {
-    public function __construct(protected ExchangeRateService $rates) {}
+    public function __construct(
+        protected ExchangeRateService $rates,
+        protected RetentionService $retentions,
+    ) {}
 
     /**
      * Resolve the start/end dates for a period type.
@@ -58,6 +63,7 @@ class ClosingService
         $serviceTotal = 0.0;
         $productTotal = 0.0;
         $commission = 0.0;
+        $tips = 0.0;
         $totalVes = 0.0;
         $services = [];
         $products = [];
@@ -65,7 +71,9 @@ class ClosingService
         $byPayment = [];
 
         foreach ($sales as $sale) {
+            $tip = (float) $sale->tip_usd;
             $commission += (float) $sale->barber_commission_usd;
+            $tips += $tip;
             $totalVes += (float) $sale->total_ves;
 
             $payment = $sale->payment_method ?: 'Sin especificar';
@@ -77,8 +85,9 @@ class ClosingService
             $barberKey = $sale->barber_id ?? 0;
             $byBarber[$barberKey]['name'] = $sale->barber->name ?? 'Venta tienda';
             $byBarber[$barberKey]['tickets'] = ($byBarber[$barberKey]['tickets'] ?? 0) + 1;
-            $byBarber[$barberKey]['total_usd'] = ($byBarber[$barberKey]['total_usd'] ?? 0) + (float) $sale->total_usd;
+            $byBarber[$barberKey]['total_usd'] = ($byBarber[$barberKey]['total_usd'] ?? 0) + (float) $sale->total_usd - $tip;
             $byBarber[$barberKey]['commission_usd'] = ($byBarber[$barberKey]['commission_usd'] ?? 0) + (float) $sale->barber_commission_usd;
+            $byBarber[$barberKey]['tip_usd'] = ($byBarber[$barberKey]['tip_usd'] ?? 0) + $tip;
 
             foreach ($sale->items as $item) {
                 if ($item->item_type === SaleItem::TYPE_SERVICE) {
@@ -97,7 +106,37 @@ class ClosingService
             }
         }
 
-        $total = $serviceTotal + $productTotal;
+        $total = $serviceTotal + $productTotal + $tips;
+
+        $retentionsTotal = 0.0;
+        $retentionsByBarber = [];
+        $retentionItems = [];
+
+        $barberModels = $sales
+            ->map(fn (Sale $sale) => $sale->barber)
+            ->filter()
+            ->unique('id');
+
+        foreach ($barberModels as $barberModel) {
+            $retentionSummary = $this->retentions->forBarber($barberModel, $start, $end);
+
+            if ($retentionSummary['total_usd'] <= 0) {
+                continue;
+            }
+
+            $retentionsByBarber[$barberModel->id] = $retentionSummary['total_usd'];
+            $retentionsTotal += $retentionSummary['total_usd'];
+            $retentionItems = array_merge($retentionItems, $retentionSummary['items']);
+        }
+
+        foreach ($byBarber as $key => $row) {
+            $retention = $retentionsByBarber[$key] ?? 0.0;
+            $byBarber[$key]['retentions_usd'] = round($retention, 2);
+            $byBarber[$key]['earnings_usd'] = round(
+                (float) ($row['commission_usd'] ?? 0) + (float) ($row['tip_usd'] ?? 0) - $retention,
+                2
+            );
+        }
 
         $expenses = $barber
             ? collect()
@@ -108,17 +147,77 @@ class ClosingService
                 ->get();
         $expensesTotal = (float) $expenses->sum('amount_usd');
 
+        $loanStart = $start->toDateString();
+        $loanEnd = $end->toDateString();
+
+        $loans = Loan::query()
+            ->with([
+                'barber',
+                'payments' => fn ($query) => $query
+                    ->whereDate('payment_date', '>=', $loanStart)
+                    ->whereDate('payment_date', '<=', $loanEnd)
+                    ->orderBy('payment_date')
+                    ->orderBy('id'),
+            ])
+            ->when($barber, fn ($query) => $query->where('barber_id', $barber->id))
+            ->where(function ($query) use ($loanStart, $loanEnd) {
+                $query->whereDate('loan_date', '>=', $loanStart)
+                    ->whereDate('loan_date', '<=', $loanEnd)
+                    ->orWhereHas('payments', fn ($payments) => $payments
+                        ->whereDate('payment_date', '>=', $loanStart)
+                        ->whereDate('payment_date', '<=', $loanEnd));
+            })
+            ->orderBy('loan_date')
+            ->orderBy('id')
+            ->get();
+
+        $loanItems = $loans->map(function (Loan $loan) use ($loanStart, $loanEnd) {
+            $loanDate = $loan->loan_date->toDateString();
+            $periodPaid = (float) $loan->payments->sum('amount_usd');
+
+            return [
+                'id' => $loan->id,
+                'barber_name' => $loan->barber?->name ?? 'Barbero eliminado',
+                'loan_date' => $loan->loan_date->format('d/m/Y'),
+                'loaned_in_period' => $loanDate >= $loanStart && $loanDate <= $loanEnd,
+                'amount_usd' => (float) $loan->amount_usd,
+                'paid_usd' => (float) $loan->paid_usd,
+                'balance_usd' => (float) $loan->balance_usd,
+                'progress' => $loan->progress,
+                'period_paid_usd' => round($periodPaid, 2),
+                'payments' => $loan->payments->map(fn (LoanPayment $payment) => [
+                    'date' => $payment->payment_date->format('d/m/Y'),
+                    'amount_usd' => (float) $payment->amount_usd,
+                    'payment_method' => $payment->payment_method,
+                    'notes' => $payment->notes,
+                ])->values()->all(),
+            ];
+        })->values();
+
+        $loanTotals = [
+            'issued_usd' => round($loanItems->where('loaned_in_period', true)->sum('amount_usd'), 2),
+            'paid_usd' => round($loanItems->sum('period_paid_usd'), 2),
+            'outstanding_usd' => round($loanItems->sum('balance_usd'), 2),
+            'count' => $loanItems->count(),
+        ];
+
         return [
             'total_services_usd' => round($serviceTotal, 2),
             'total_products_usd' => round($productTotal, 2),
             'total_usd' => round($total, 2),
             'total_ves' => round($totalVes, 2),
             'barber_commission_usd' => round($commission, 2),
+            'barber_tips_usd' => round($tips, 2),
+            'barber_retentions_usd' => round($retentionsTotal, 2),
+            'barber_earnings_usd' => round($commission + $tips - $retentionsTotal, 2),
             'total_expenses_usd' => round($expensesTotal, 2),
-            'shop_amount_usd' => round($total - $commission - $expensesTotal, 2),
+            'shop_amount_usd' => round($total - $commission - $tips + $retentionsTotal - $expensesTotal, 2),
             'ticket_count' => $sales->count(),
             'details' => [
                 'barberos' => array_values($byBarber),
+                'retenciones' => array_values($retentionItems),
+                'prestamos' => $loanItems->all(),
+                'prestamos_totales' => $loanTotals,
                 'metodos_pago' => array_values($byPayment),
                 'servicios' => array_values($services),
                 'productos' => array_values($products),

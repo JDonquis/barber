@@ -32,6 +32,8 @@ class Closing extends Model
         'total_ves',
         'total_ves_reference',
         'barber_commission_usd',
+        'barber_tips_usd',
+        'barber_retentions_usd',
         'total_expenses_usd',
         'shop_amount_usd',
         'ticket_count',
@@ -55,6 +57,8 @@ class Closing extends Model
         'total_ves' => 'decimal:2',
         'total_ves_reference' => 'decimal:2',
         'barber_commission_usd' => 'decimal:2',
+        'barber_tips_usd' => 'decimal:2',
+        'barber_retentions_usd' => 'decimal:2',
         'total_expenses_usd' => 'decimal:2',
         'shop_amount_usd' => 'decimal:2',
         'ticket_count' => 'integer',
@@ -88,5 +92,21 @@ class Closing extends Model
     public function isClosed(): bool
     {
         return $this->status === self::STATUS_CLOSED;
+    }
+
+    /**
+     * Gross earnings for the barber before retentions.
+     */
+    public function barberGrossEarningsUsd(): float
+    {
+        return round((float) $this->barber_commission_usd + (float) $this->barber_tips_usd, 2);
+    }
+
+    /**
+     * Total amount payable to the barber: commission plus tips minus retentions.
+     */
+    public function barberEarningsUsd(): float
+    {
+        return round($this->barberGrossEarningsUsd() - (float) $this->barber_retentions_usd, 2);
     }
 }

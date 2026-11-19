@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Closing;
 use App\Models\Company;
 use App\Models\Loan;
 use App\Models\LoanPayment;
@@ -69,6 +70,77 @@ class LoanTest extends TestCase
         $this->assertSame(150.0, (float) $loan->amount_usd);
         $this->assertSame(4500.0, (float) $loan->amount_ves);
         $this->assertSame(Loan::STATUS_PENDING, $loan->status);
+    }
+
+    public function test_closing_report_includes_loans_and_payment_progress(): void
+    {
+        $admin = $this->admin();
+        $barber = $this->barber();
+        $loan = $this->loan($barber, ['amount_usd' => 100, 'paid_usd' => 40]);
+        $oldLoan = $this->loan($barber, [
+            'amount_usd' => 50,
+            'paid_usd' => 10,
+            'loan_date' => now()->subDays(10)->toDateString(),
+        ]);
+
+        LoanPayment::create([
+            'loan_id' => $loan->id,
+            'created_by' => $admin->id,
+            'amount_usd' => 40,
+            'amount_ves' => 1200,
+            'exchange_rate' => 30,
+            'payment_date' => now()->toDateString(),
+            'payment_method' => 'Efectivo USD',
+        ]);
+
+        LoanPayment::create([
+            'loan_id' => $oldLoan->id,
+            'created_by' => $admin->id,
+            'amount_usd' => 10,
+            'amount_ves' => 300,
+            'exchange_rate' => 30,
+            'payment_date' => now()->toDateString(),
+            'payment_method' => 'Pago móvil',
+        ]);
+
+        $this->actingAs($admin)->post(route('closings.generate'), [
+            'period_type' => 'diario',
+            'date' => now()->toDateString(),
+        ])->assertRedirect();
+
+        $closing = Closing::query()->whereNull('barber_id')->latest('id')->firstOrFail();
+        $loans = collect($closing->details['prestamos'] ?? []);
+        $totals = $closing->details['prestamos_totales'];
+
+        $this->assertCount(2, $loans);
+
+        $current = $loans->firstWhere('id', $loan->id);
+        $previous = $loans->firstWhere('id', $oldLoan->id);
+
+        $this->assertEquals(100.0, $current['amount_usd']);
+        $this->assertEquals(40.0, $current['paid_usd']);
+        $this->assertEquals(60.0, $current['balance_usd']);
+        $this->assertEquals(40.0, $current['period_paid_usd']);
+        $this->assertSame(40, $current['progress']);
+        $this->assertTrue($current['loaned_in_period']);
+        $this->assertFalse($previous['loaned_in_period']);
+
+        $this->assertEquals(100.0, $totals['issued_usd']);
+        $this->assertEquals(50.0, $totals['paid_usd']);
+        $this->assertEquals(100.0, $totals['outstanding_usd']);
+
+        $this->actingAs($admin)
+            ->get(route('closings.show', $closing))
+            ->assertOk()
+            ->assertSee('Préstamos del período')
+            ->assertSee($barber->name)
+            ->assertSee('Abonos en el período');
+
+        $this->actingAs($admin)
+            ->get(route('closings.print', $closing))
+            ->assertOk()
+            ->assertSee('Préstamos del período')
+            ->assertSee('Abonos del período');
     }
 
     public function test_loan_pages_render(): void

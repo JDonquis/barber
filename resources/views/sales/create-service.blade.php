@@ -18,6 +18,7 @@
         serviceId: '{{ old('service_id') }}',
         barberId: '{{ old('barber_id', ($singleBarberMode || auth()->user()->isBarber()) ? auth()->id() : '') }}',
         amountEntry: {{ (float) old('price', 0) }},
+        tipEntry: {{ (float) old('tip_usd', 0) }},
         paymentCurrency: '{{ old('payment_currency', 'USD') }}',
         paymentMethod: '{{ old('payment_method', '') }}',
         updateServicePrice: false,
@@ -35,6 +36,10 @@
             } else if (this.serviceId) {
                 this.amountEntry = this.toDisplay(this.servicePrice(this.serviceId));
             }
+
+            if (this.tipEntry && this.paymentCurrency === this.localCode) {
+                this.tipEntry = +(this.tipEntry * this.rate).toFixed(2);
+            }
         },
         servicePrice(id) { return this.services[id]?.price ?? 0; },
         toDisplay(usd) {
@@ -51,17 +56,25 @@
         setCurrency(currency) {
             if (currency === this.paymentCurrency) return;
             const usd = this.usdPrice;
+            const tip = this.tipUsd;
             this.paymentCurrency = currency;
             this.amountEntry = this.toDisplay(usd);
+            this.tipEntry = this.toDisplay(tip);
         },
         adjust(delta) {
             const step = this.paymentCurrency === this.localCode ? delta * this.rate : delta;
             this.amountEntry = Math.max(0, +(Number(this.amountEntry || 0) + step).toFixed(2));
         },
+        adjustTip(delta) {
+            const step = this.paymentCurrency === this.localCode ? delta * this.rate : delta;
+            this.tipEntry = Math.max(0, +(Number(this.tipEntry || 0) + step).toFixed(2));
+        },
         formatVes(value) {
             return this.localSymbol + ' ' + Number(value || 0).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         },
         get usdPrice() { return this.paymentCurrency === this.localCode ? Number(this.amountEntry || 0) / this.rate : Number(this.amountEntry || 0); },
+        get tipUsd() { return this.paymentCurrency === this.localCode ? Number(this.tipEntry || 0) / this.rate : Number(this.tipEntry || 0); },
+        get totalUsd() { return this.usdPrice + this.tipUsd; },
         get hasService() { return this.serviceId !== '' && this.serviceId !== null; },
         get basePrice() { return this.servicePrice(this.serviceId); },
         get serviceName() { return this.services[this.serviceId]?.name ?? ''; },
@@ -72,6 +85,7 @@
                 : this.commissionRate;
         },
         get barberUsd() { return this.usdPrice * this.effectiveCommissionRate / 100; },
+        get barberEarningsUsd() { return this.barberUsd + this.tipUsd; },
         get studioUsd() { return this.usdPrice - this.barberUsd; }
     }">
         <form method="POST" action="{{ route('sales.store-service') }}" class="space-y-4">
@@ -79,6 +93,7 @@
             <input type="hidden" name="service_id" :value="serviceId">
             <input type="hidden" name="barber_id" :value="barberId">
             <input type="hidden" name="price" :value="usdPrice.toFixed(2)">
+            <input type="hidden" name="tip_usd" :value="tipUsd.toFixed(2)">
             <input type="hidden" name="payment_method" :value="paymentMethod">
             <input type="hidden" name="payment_currency" :value="paymentCurrency">
 
@@ -223,6 +238,43 @@
                         </button>
                     </div>
 
+                    <div class="space-y-2 rounded-xl border border-dashed border-emerald-200 bg-emerald-50/50 p-3">
+                        <div class="flex items-center justify-between">
+                            <span class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-emerald-700">
+                                <x-icon name="dollar" class="h-4 w-4" /> Propina (opcional)
+                            </span>
+                            <span class="text-[11px] font-semibold text-emerald-700" x-text="'$' + tipUsd.toFixed(2)"></span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-lg font-bold text-emerald-600" x-text="paymentCurrency === localCode ? localSymbol : '$'"></span>
+                            <input id="tip" type="number" step="0.01" min="0" inputmode="decimal"
+                                   x-model.number="tipEntry"
+                                   class="h-10 w-full rounded-lg border border-emerald-200 bg-white px-3 text-lg font-bold text-slate-800 focus:border-emerald-500 focus:ring-emerald-500" />
+                            <span class="text-xs font-bold text-slate-400" x-text="paymentCurrency"></span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button type="button" @click="adjustTip(1)" class="flex-1 rounded-lg bg-white py-1.5 text-[12px] font-bold text-emerald-700 ring-1 ring-emerald-200 transition hover:bg-emerald-100 active:scale-95">+$1</button>
+                            <button type="button" @click="adjustTip(2)" class="flex-1 rounded-lg bg-white py-1.5 text-[12px] font-bold text-emerald-700 ring-1 ring-emerald-200 transition hover:bg-emerald-100 active:scale-95">+$2</button>
+                            <button type="button" @click="adjustTip(5)" class="flex-1 rounded-lg bg-white py-1.5 text-[12px] font-bold text-emerald-700 ring-1 ring-emerald-200 transition hover:bg-emerald-100 active:scale-95">+$5</button>
+                            <button type="button" @click="tipEntry = 0" class="flex w-10 items-center justify-center rounded-lg bg-white py-1.5 text-slate-500 ring-1 ring-emerald-200 transition hover:bg-emerald-100 active:scale-95" title="Quitar propina">
+                                <x-icon name="x" class="h-3.5 w-3.5" />
+                            </button>
+                        </div>
+                        <p class="text-[11px] text-emerald-700/80">La propina se suma completa a las ganancias del barbero.</p>
+                    </div>
+                    <x-input-error :messages="$errors->get('tip_usd')" />
+
+                    <div class="flex items-center justify-between rounded-xl bg-brand-50 px-4 py-3 ring-1 ring-brand-200">
+                        <div>
+                            <span class="block text-xs font-bold uppercase tracking-wider text-brand-700">Total a cobrar</span>
+                            <span class="text-[11px] text-brand-700/80">Servicio + propina</span>
+                        </div>
+                        <div class="text-right">
+                            <span class="block text-xl font-extrabold tracking-tight text-brand-700" x-text="'$' + totalUsd.toFixed(2)"></span>
+                            <span class="text-[11px] font-medium text-brand-700/80" x-text="formatVes(totalUsd * rate)"></span>
+                        </div>
+                    </div>
+
                     @if (auth()->user()->isAdmin())
                         <div x-show="priceChanged" x-cloak class="rounded-lg border border-brand-200 bg-brand-50 px-4 py-3">
                             <label class="flex cursor-pointer items-start gap-2.5">
@@ -275,7 +327,17 @@
                                 <x-icon name="scissors" class="h-3.5 w-3.5 text-emerald-500" />
                             </div>
                             <p class="text-[17px] font-extrabold text-slate-800" x-text="'$' + barberUsd.toFixed(2)">$0.00</p>
-                            <p class="text-[11px] text-slate-400" x-text="formatVes(barberUsd * rate)">0,00</p>
+                            <p class="text-[11px] text-slate-400" x-text="'Comisión · ' + formatVes(barberUsd * rate)">0,00</p>
+                            <div class="mt-1.5 space-y-0.5 border-t border-slate-200 pt-1.5">
+                                <div class="flex items-center justify-between text-[11px]">
+                                    <span class="text-slate-500">Propina</span>
+                                    <span class="font-semibold text-emerald-600" x-text="'$' + tipUsd.toFixed(2)"></span>
+                                </div>
+                                <div class="flex items-center justify-between text-[11px]">
+                                    <span class="font-semibold text-slate-600">Ganancia total</span>
+                                    <span class="font-extrabold text-emerald-700" x-text="'$' + barberEarningsUsd.toFixed(2)"></span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -319,7 +381,7 @@
                 <button type="submit"
                         class="flex w-full min-h-[52px] items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-500 to-brand-400 px-6 text-sm font-extrabold uppercase tracking-wide text-white shadow-lg shadow-brand-500/30 transition-all hover:opacity-95 active:scale-[0.985]">
                     <x-icon name="check" class="h-5 w-5" />
-                    <span>Confirmar y registrar ($<span x-text="usdPrice.toFixed(2)"></span>)</span>
+                    <span>Confirmar y registrar ($<span x-text="totalUsd.toFixed(2)"></span>)</span>
                 </button>
                 <a href="{{ route('sales.index') }}" class="flex items-center justify-center gap-1 py-1 text-sm text-slate-400 transition hover:text-slate-600">
                     <x-icon name="x" class="h-4 w-4" /> Cancelar

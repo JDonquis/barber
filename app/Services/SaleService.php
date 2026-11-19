@@ -34,15 +34,17 @@ class SaleService
         $barber = $barberId ? User::query()->find($barberId) : null;
         $commissionRate = $barber ? $barber->effectiveCommissionRate($baseRate) : $baseRate;
         $commission = round($total * $commissionRate / 100, 2);
+        $tip = round(max(0, (float) ($data['tip_usd'] ?? 0)), 2);
 
-        return DB::transaction(function () use ($service, $total, $commission, $commissionRate, $data, $registeredBy, $barberId) {
+        return DB::transaction(function () use ($service, $total, $tip, $commission, $commissionRate, $data, $registeredBy, $barberId) {
             $sale = $this->createSale([
                 'user_id' => $registeredBy->id,
                 'barber_id' => $barberId,
                 'type' => Sale::TYPE_SERVICE,
                 'commission_rate' => $commissionRate,
-                'total_usd' => $total,
+                'total_usd' => round($total + $tip, 2),
                 'barber_commission_usd' => $commission,
+                'tip_usd' => $tip,
                 'payment_method' => $data['payment_method'] ?? null,
                 'payment_currency' => $data['payment_currency'] ?? 'USD',
                 'notes' => $data['notes'] ?? null,
@@ -112,6 +114,7 @@ class SaleService
                 'commission_rate' => $commissionRate,
                 'total_usd' => $total,
                 'barber_commission_usd' => 0,
+                'tip_usd' => 0,
                 'payment_method' => $data['payment_method'] ?? null,
                 'payment_currency' => $data['payment_currency'] ?? 'USD',
                 'notes' => $data['notes'] ?? null,
@@ -185,6 +188,7 @@ class SaleService
         $rate = $this->rates->current();
         $total = (float) $attributes['total_usd'];
         $commission = (float) ($attributes['barber_commission_usd'] ?? 0);
+        $tip = (float) ($attributes['tip_usd'] ?? 0);
 
         $this->assertPeriodOpen(now());
 
@@ -192,7 +196,7 @@ class SaleService
             'code' => 'TMP-'.Str::uuid(),
             'exchange_rate' => $rate,
             'total_ves' => round($total * $rate, 2),
-            'shop_amount_usd' => round($total - $commission, 2),
+            'shop_amount_usd' => round($total - $commission - $tip, 2),
             'status' => Sale::STATUS_COMPLETED,
             'sold_at' => now(),
         ]);

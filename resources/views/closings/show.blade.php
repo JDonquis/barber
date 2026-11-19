@@ -6,6 +6,14 @@
         ->values();
     $methods = collect($closing->details['metodos_pago'] ?? []);
     $expenses = collect($closing->details['gastos'] ?? []);
+    $retentions = collect($closing->details['retenciones'] ?? []);
+    $loans = collect($closing->details['prestamos'] ?? []);
+    $loanTotals = $closing->details['prestamos_totales'] ?? [
+        'issued_usd' => 0,
+        'paid_usd' => 0,
+        'outstanding_usd' => 0,
+        'count' => $loans->count(),
+    ];
     $expensesTotal = (float) $closing->total_expenses_usd;
 
     $isBarberClosing = $closing->barber_id !== null;
@@ -13,8 +21,10 @@
 
     $serviceQty = (int) $services->sum('quantity');
     $productQty = (int) $products->sum('quantity');
+    $barberGross = $closing->barberGrossEarningsUsd();
+    $barberEarnings = $closing->barberEarningsUsd();
     $commissionPct = (float) $closing->total_usd > 0
-        ? (int) round((float) $closing->barber_commission_usd / (float) $closing->total_usd * 100)
+        ? (int) round($barberEarnings / (float) $closing->total_usd * 100)
         : 0;
 
     $methodIcon = function (?string $method) {
@@ -108,14 +118,14 @@
 
             <div class="flex flex-col justify-between rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
                 <div class="mb-2 flex items-center justify-between gap-2">
-                    <span class="truncate text-xs text-slate-400">{{ $isBarberClosing ? 'Comisión a pagar' : 'Comisiones' }}</span>
+                    <span class="truncate text-xs text-slate-400">{{ $isBarberClosing ? 'Ganancia a pagar' : 'Comisiones + propinas − retenciones' }}</span>
                     <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-emerald-600">
                         <x-icon name="users" class="h-4 w-4" />
                     </span>
                 </div>
-                <span class="truncate text-lg font-bold tracking-tight text-slate-800">{{ usd($closing->barber_commission_usd) }}</span>
+                <span class="truncate text-lg font-bold tracking-tight text-slate-800">{{ usd($barberEarnings) }}</span>
                 <span class="text-[11px] font-semibold text-emerald-600">
-                    {{ $isBarberClosing ? 'Total a liquidar' : 'A liquidar staff · '.$commissionPct.'%' }}
+                    {{ $isBarberClosing ? 'Comisión + propinas − retenciones' : 'A liquidar staff · '.$commissionPct.'%' }}
                 </span>
             </div>
 
@@ -140,10 +150,10 @@
                         </span>
                         <div>
                             <span class="text-xs font-bold uppercase tracking-wider text-emerald-700">Total a pagar a {{ $barberName }}</span>
-                            <span class="block text-[11px] text-emerald-700">Comisión por {{ $closing->ticket_count }} ticket(s) · Producción {{ usd($closing->total_usd) }}</span>
+                            <span class="block text-[11px] text-emerald-700">Comisión {{ usd($closing->barber_commission_usd) }} + propinas {{ usd($closing->barber_tips_usd) }} − retenciones {{ usd($closing->barber_retentions_usd) }} · {{ $closing->ticket_count }} ticket(s)</span>
                         </div>
                     </div>
-                    <span class="shrink-0 text-2xl font-extrabold tracking-tight text-emerald-700">{{ usd($closing->barber_commission_usd) }}</span>
+                    <span class="shrink-0 text-2xl font-extrabold tracking-tight text-emerald-700">{{ usd($barberEarnings) }}</span>
                 </div>
             @else
                 <div class="col-span-2 flex items-center justify-between gap-3 rounded-xl bg-emerald-50 p-4 shadow-sm ring-1 ring-emerald-200">
@@ -153,7 +163,7 @@
                         </span>
                         <div>
                             <span class="text-xs font-bold uppercase tracking-wider text-emerald-700">Monto tienda</span>
-                            <span class="block text-[11px] text-emerald-700">Ventas − comisiones − gastos</span>
+                            <span class="block text-[11px] text-emerald-700">Ventas − comisiones − propinas + retenciones − gastos</span>
                         </div>
                     </div>
                     <span class="shrink-0 text-2xl font-extrabold tracking-tight text-emerald-700">{{ usd($closing->shop_amount_usd) }}</span>
@@ -204,9 +214,26 @@
                             <span class="font-semibold text-slate-500">{{ ves($closing->total_ves_reference > 0 ? $closing->total_ves_reference : to_ves($closing->total_usd, (float) $closing->exchange_rate)) }}</span>
                         </div>
                         <div class="flex items-center justify-between border-t border-slate-200 pt-2">
-                            <span class="text-slate-500">{{ $isBarberClosing ? 'Comisión a pagar' : 'Comisiones barberos' }}</span>
+                            <span class="text-slate-500">{{ $isBarberClosing ? 'Comisión' : 'Comisiones barberos' }}</span>
                             <span class="font-semibold text-brand-600">- {{ usd($closing->barber_commission_usd) }}</span>
                         </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-slate-500">{{ $isBarberClosing ? 'Propinas' : 'Propinas barberos' }}</span>
+                            <span class="font-semibold text-emerald-600">- {{ usd($closing->barber_tips_usd) }}</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-slate-500">{{ $isBarberClosing ? 'Retenciones' : 'Retenciones barberos' }}</span>
+                            <span class="font-semibold text-rose-600">- {{ usd($closing->barber_retentions_usd) }}</span>
+                        </div>
+                        @if ($isBarberClosing)
+                            <div class="flex items-center justify-between border-t border-slate-200 pt-2">
+                                <div>
+                                    <span class="font-semibold text-emerald-700">Ganancia total</span>
+                                    <span class="block text-[10px] text-slate-400">Bruto: {{ usd($barberGross) }}</span>
+                                </div>
+                                <span class="font-extrabold text-emerald-700">{{ usd($barberEarnings) }}</span>
+                            </div>
+                        @endif
                         @unless ($isBarberClosing)
                             <div class="flex items-center justify-between">
                                 <span class="text-slate-500">Gastos del período</span>
@@ -237,6 +264,107 @@
                 <p class="rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-500">{{ $closing->notes }}</p>
             @endif
         </section>
+
+        @if ($loans->isNotEmpty())
+            <section class="space-y-3 rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
+                <div class="flex items-center justify-between">
+                    <span class="flex items-center gap-2 text-sm font-bold text-slate-800">
+                        <x-icon name="wallet" class="h-5 w-5 text-brand-500" /> Préstamos del período
+                    </span>
+                    <span class="text-xs text-slate-400">{{ $loanTotals['count'] ?? $loans->count() }} préstamo(s)</span>
+                </div>
+
+                <div class="grid grid-cols-3 gap-2">
+                    <div class="rounded-lg bg-brand-50 p-2.5 text-center ring-1 ring-brand-100">
+                        <span class="block text-[10px] font-bold uppercase tracking-wide text-brand-700">Prestado</span>
+                        <span class="mt-0.5 block text-sm font-extrabold text-brand-700">{{ usd($loanTotals['issued_usd'] ?? 0) }}</span>
+                    </div>
+                    <div class="rounded-lg bg-emerald-50 p-2.5 text-center ring-1 ring-emerald-100">
+                        <span class="block text-[10px] font-bold uppercase tracking-wide text-emerald-700">Abonos período</span>
+                        <span class="mt-0.5 block text-sm font-extrabold text-emerald-700">{{ usd($loanTotals['paid_usd'] ?? 0) }}</span>
+                    </div>
+                    <div class="rounded-lg bg-amber-50 p-2.5 text-center ring-1 ring-amber-100">
+                        <span class="block text-[10px] font-bold uppercase tracking-wide text-amber-700">Por cobrar</span>
+                        <span class="mt-0.5 block text-sm font-extrabold text-amber-700">{{ usd($loanTotals['outstanding_usd'] ?? 0) }}</span>
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    @foreach ($loans as $loan)
+                        <div class="rounded-xl bg-slate-50 p-3">
+                            <div class="flex items-start justify-between gap-3">
+                                <div class="min-w-0">
+                                    <div class="flex flex-wrap items-center gap-1.5">
+                                        <span class="truncate text-sm font-semibold text-slate-700">{{ $loan['barber_name'] ?? 'Barbero' }}</span>
+                                        <span class="rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold text-slate-500 ring-1 ring-slate-200">
+                                            {{ $loan['loan_date'] ?? '' }}
+                                        </span>
+                                        @unless ($loan['loaned_in_period'] ?? true)
+                                            <span class="rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-sky-700">Anterior</span>
+                                        @endunless
+                                    </div>
+                                    <p class="mt-1 text-[11px] text-slate-400">
+                                        Prestado {{ usd($loan['amount_usd'] ?? 0) }} · Pagado {{ usd($loan['paid_usd'] ?? 0) }} · Saldo {{ usd($loan['balance_usd'] ?? 0) }}
+                                    </p>
+                                </div>
+                                <span class="shrink-0 text-sm font-extrabold {{ ($loan['balance_usd'] ?? 0) > 0 ? 'text-amber-600' : 'text-emerald-600' }}">
+                                    {{ usd($loan['balance_usd'] ?? 0) }}
+                                </span>
+                            </div>
+
+                            <div class="mt-2 h-1.5 overflow-hidden rounded-full bg-white ring-1 ring-slate-200">
+                                <div class="h-full rounded-full bg-brand-500" style="width: {{ (int) ($loan['progress'] ?? 0) }}%"></div>
+                            </div>
+                            <div class="mt-1 flex items-center justify-between text-[10px] text-slate-400">
+                                <span>Progreso de pago</span>
+                                <span>{{ (int) ($loan['progress'] ?? 0) }}%</span>
+                            </div>
+
+                            @if (! empty($loan['payments']))
+                                <div class="mt-2 space-y-1 border-t border-slate-200 pt-2">
+                                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Abonos en el período</span>
+                                    @foreach ($loan['payments'] as $payment)
+                                        <div class="flex items-center justify-between gap-2 text-[11px]">
+                                            <span class="text-slate-500">
+                                                {{ $payment['date'] ?? '' }}
+                                                @if (! empty($payment['payment_method']))
+                                                    · {{ $payment['payment_method'] }}
+                                                @endif
+                                            </span>
+                                            <span class="font-semibold text-emerald-600">{{ usd($payment['amount_usd'] ?? 0) }}</span>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @endif
+                        </div>
+                    @endforeach
+                </div>
+            </section>
+        @endif
+
+        @if ($retentions->isNotEmpty())
+            <section class="space-y-3 rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
+                <div class="flex items-center justify-between">
+                    <span class="flex items-center gap-2 text-sm font-bold text-slate-800">
+                        <x-icon name="shield-check" class="h-5 w-5 text-rose-500" /> Retenciones aplicadas
+                    </span>
+                    <span class="text-sm font-extrabold text-rose-600">- {{ usd($closing->barber_retentions_usd) }}</span>
+                </div>
+                <div class="space-y-1.5">
+                    @foreach ($retentions as $row)
+                        <div class="flex items-center justify-between gap-2 rounded-lg bg-slate-50 px-3 py-2.5">
+                            <div class="min-w-0">
+                                <p class="truncate text-sm font-semibold text-slate-700">{{ $row['name'] }}</p>
+                                <p class="text-[11px] text-slate-400">
+                                    {{ $isBarberClosing ? '' : (($row['barber_name'] ?? 'Barbero').' · ') }}{{ $row['frequency_label'] ?? '' }} · {{ $row['days'] ?? '' }} día(s)
+                                </p>
+                            </div>
+                            <span class="shrink-0 text-sm font-bold text-rose-600">- {{ usd($row['applied_usd'] ?? 0) }}</span>
+                        </div>
+                    @endforeach
+                </div>
+            </section>
+        @endif
 
         <!-- Servicios y productos vendidos -->
         <section class="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-slate-200">
@@ -313,9 +441,14 @@
                             </div>
                             <span class="rounded-full bg-white px-2 py-0.5 text-[11px] font-semibold text-slate-500 ring-1 ring-slate-200">{{ $row['tickets'] }} tickets</span>
                         </div>
-                        <div class="mt-1.5 flex items-center justify-between text-xs">
+                        <div class="mt-1.5 flex flex-wrap items-center justify-between gap-1 text-xs">
                             <span class="text-slate-400">Producción: <strong class="font-bold text-slate-600">{{ usd($row['total_usd']) }}</strong></span>
                             <span class="font-semibold text-emerald-600">Comisión {{ usd($row['commission_usd']) }}</span>
+                        </div>
+                        <div class="mt-1 flex flex-wrap items-center justify-between gap-1 text-xs">
+                            <span class="font-semibold text-emerald-600">Propinas {{ usd($row['tip_usd'] ?? 0) }}</span>
+                            <span class="font-semibold text-rose-600">Retenciones {{ usd($row['retentions_usd'] ?? 0) }}</span>
+                            <span class="font-bold text-emerald-700">Ganancia {{ usd($row['earnings_usd'] ?? ($row['commission_usd'] + ($row['tip_usd'] ?? 0))) }}</span>
                         </div>
                     </div>
                 @empty

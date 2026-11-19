@@ -1,5 +1,5 @@
 @php
-    $maxCommission = $topBarbers->max('commission') ?: 1;
+    $maxCommission = $topBarbers->max('earnings') ?: 1;
 @endphp
 
 <x-app-layout>
@@ -44,13 +44,13 @@
 
             <div class="flex flex-col justify-between rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
                 <div class="mb-2 flex items-center justify-between">
-                    <span class="text-xs font-medium text-slate-400">Comisión hoy</span>
+                    <span class="text-xs font-medium text-slate-400">{{ $isBarber ? 'Ganancias hoy' : 'Comisiones + propinas' }}</span>
                     <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-100 text-brand-600">
                         <x-icon name="users" class="h-5 w-5" />
                     </span>
                 </div>
-                <span class="text-xl font-extrabold tracking-tight text-slate-800">{{ usd($todayCommission) }}</span>
-                <span class="mt-0.5 text-[11px] text-brand-600">{{ $isBarber ? 'Tu comisión del día' : 'Total barberos' }}</span>
+                <span class="text-xl font-extrabold tracking-tight text-slate-800">{{ usd($todayEarnings) }}</span>
+                <span class="mt-0.5 text-[11px] text-brand-600">Comisión {{ usd($todayCommission) }} · Propinas {{ usd($todayTips) }}</span>
             </div>
 
             <div class="flex flex-col justify-between rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
@@ -212,7 +212,7 @@
                         <span class="flex items-center gap-2 text-sm font-bold text-slate-800">
                             <x-icon name="chart" class="h-5 w-5 text-brand-500" /> Ranking de barberos
                         </span>
-                        <span class="text-[11px] text-slate-400">Calculado por comisión neta generada</span>
+                        <span class="text-[11px] text-slate-400">Calculado por ganancias: comisión + propinas</span>
                     </div>
                     <span class="rounded bg-slate-100 px-2 py-0.5 text-[11px] font-bold text-brand-600">Mes en curso</span>
                 </div>
@@ -221,7 +221,7 @@
                     @forelse ($topBarbers as $index => $barber)
                         @php($words = preg_split('/\s+/', trim($barber->name)))
                         @php($initials = mb_strtoupper(mb_substr($words[0] ?? '', 0, 1).mb_substr($words[1] ?? '', 0, 1)))
-                        @php($width = $maxCommission > 0 ? round(($barber->commission ?? 0) / $maxCommission * 100) : 0)
+                        @php($width = $maxCommission > 0 ? round(($barber->earnings ?? 0) / $maxCommission * 100) : 0)
                         <div class="rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
                             <div class="flex items-center justify-between gap-3">
                                 <div class="flex min-w-0 items-center gap-3">
@@ -239,8 +239,9 @@
                                     </div>
                                 </div>
                                 <div class="shrink-0 text-right">
-                                    <span class="block text-sm font-extrabold {{ $index === 0 ? 'text-brand-600' : 'text-slate-700' }}">{{ usd($barber->commission ?? 0) }}</span>
-                                    <span class="text-[10px] uppercase tracking-wide text-slate-400">Comisión</span>
+                                    <span class="block text-sm font-extrabold {{ $index === 0 ? 'text-brand-600' : 'text-slate-700' }}">{{ usd($barber->earnings ?? 0) }}</span>
+                                    <span class="text-[10px] uppercase tracking-wide text-slate-400">Ganancias</span>
+                                    <span class="block text-[10px] text-slate-400">Comisión {{ usd($barber->commission ?? 0) }} · Propinas {{ usd($barber->tips ?? 0) }}</span>
                                 </div>
                             </div>
                             <div class="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
@@ -264,8 +265,9 @@
                         <span class="text-lg font-bold text-slate-800">{{ usd($monthTotal) }}</span>
                     </div>
                     <div class="rounded-lg bg-slate-50 p-3">
-                        <span class="block text-xs text-slate-400">Comisión</span>
-                        <span class="text-lg font-bold text-emerald-600">{{ usd($monthCommission) }}</span>
+                        <span class="block text-xs text-slate-400">Ganancias</span>
+                        <span class="text-lg font-bold text-emerald-600">{{ usd($monthEarnings) }}</span>
+                        <span class="block text-[10px] text-slate-400">Comisión {{ usd($monthCommission) }} · Propinas {{ usd($monthTips) }}</span>
                     </div>
                 </div>
             </section>

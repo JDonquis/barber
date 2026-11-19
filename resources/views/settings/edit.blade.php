@@ -128,6 +128,38 @@
                 <x-input-error :messages="$errors->get('single_barber_mode')" />
             </section>
 
+            <!-- Módulos adicionales -->
+            <section class="space-y-4 rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+                <div class="flex items-center gap-3">
+                    <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-100 text-rose-600">
+                        <x-icon name="shield-check" class="h-5 w-5" />
+                    </span>
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-800">Módulos adicionales</h3>
+                        <p class="text-xs text-slate-400">Activa funciones opcionales para el estudio</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between gap-3 rounded-xl bg-slate-50 p-3 ring-1 ring-slate-100">
+                    <div class="pr-3">
+                        <span class="flex items-center gap-1.5 text-sm font-semibold text-slate-700">
+                            <x-icon name="shield-check" class="h-4 w-4 text-rose-500" /> Retenciones
+                        </span>
+                        <span class="block text-xs text-slate-400">Permite crear conceptos recurrentes que se descuentan de las ganancias de los barberos en sus liquidaciones.</span>
+                    </div>
+                    <label class="relative inline-flex shrink-0 cursor-pointer items-center">
+                        <input type="hidden" name="retentions_enabled" value="0">
+                        <input type="checkbox" name="retentions_enabled" value="1" class="peer sr-only"
+                               @checked((string) old('retentions_enabled', $values['retentions_enabled'] ?? '0') === '1')>
+                        <span class="relative h-7 w-12 rounded-full bg-slate-200 transition-colors after:absolute after:left-[2px] after:top-[2px] after:h-6 after:w-6 after:rounded-full after:bg-white after:shadow after:transition-all after:content-[''] peer-checked:bg-rose-500 peer-checked:after:translate-x-full"></span>
+                    </label>
+                </div>
+                <x-input-error :messages="$errors->get('retentions_enabled')" />
+                <p class="text-[11px] leading-relaxed text-slate-400">
+                    Al activarlo aparecerá el módulo <strong>Retenciones</strong> en el menú de administración.
+                </p>
+            </section>
+
             <!-- Ficha del establecimiento -->
             <section class="space-y-4 rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
                 <div class="flex items-center gap-3">

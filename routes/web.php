@@ -20,6 +20,7 @@ use App\Http\Controllers\LoanPaymentController;
 use App\Http\Controllers\PasswordResetRequestController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\RetentionController;
 use App\Http\Controllers\SaleController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\SettingController;
@@ -121,6 +122,9 @@ Route::middleware(['auth', 'tenant'])->group(function () {
         Route::resource('loans', LoanController::class);
         Route::post('/loans/{loan}/payments', [LoanPaymentController::class, 'store'])->name('loans.payments.store');
         Route::delete('/loans/{loan}/payments/{payment}', [LoanPaymentController::class, 'destroy'])->name('loans.payments.destroy');
+
+        Route::resource('retentions', RetentionController::class)->except(['show']);
+        Route::post('/retentions/{retention}/toggle', [RetentionController::class, 'toggleActive'])->name('retentions.toggle');
 
         Route::get('/closings', [ClosingController::class, 'index'])->name('closings.index');
         Route::post('/closings', [ClosingController::class, 'generate'])->name('closings.generate');

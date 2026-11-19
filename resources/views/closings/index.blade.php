@@ -17,10 +17,14 @@
             'services' => (float) $closing->total_services_usd,
             'products' => (float) $closing->total_products_usd,
             'commission' => (float) $closing->barber_commission_usd,
-            'commissionPct' => $total > 0 ? (int) round((float) $closing->barber_commission_usd / $total * 100) : 0,
+            'tips' => (float) $closing->barber_tips_usd,
+            'retentions' => (float) $closing->barber_retentions_usd,
+            'earnings' => $closing->barberEarningsUsd(),
+            'commissionPct' => $total > 0 ? (int) round($closing->barberEarningsUsd() / $total * 100) : 0,
             'expenses' => (float) $closing->total_expenses_usd,
             'net' => (float) $closing->shop_amount_usd,
             'total' => $total,
+            'production' => round($total - (float) $closing->barber_tips_usd, 2),
             'tickets' => (int) $closing->ticket_count,
             'serviceQty' => (int) $services->sum('quantity'),
             'productQty' => (int) $products->sum('quantity'),
@@ -106,8 +110,8 @@
                         <x-icon name="users" class="h-5 w-5" />
                     </span>
                     <div class="min-w-0">
-                        <span class="block text-xs text-slate-400">Comisiones liq.</span>
-                        <span class="block truncate text-sm font-bold tracking-tight text-brand-600">{{ usd($monthCommission) }}</span>
+                        <span class="block text-xs text-slate-400">Comisiones + propinas − ret.</span>
+                        <span class="block truncate text-sm font-bold tracking-tight text-brand-600">{{ usd($monthCommission + $monthTips - $monthRetentions) }}</span>
                     </div>
                 </div>
                 <div class="flex items-center gap-3 rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
@@ -331,9 +335,9 @@
                                 <span class="text-[10px] text-slate-400"><span x-text="closing.productQty"></span> unidades</span>
                             </div>
                             <div class="pt-1">
-                                <span class="text-xs text-slate-400">Comisión barberos</span>
-                                <p class="text-sm font-semibold text-brand-600" x-text="formatUsd(closing.commission)"></p>
-                                <span class="text-[10px] text-slate-400">Reparto <span x-text="closing.commissionPct"></span>%</span>
+                                <span class="text-xs text-slate-400">Comisiones + propinas − ret.</span>
+                                <p class="text-sm font-semibold text-brand-600" x-text="formatUsd(closing.earnings)"></p>
+                                <span class="text-[10px] text-slate-400">Propinas <span x-text="formatUsd(closing.tips)"></span> · Retenciones <span x-text="formatUsd(closing.retentions)"></span></span>
                             </div>
                             <div class="pt-1">
                                 <span class="text-xs text-slate-400">Gastos</span>
@@ -366,12 +370,13 @@
                             </div>
                             <div class="pt-1">
                                 <span class="text-xs text-slate-400">Producción</span>
-                                <p class="text-sm font-semibold text-slate-700" x-text="formatUsd(closing.total)"></p>
+                                <p class="text-sm font-semibold text-slate-700" x-text="formatUsd(closing.production)"></p>
                                 <span class="text-[10px] text-slate-400"><span x-text="closing.tickets"></span> ticket(s)</span>
                             </div>
                             <div class="pt-1">
                                 <span class="text-[10px] font-semibold uppercase tracking-wider text-emerald-600">A pagar</span>
-                                <p class="text-xl font-extrabold leading-tight text-emerald-600" x-text="formatUsd(closing.commission)"></p>
+                                <p class="text-xl font-extrabold leading-tight text-emerald-600" x-text="formatUsd(closing.earnings)"></p>
+                                <span class="text-[10px] text-slate-400">Comisión + propinas − retenciones (<span x-text="formatUsd(closing.retentions)"></span>)</span>
                             </div>
                         </div>
                     </template>

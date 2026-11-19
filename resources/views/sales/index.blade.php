@@ -26,6 +26,7 @@
 
         $kpiShop = (float) ($isProduct ? $summary->product_shop_usd : ($isService ? $summary->service_shop_usd : $summary->shop_usd));
         $kpiCommission = (float) $summary->commission_usd;
+        $kpiTips = (float) $summary->tips_usd;
         $kpiExpenses = (float) ($expensesUsd ?? 0);
         $kpiNet = $kpiShop - $kpiExpenses;
 
@@ -262,7 +263,7 @@
                         <span class="text-[11px] text-emerald-700/70">USD</span>
                     </div>
                     <div class="mt-1 flex items-center justify-between gap-2 text-[11px] text-emerald-700/80">
-                        <span>Comisiones: {{ usd($kpiCommission) }}</span>
+                        <span>Com. {{ usd($kpiCommission) }} · Prop. {{ usd($kpiTips) }}</span>
                         <span>Gastos: {{ usd($kpiExpenses) }}</span>
                     </div>
                 </div>

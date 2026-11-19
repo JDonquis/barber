@@ -149,6 +149,9 @@
 
         <!-- Totales -->
         <div class="row"><span class="label">Artículos</span><span>{{ $sale->items->sum('quantity') }}</span></div>
+        @if ((float) $sale->tip_usd > 0)
+            <div class="row"><span class="label">Propina</span><span>{{ usd($sale->tip_usd) }}</span></div>
+        @endif
         <div class="row total-row"><span>TOTAL USD</span><span>{{ usd($sale->total_usd) }}</span></div>
         <div class="row"><span class="label">TOTAL {{ local_currency() }}</span><span>{{ ves($sale->total_ves) }}</span></div>
         <div class="row"><span class="label">Tasa aplicada</span><span>{{ local_currency_symbol() }} {{ number_format($sale->exchange_rate, 2, ',', '.') }} / $1</span></div>
@@ -158,6 +161,9 @@
         <div class="row"><span class="label">Método de pago</span><span>{{ $sale->payment_method ?: 'Sin especificar' }}</span></div>
         <div class="row"><span class="label">Moneda</span><span class="bold">{{ $sale->payment_currency }}</span></div>
         <div class="row"><span class="label">Comisión barbero</span><span>{{ usd($sale->barber_commission_usd) }}</span></div>
+        @if ((float) $sale->tip_usd > 0)
+            <div class="row"><span class="label">Ganancia barbero</span><span class="bold">{{ usd($sale->barberEarningsUsd()) }}</span></div>
+        @endif
 
         @if ($sale->notes)
             <div class="sep"></div>
