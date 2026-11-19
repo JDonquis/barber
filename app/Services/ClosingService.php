@@ -150,7 +150,7 @@ class ClosingService
         $loanStart = $start->toDateString();
         $loanEnd = $end->toDateString();
 
-        $loans = Loan::query()
+        $loanQuery = Loan::query()
             ->with([
                 'barber',
                 'payments' => fn ($query) => $query
@@ -159,14 +159,19 @@ class ClosingService
                     ->orderBy('payment_date')
                     ->orderBy('id'),
             ])
-            ->when($barber, fn ($query) => $query->where('barber_id', $barber->id))
-            ->where(function ($query) use ($loanStart, $loanEnd) {
+            ->when($barber, fn ($query) => $query->where('barber_id', $barber->id));
+
+        if (! $barber) {
+            $loanQuery->where(function ($query) use ($loanStart, $loanEnd) {
                 $query->whereDate('loan_date', '>=', $loanStart)
                     ->whereDate('loan_date', '<=', $loanEnd)
                     ->orWhereHas('payments', fn ($payments) => $payments
                         ->whereDate('payment_date', '>=', $loanStart)
                         ->whereDate('payment_date', '<=', $loanEnd));
-            })
+            });
+        }
+
+        $loans = $loanQuery
             ->orderBy('loan_date')
             ->orderBy('id')
             ->get();

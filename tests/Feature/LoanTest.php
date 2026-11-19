@@ -143,6 +143,40 @@ class LoanTest extends TestCase
             ->assertSee('Abonos del período');
     }
 
+    public function test_barber_closing_includes_all_their_loans_even_without_period_activity(): void
+    {
+        $admin = $this->admin();
+        $barber = $this->barber();
+        $loan = $this->loan($barber, [
+            'amount_usd' => 20,
+            'paid_usd' => 19,
+            'loan_date' => now()->subDays(8)->toDateString(),
+        ]);
+
+        $this->actingAs($admin)->post(route('closings.generate'), [
+            'period_type' => 'diario',
+            'date' => now()->toDateString(),
+            'barber_id' => $barber->id,
+        ])->assertRedirect();
+
+        $closing = Closing::query()->where('barber_id', $barber->id)->latest('id')->firstOrFail();
+        $loans = collect($closing->details['prestamos'] ?? []);
+        $row = $loans->firstWhere('id', $loan->id);
+
+        $this->assertCount(1, $loans);
+        $this->assertEquals(20.0, $row['amount_usd']);
+        $this->assertEquals(19.0, $row['paid_usd']);
+        $this->assertEquals(1.0, $row['balance_usd']);
+        $this->assertEquals(0.0, $row['period_paid_usd']);
+        $this->assertFalse($row['loaned_in_period']);
+
+        $this->actingAs($admin)
+            ->get(route('closings.print', $closing))
+            ->assertOk()
+            ->assertSee('Préstamos del período')
+            ->assertSee($barber->name);
+    }
+
     public function test_loan_pages_render(): void
     {
         $admin = $this->admin();
