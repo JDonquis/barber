@@ -9,8 +9,6 @@
             'period' => $closing->period_type,
             'label' => ucfirst($closing->period_type),
             'closed' => $closing->isClosed(),
-            'isBarber' => $closing->barber_id !== null,
-            'barberName' => $closing->barber->name ?? 'Barbero',
             'start' => optional($closing->period_start)->format('d/m/Y'),
             'end' => optional($closing->period_end)->format('d/m/Y'),
             'time' => optional($closing->closed_at ?? $closing->created_at)->format('H:i'),
@@ -43,10 +41,7 @@
         closings: @js($closingsData),
         search: '',
         filter: 'all',
-        scope: 'all',
         open: false,
-        closeScope: 'general',
-        barberId: '',
         get filteredClosings() {
             const q = this.search.toLowerCase().trim();
             return this.closings.filter((closing) => {
@@ -54,20 +49,14 @@
                     || closing.label.toLowerCase().includes(q)
                     || (closing.start || '').includes(q)
                     || (closing.end || '').includes(q)
-                    || (! closing.isBarber && 'general tienda'.includes(q))
-                    || (closing.isBarber && closing.barberName.toLowerCase().includes(q));
+                    || 'general tienda'.includes(q);
                 const matchesFilter = this.filter === 'all' || closing.period === this.filter;
-                const matchesScope = this.scope === 'all'
-                    || (this.scope === 'barber' && closing.isBarber)
-                    || (this.scope === 'general' && ! closing.isBarber);
-                return matchesSearch && matchesFilter && matchesScope;
+                return matchesSearch && matchesFilter;
             });
         },
         get dailyCount() { return this.closings.filter((c) => c.period === 'diario').length; },
         get weeklyCount() { return this.closings.filter((c) => c.period === 'semanal').length; },
         get monthlyCount() { return this.closings.filter((c) => c.period === 'mensual').length; },
-        get generalCount() { return this.closings.filter((c) => ! c.isBarber).length; },
-        get barberCount() { return this.closings.filter((c) => c.isBarber).length; },
         periodClass(period) {
             if (period === 'diario') return 'bg-brand-100 text-brand-700';
             if (period === 'semanal') return 'bg-emerald-100 text-emerald-700';
@@ -85,7 +74,7 @@
                         <x-icon name="chart" class="h-4 w-4" /> Finanzas &amp; Auditoría
                     </span>
                     <h2 class="mt-1 text-xl font-extrabold tracking-tight text-slate-800">Cierres y Reportes</h2>
-                    <p class="mt-0.5 text-xs leading-snug text-slate-400">Historial de liquidaciones, balances de servicios y comisiones calculadas.</p>
+                    <p class="mt-0.5 text-xs leading-snug text-slate-400">Cierres operativos por niveles: diario, semanal y mensual. Las liquidaciones de barberos están en su propio módulo.</p>
                 </div>
                 <button type="button" @click="open = ! open"
                         class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-brand-500 text-white shadow-md shadow-brand-500/25 transition hover:bg-brand-400 active:scale-95"
@@ -157,66 +146,14 @@
                         <option value="mensual">Mensual (cierre calendario)</option>
                     </select>
                 </div>
-                <div class="space-y-2">
-                    <label class="text-xs font-medium text-slate-500">Ámbito del cierre</label>
-                    <div class="grid grid-cols-2 gap-2">
-                        <button type="button" @click="closeScope = 'general'; barberId = ''"
-                                :class="closeScope === 'general' ? 'bg-brand-500 text-white ring-2 ring-brand-500' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'"
-                                class="flex h-11 items-center justify-center rounded-xl text-sm font-semibold transition active:scale-[0.98]">
-                            General (tienda)
-                        </button>
-                        <button type="button" @click="closeScope = 'barber'"
-                                :class="closeScope === 'barber' ? 'bg-brand-500 text-white ring-2 ring-brand-500' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'"
-                                class="flex h-11 items-center justify-center rounded-xl text-sm font-semibold transition active:scale-[0.98]">
-                            Barberos
-                        </button>
-                    </div>
-
-                    <div x-show="closeScope === 'barber'" x-cloak x-transition.opacity class="space-y-2 rounded-xl bg-slate-50 p-3">
-                        <div class="flex items-center justify-between">
-                            <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Selecciona un barbero</span>
-                            <span class="text-[11px] text-slate-400">Toca para seleccionar</span>
-                        </div>
-                        @if ($barbers->isEmpty())
-                            <p class="rounded-lg bg-white px-4 py-4 text-center text-xs text-slate-400">No hay barberos registrados.</p>
-                        @else
-                            <div class="grid grid-cols-3 gap-2 sm:grid-cols-4">
-                                @foreach ($barbers as $barber)
-                                    @php
-                                        $initials = collect(explode(' ', trim($barber->name)))
-                                            ->filter()
-                                            ->map(fn ($word) => mb_strtoupper(mb_substr($word, 0, 1)))
-                                            ->take(2)
-                                            ->implode('');
-                                    @endphp
-                                    <button type="button" @click="barberId = '{{ $barber->id }}'"
-                                            :class="barberId === '{{ $barber->id }}' ? 'ring-2 ring-brand-500 bg-brand-50' : 'bg-white hover:bg-slate-100'"
-                                            class="flex flex-col items-center gap-1.5 rounded-xl p-2.5 transition">
-                                        <span class="flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold transition"
-                                              :class="barberId === '{{ $barber->id }}' ? 'bg-brand-500 text-white' : 'bg-slate-200 text-slate-600'">
-                                            {{ $initials }}
-                                        </span>
-                                        <span class="w-full truncate text-center text-xs font-medium transition"
-                                              :class="barberId === '{{ $barber->id }}' ? 'text-brand-600 font-semibold' : 'text-slate-600'">
-                                            {{ $barber->name }}
-                                        </span>
-                                    </button>
-                                @endforeach
-                            </div>
-                        @endif
-                    </div>
-
-                    <input type="hidden" name="barber_id" :value="closeScope === 'barber' ? barberId : ''">
-                    <x-input-error :messages="$errors->get('barber_id')" />
-                </div>
                 <div class="space-y-1.5">
                     <label for="date" class="text-xs font-medium text-slate-500">Fecha de referencia</label>
                     <input id="date" name="date" type="date" required value="{{ old('date', now()->toDateString()) }}"
                            class="block h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-700 focus:border-brand-500 focus:bg-white focus:ring-brand-500" />
                     <x-input-error :messages="$errors->get('date')" />
                 </div>
-                <button type="submit" :disabled="closeScope === 'barber' && ! barberId"
-                        class="flex h-[50px] w-full items-center justify-center gap-2 rounded-xl bg-brand-500 text-sm font-bold text-white shadow-md shadow-brand-500/25 transition hover:bg-brand-400 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50">
+                <button type="submit"
+                        class="flex h-[50px] w-full items-center justify-center gap-2 rounded-xl bg-brand-500 text-sm font-bold text-white shadow-md shadow-brand-500/25 transition hover:bg-brand-400 active:scale-95">
                     <x-icon name="chart" class="h-5 w-5" /> Calcular &amp; auditar cierre
                 </button>
             </form>
@@ -248,24 +185,6 @@
                         class="inline-flex h-9 items-center justify-center whitespace-nowrap rounded-full px-3.5 text-xs font-semibold transition active:scale-95"
                         :class="filter === 'mensual' ? 'bg-brand-500 text-white shadow-sm' : 'bg-white text-slate-500 ring-1 ring-slate-200 hover:text-slate-700'">
                     Mensuales (<span x-text="monthlyCount"></span>)
-                </button>
-            </div>
-
-            <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
-                <button type="button" @click="scope = 'all'"
-                        class="inline-flex h-8 items-center justify-center whitespace-nowrap rounded-full px-3.5 text-xs font-semibold transition active:scale-95"
-                        :class="scope === 'all' ? 'bg-slate-800 text-white shadow-sm' : 'bg-white text-slate-500 ring-1 ring-slate-200 hover:text-slate-700'">
-                    Todos
-                </button>
-                <button type="button" @click="scope = 'general'"
-                        class="inline-flex h-8 items-center justify-center whitespace-nowrap rounded-full px-3.5 text-xs font-semibold transition active:scale-95"
-                        :class="scope === 'general' ? 'bg-slate-800 text-white shadow-sm' : 'bg-white text-slate-500 ring-1 ring-slate-200 hover:text-slate-700'">
-                    Tienda (<span x-text="generalCount"></span>)
-                </button>
-                <button type="button" @click="scope = 'barber'"
-                        class="inline-flex h-8 items-center justify-center whitespace-nowrap rounded-full px-3.5 text-xs font-semibold transition active:scale-95"
-                        :class="scope === 'barber' ? 'bg-slate-800 text-white shadow-sm' : 'bg-white text-slate-500 ring-1 ring-slate-200 hover:text-slate-700'">
-                    Barberos (<span x-text="barberCount"></span>)
                 </button>
             </div>
 
@@ -304,11 +223,6 @@
                                 <span class="h-1.5 w-1.5 rounded-full" :class="closing.closed ? 'bg-emerald-500' : 'bg-brand-500'"></span>
                                 <span x-text="closing.closed ? 'Cerrado' : 'Abierto'"></span>
                             </span>
-                            <template x-if="closing.isBarber">
-                                <span class="inline-flex items-center gap-1 rounded-full bg-sky-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-sky-700">
-                                    <x-icon name="user" class="h-3 w-3" /> <span x-text="closing.barberName"></span>
-                                </span>
-                            </template>
                         </div>
                         <span class="flex items-center gap-1 text-xs text-slate-400">
                             <x-icon name="clock" class="h-4 w-4" /> <span x-text="closing.time"></span>
@@ -322,8 +236,7 @@
                     </div>
 
                     <!-- Métricas (tienda) -->
-                    <template x-if="! closing.isBarber">
-                        <div class="grid grid-cols-2 gap-3 rounded-xl bg-slate-50 p-3">
+                    <div class="grid grid-cols-2 gap-3 rounded-xl bg-slate-50 p-3">
                             <div>
                                 <span class="text-xs text-slate-400">Servicios</span>
                                 <p class="text-sm font-semibold text-slate-700" x-text="formatUsd(closing.services)"></p>
@@ -353,33 +266,6 @@
                                 <p class="text-xl font-extrabold leading-tight text-emerald-600" x-text="formatUsd(closing.net)"></p>
                             </div>
                         </div>
-                    </template>
-
-                    <!-- Métricas (barbero) -->
-                    <template x-if="closing.isBarber">
-                        <div class="grid grid-cols-2 gap-3 rounded-xl bg-sky-50 p-3">
-                            <div>
-                                <span class="text-xs text-slate-400">Servicios</span>
-                                <p class="text-sm font-semibold text-slate-700" x-text="formatUsd(closing.services)"></p>
-                                <span class="text-[10px] text-slate-400"><span x-text="closing.serviceQty"></span> servicios</span>
-                            </div>
-                            <div>
-                                <span class="text-xs text-slate-400">Productos</span>
-                                <p class="text-sm font-semibold text-slate-700" x-text="formatUsd(closing.products)"></p>
-                                <span class="text-[10px] text-slate-400"><span x-text="closing.productQty"></span> unidades</span>
-                            </div>
-                            <div class="pt-1">
-                                <span class="text-xs text-slate-400">Producción</span>
-                                <p class="text-sm font-semibold text-slate-700" x-text="formatUsd(closing.production)"></p>
-                                <span class="text-[10px] text-slate-400"><span x-text="closing.tickets"></span> ticket(s)</span>
-                            </div>
-                            <div class="pt-1">
-                                <span class="text-[10px] font-semibold uppercase tracking-wider text-emerald-600">A pagar</span>
-                                <p class="text-xl font-extrabold leading-tight text-emerald-600" x-text="formatUsd(closing.earnings)"></p>
-                                <span class="text-[10px] text-slate-400">Comisión + propinas − retenciones (<span x-text="formatUsd(closing.retentions)"></span>)</span>
-                            </div>
-                        </div>
-                    </template>
 
                     <!-- Acciones -->
                     <div class="flex items-center gap-2 pl-2">
@@ -403,7 +289,7 @@
                 </span>
                 <p class="mt-3 text-base font-bold text-slate-800">No hay cierres</p>
                 <p class="mt-1 max-w-xs text-xs text-slate-400">Genera un cierre con el botón + o ajusta los filtros.</p>
-                <button type="button" @click="search = ''; filter = 'all'; scope = 'all'"
+                <button type="button" @click="search = ''; filter = 'all'"
                         class="mt-4 rounded-lg bg-slate-100 px-4 py-2 text-sm font-semibold text-brand-600 transition hover:bg-slate-200">
                     Restablecer filtros
                 </button>

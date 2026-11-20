@@ -1,0 +1,563 @@
+@php
+    $services = collect($liquidation->details['servicios'] ?? []);
+    $products = collect($liquidation->details['productos'] ?? []);
+    $barbers = collect($liquidation->details['barberos'] ?? [])
+        ->reject(fn ($row) => in_array($row['name'] ?? '', ['Sin barbero', 'Venta tienda'], true))
+        ->values();
+    $methods = collect($liquidation->details['metodos_pago'] ?? []);
+    $expenses = collect($liquidation->details['gastos'] ?? []);
+    $retentions = collect($liquidation->details['retenciones'] ?? []);
+    $loans = collect($liquidation->details['prestamos'] ?? []);
+    $loanTotals = $liquidation->details['prestamos_totales'] ?? [
+        'issued_usd' => 0,
+        'paid_usd' => 0,
+        'outstanding_usd' => 0,
+        'count' => $loans->count(),
+    ];
+    $expensesTotal = (float) $liquidation->total_expenses_usd;
+
+    $isBarberClosing = true;
+    $barberName = $liquidation->barber->name ?? 'Barbero';
+
+    $serviceQty = (int) $services->sum('quantity');
+    $productQty = (int) $products->sum('quantity');
+    $barberGross = $liquidation->barberGrossEarningsUsd();
+    $barberEarnings = $liquidation->barberEarningsUsd();
+    $commissionPct = (float) $liquidation->total_usd > 0
+        ? (int) round($barberEarnings / (float) $liquidation->total_usd * 100)
+        : 0;
+
+    $methodIcon = function (?string $method) {
+        $m = mb_strtolower((string) $method);
+        return match (true) {
+            str_contains($m, 'móvil'), str_contains($m, 'movil') => 'phone',
+            str_contains($m, 'punto'), str_contains($m, 'débito'), str_contains($m, 'debito'), str_contains($m, 'tarjeta') => 'card',
+            str_contains($m, 'transfer'), str_contains($m, 'zelle') => 'refresh',
+            default => 'dollar',
+        };
+    };
+@endphp
+
+<x-app-layout>
+    <x-slot name="header">
+        <h1 class="text-lg font-semibold text-slate-800">
+            {{ $isBarberClosing ? 'Liquidación de '.$barberName : 'Cierre '.ucfirst($liquidation->period_type) }}
+        </h1>
+    </x-slot>
+
+    <div class="max-w-2xl mx-auto space-y-4">
+        <!-- Volver + estado -->
+        <div class="flex items-center justify-between gap-3">
+            <a href="{{ route('liquidations.index') }}" class="inline-flex items-center gap-1 text-sm font-semibold text-brand-600 transition hover:text-brand-700">
+                <x-icon name="arrow-left" class="h-4 w-4" /> Volver a liquidaciones
+            </a>
+            @if ($liquidation->isClosed())
+                <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-emerald-700">
+                    <span class="h-2 w-2 rounded-full bg-emerald-500"></span> Cerrado
+                </span>
+            @else
+                <span class="inline-flex items-center gap-1.5 rounded-full bg-brand-100 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-brand-700">
+                    <span class="h-2 w-2 animate-pulse rounded-full bg-brand-500"></span> Abierto
+                </span>
+            @endif
+        </div>
+
+        <!-- Título + acciones -->
+        <div class="flex items-center justify-between gap-3">
+            <div class="min-w-0">
+                <span class="text-[11px] font-semibold uppercase tracking-widest text-slate-400">
+                    {{ $isBarberClosing ? 'Liquidación de barbero' : 'Auditoría operativa' }}
+                </span>
+                <h1 class="truncate text-xl font-extrabold tracking-tight text-slate-800">
+                    {{ $isBarberClosing ? $barberName : 'Cierre '.ucfirst($liquidation->period_type) }}
+                </h1>
+            </div>
+            <div class="flex shrink-0 items-center gap-2">
+                <a href="{{ route('liquidations.print', $liquidation) }}" target="_blank" title="Imprimir reporte"
+                   class="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-slate-600 shadow-sm ring-1 ring-slate-200 transition hover:bg-slate-100 active:scale-95">
+                    <x-icon name="printer" class="h-4 w-4" />
+                </a>
+            </div>
+        </div>
+
+        <!-- Banner estado -->
+        <div class="flex items-center gap-2.5 rounded-xl px-4 py-2.5 {{ $liquidation->isClosed() ? 'bg-emerald-50 text-emerald-700' : 'bg-brand-50 text-brand-700' }}">
+            <x-icon name="{{ $liquidation->isClosed() ? 'check' : 'clock' }}" class="h-5 w-5 shrink-0" />
+            <span class="text-xs font-medium">
+                @if ($isBarberClosing)
+                    Liquidación {{ $liquidation->isClosed() ? 'cerrada' : 'en curso' }} — Producción y comisión de {{ $barberName }}
+                @else
+                    Reporte {{ $liquidation->isClosed() ? 'cerrado y auditado' : 'en curso' }} — Sincronizado con las ventas del período
+                @endif
+            </span>
+        </div>
+
+        <!-- KPIs -->
+        <section class="grid grid-cols-2 gap-3">
+            <div class="flex flex-col justify-between rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
+                <div class="mb-2 flex items-center justify-between gap-2">
+                    <span class="truncate text-xs text-slate-400">Servicios</span>
+                    <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-brand-100 text-brand-600">
+                        <x-icon name="scissors" class="h-4 w-4" />
+                    </span>
+                </div>
+                <span class="truncate text-lg font-bold tracking-tight text-slate-800">{{ money($liquidation->total_services_usd) }}</span>
+                <span class="text-[11px] text-slate-400">{{ $serviceQty }} atenciones</span>
+            </div>
+
+            <div class="flex flex-col justify-between rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
+                <div class="mb-2 flex items-center justify-between gap-2">
+                    <span class="truncate text-xs text-slate-400">Productos</span>
+                    <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-brand-100 text-brand-600">
+                        <x-icon name="bag" class="h-4 w-4" />
+                    </span>
+                </div>
+                <span class="truncate text-lg font-bold tracking-tight text-slate-800">{{ money($liquidation->total_products_usd) }}</span>
+                <span class="text-[11px] text-slate-400">{{ $productQty }} artículos retail</span>
+            </div>
+
+            <div class="flex flex-col justify-between rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
+                <div class="mb-2 flex items-center justify-between gap-2">
+                    <span class="truncate text-xs text-slate-400">{{ $isBarberClosing ? 'Ganancia a pagar' : 'Comisiones + propinas − retenciones' }}</span>
+                    <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-emerald-600">
+                        <x-icon name="users" class="h-4 w-4" />
+                    </span>
+                </div>
+                <span class="truncate text-lg font-bold tracking-tight text-slate-800">{{ money($barberEarnings) }}</span>
+                <span class="text-[11px] font-semibold text-emerald-600">
+                    {{ $isBarberClosing ? 'Comisión + propinas − retenciones' : 'A liquidar staff · '.$commissionPct.'%' }}
+                </span>
+            </div>
+
+            @unless ($isBarberClosing)
+                <div class="flex flex-col justify-between rounded-xl bg-rose-50 p-4 shadow-sm ring-1 ring-rose-200">
+                    <div class="mb-2 flex items-center justify-between gap-2">
+                        <span class="truncate text-xs text-rose-700">Gastos</span>
+                        <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-rose-500 text-white">
+                            <x-icon name="minus" class="h-4 w-4" />
+                        </span>
+                    </div>
+                    <span class="truncate text-lg font-bold tracking-tight text-rose-700">{{ money($expensesTotal) }}</span>
+                    <span class="text-[11px] text-rose-700">{{ $expenses->count() }} egreso(s) del período</span>
+                </div>
+            @endunless
+
+            @if ($isBarberClosing)
+                <div class="col-span-2 flex items-center justify-between gap-3 rounded-xl bg-emerald-50 p-4 shadow-sm ring-1 ring-emerald-200">
+                    <div class="flex items-center gap-3">
+                        <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-500 text-white">
+                            <x-icon name="dollar" class="h-5 w-5" />
+                        </span>
+                        <div>
+                            <span class="text-xs font-bold uppercase tracking-wider text-emerald-700">Total a pagar a {{ $barberName }}</span>
+                            <span class="block text-[11px] text-emerald-700">Comisión {{ money($liquidation->barber_commission_usd) }} + propinas {{ money($liquidation->barber_tips_usd) }} − retenciones {{ money($liquidation->barber_retentions_usd) }} · {{ $liquidation->ticket_count }} ticket(s)</span>
+                        </div>
+                    </div>
+                    <span class="shrink-0 text-2xl font-extrabold tracking-tight text-emerald-700">{{ money($barberEarnings) }}</span>
+                </div>
+            @else
+                <div class="col-span-2 flex items-center justify-between gap-3 rounded-xl bg-emerald-50 p-4 shadow-sm ring-1 ring-emerald-200">
+                    <div class="flex items-center gap-3">
+                        <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-500 text-white">
+                            <x-icon name="dollar" class="h-5 w-5" />
+                        </span>
+                        <div>
+                            <span class="text-xs font-bold uppercase tracking-wider text-emerald-700">Monto tienda</span>
+                            <span class="block text-[11px] text-emerald-700">Ventas − comisiones − propinas + retenciones − gastos</span>
+                        </div>
+                    </div>
+                    <span class="shrink-0 text-2xl font-extrabold tracking-tight text-emerald-700">{{ money($liquidation->shop_amount_usd) }}</span>
+                </div>
+            @endif
+        </section>
+
+        <!-- Resumen del período -->
+        <section class="space-y-3 rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
+            <div class="flex items-center justify-between">
+                <span class="flex items-center gap-2 text-sm font-bold text-slate-800">
+                    <x-icon name="clock" class="h-5 w-5 text-brand-500" /> Resumen del período
+                </span>
+                <span class="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-semibold uppercase text-slate-500">{{ $liquidation->period_type }}</span>
+            </div>
+            <div class="space-y-1.5 text-sm">
+                <div class="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2">
+                    <span class="text-slate-500">Rango de fechas</span>
+                    <span class="font-semibold text-slate-700">{{ $liquidation->period_start->format('d/m/Y') }} — {{ $liquidation->period_end->format('d/m/Y') }}</span>
+                </div>
+                <div class="flex items-center justify-between rounded-lg px-3 py-2">
+                    <span class="text-slate-500">Total operaciones</span>
+                    <span class="font-semibold text-slate-700">{{ $liquidation->ticket_count }} tickets</span>
+                </div>
+                @if ($usdConversionEnabled)
+                    <div class="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2">
+                        <span class="text-slate-500">Tasa promedio del período</span>
+                        <span class="font-semibold text-brand-600">{{ local_currency_symbol() }} {{ number_format($liquidation->average_rate ?: $liquidation->exchange_rate, 2, ',', '.') }}</span>
+                    </div>
+                    <div class="flex items-center justify-between rounded-lg px-3 py-2">
+                        <span class="text-slate-500">Tasa de cierre</span>
+                        <span class="font-semibold text-slate-600">{{ local_currency_symbol() }} {{ number_format($liquidation->exchange_rate, 2, ',', '.') }}</span>
+                    </div>
+                @endif
+                <div class="mt-1 rounded-lg bg-slate-100 px-3 py-2.5">
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <span class="block text-xs text-slate-400">Total recaudado</span>
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-brand-600">Monto consolidado</span>
+                        </div>
+                        <span class="text-2xl font-extrabold leading-none text-brand-600">{{ money($liquidation->total_usd, $liquidation->localTotal()) }}</span>
+                    </div>
+                    <div class="mt-2 space-y-1 border-t border-slate-200 pt-2 text-xs">
+                        @if ($usdConversionEnabled)
+                            <div class="flex items-center justify-between">
+                                <span class="text-slate-500">{{ local_currency() }} cobrados (tasa histórica)</span>
+                                <span class="font-bold text-emerald-600">{{ ves($liquidation->total_ves) }}</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-slate-500">Equivalente a tasa de cierre</span>
+                                <span class="font-semibold text-slate-500">{{ ves($liquidation->total_ves_reference > 0 ? $liquidation->total_ves_reference : to_ves($liquidation->total_usd, (float) $liquidation->exchange_rate)) }}</span>
+                            </div>
+                        @endif
+                        <div class="flex items-center justify-between border-t border-slate-200 pt-2">
+                            <span class="text-slate-500">{{ $isBarberClosing ? 'Comisión' : 'Comisiones barberos' }}</span>
+                            <span class="font-semibold text-brand-600">- {{ money($liquidation->barber_commission_usd) }}</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-slate-500">{{ $isBarberClosing ? 'Propinas' : 'Propinas barberos' }}</span>
+                            <span class="font-semibold text-emerald-600">- {{ money($liquidation->barber_tips_usd) }}</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-slate-500">{{ $isBarberClosing ? 'Retenciones' : 'Retenciones barberos' }}</span>
+                            <span class="font-semibold text-rose-600">- {{ money($liquidation->barber_retentions_usd) }}</span>
+                        </div>
+                        @if ($isBarberClosing)
+                            <div class="flex items-center justify-between border-t border-slate-200 pt-2">
+                                <div>
+                                    <span class="font-semibold text-emerald-700">Ganancia total</span>
+                                    <span class="block text-[10px] text-slate-400">Bruto: {{ money($barberGross) }}</span>
+                                </div>
+                                <span class="font-extrabold text-emerald-700">{{ money($barberEarnings) }}</span>
+                            </div>
+                        @endif
+                        @unless ($isBarberClosing)
+                            <div class="flex items-center justify-between">
+                                <span class="text-slate-500">Gastos del período</span>
+                                <span class="font-semibold text-rose-600">- {{ money($liquidation->total_expenses_usd) }}</span>
+                            </div>
+                        @endunless
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-emerald-700">{{ $isBarberClosing ? 'Saldo para el estudio' : 'Ganancia neta tienda' }}</span>
+                            <span class="font-extrabold text-emerald-700">{{ money($liquidation->shop_amount_usd) }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @if ($liquidation->closed_at)
+                <div class="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3 text-xs text-slate-400">
+                    <span>Cerrado por <span class="font-semibold text-slate-600">{{ $liquidation->closedBy->name ?? '—' }}</span></span>
+                    <span>{{ $liquidation->closed_at->format('d/m/Y h:i a') }}</span>
+                </div>
+            @endif
+            @if ($liquidation->reopened_at)
+                <div class="flex flex-wrap items-center justify-between gap-2 text-xs text-brand-600">
+                    <span>Reabierto por <span class="font-semibold">{{ $liquidation->reopenedBy->name ?? '—' }}</span></span>
+                    <span>{{ $liquidation->reopened_at->format('d/m/Y h:i a') }}</span>
+                </div>
+            @endif
+            @if ($liquidation->isClosed() && $liquidation->notes)
+                <p class="rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-500">{{ $liquidation->notes }}</p>
+            @endif
+        </section>
+
+        @if ($loans->isNotEmpty())
+            <section class="space-y-3 rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
+                <div class="flex items-center justify-between">
+                    <span class="flex items-center gap-2 text-sm font-bold text-slate-800">
+                        <x-icon name="wallet" class="h-5 w-5 text-brand-500" /> Préstamos del período
+                    </span>
+                    <span class="text-xs text-slate-400">{{ $loanTotals['count'] ?? $loans->count() }} préstamo(s)</span>
+                </div>
+
+                <div class="grid grid-cols-3 gap-2">
+                    <div class="rounded-lg bg-brand-50 p-2.5 text-center ring-1 ring-brand-100">
+                        <span class="block text-[10px] font-bold uppercase tracking-wide text-brand-700">Prestado</span>
+                        <span class="mt-0.5 block text-sm font-extrabold text-brand-700">{{ money($loanTotals['issued_usd'] ?? 0) }}</span>
+                    </div>
+                    <div class="rounded-lg bg-emerald-50 p-2.5 text-center ring-1 ring-emerald-100">
+                        <span class="block text-[10px] font-bold uppercase tracking-wide text-emerald-700">Abonos período</span>
+                        <span class="mt-0.5 block text-sm font-extrabold text-emerald-700">{{ money($loanTotals['paid_usd'] ?? 0) }}</span>
+                    </div>
+                    <div class="rounded-lg bg-amber-50 p-2.5 text-center ring-1 ring-amber-100">
+                        <span class="block text-[10px] font-bold uppercase tracking-wide text-amber-700">Por cobrar</span>
+                        <span class="mt-0.5 block text-sm font-extrabold text-amber-700">{{ money($loanTotals['outstanding_usd'] ?? 0) }}</span>
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    @foreach ($loans as $loan)
+                        <div class="rounded-xl bg-slate-50 p-3">
+                            <div class="flex items-start justify-between gap-3">
+                                <div class="min-w-0">
+                                    <div class="flex flex-wrap items-center gap-1.5">
+                                        <span class="truncate text-sm font-semibold text-slate-700">{{ $loan['barber_name'] ?? 'Barbero' }}</span>
+                                        <span class="rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold text-slate-500 ring-1 ring-slate-200">
+                                            {{ $loan['loan_date'] ?? '' }}
+                                        </span>
+                                        @unless ($loan['loaned_in_period'] ?? true)
+                                            <span class="rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-sky-700">Anterior</span>
+                                        @endunless
+                                    </div>
+                                    <p class="mt-1 text-[11px] text-slate-400">
+                                        Prestado {{ money($loan['amount_usd'] ?? 0) }} · Pagado {{ money($loan['paid_usd'] ?? 0) }} · Saldo {{ money($loan['balance_usd'] ?? 0) }}
+                                    </p>
+                                </div>
+                                <span class="shrink-0 text-sm font-extrabold {{ ($loan['balance_usd'] ?? 0) > 0 ? 'text-amber-600' : 'text-emerald-600' }}">
+                                    {{ money($loan['balance_usd'] ?? 0) }}
+                                </span>
+                            </div>
+
+                            <div class="mt-2 h-1.5 overflow-hidden rounded-full bg-white ring-1 ring-slate-200">
+                                <div class="h-full rounded-full bg-brand-500" style="width: {{ (int) ($loan['progress'] ?? 0) }}%"></div>
+                            </div>
+                            <div class="mt-1 flex items-center justify-between text-[10px] text-slate-400">
+                                <span>Progreso de pago</span>
+                                <span>{{ (int) ($loan['progress'] ?? 0) }}%</span>
+                            </div>
+
+                            @if (! empty($loan['payments']))
+                                <div class="mt-2 space-y-1 border-t border-slate-200 pt-2">
+                                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Abonos en el período</span>
+                                    @foreach ($loan['payments'] as $payment)
+                                        <div class="flex items-center justify-between gap-2 text-[11px]">
+                                            <span class="text-slate-500">
+                                                {{ $payment['date'] ?? '' }}
+                                                @if (! empty($payment['payment_method']))
+                                                    · {{ $payment['payment_method'] }}
+                                                @endif
+                                            </span>
+                                            <span class="font-semibold text-emerald-600">{{ money($payment['amount_usd'] ?? 0) }}</span>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @endif
+                        </div>
+                    @endforeach
+                </div>
+            </section>
+        @endif
+
+        @if ($retentions->isNotEmpty())
+            <section class="space-y-3 rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
+                <div class="flex items-center justify-between">
+                    <span class="flex items-center gap-2 text-sm font-bold text-slate-800">
+                        <x-icon name="shield-check" class="h-5 w-5 text-rose-500" /> Retenciones aplicadas
+                    </span>
+                    <span class="text-sm font-extrabold text-rose-600">- {{ money($liquidation->barber_retentions_usd) }}</span>
+                </div>
+                <div class="space-y-1.5">
+                    @foreach ($retentions as $row)
+                        <div class="flex items-center justify-between gap-2 rounded-lg bg-slate-50 px-3 py-2.5">
+                            <div class="min-w-0">
+                                <p class="truncate text-sm font-semibold text-slate-700">{{ $row['name'] }}</p>
+                                <p class="text-[11px] text-slate-400">
+                                    {{ $isBarberClosing ? '' : (($row['barber_name'] ?? 'Barbero').' · ') }}{{ $row['frequency_label'] ?? '' }} · {{ $row['days'] ?? '' }} día(s)
+                                </p>
+                            </div>
+                            <span class="shrink-0 text-sm font-bold text-rose-600">- {{ money($row['applied_usd'] ?? 0, $row['applied_local'] ?? null) }}</span>
+                        </div>
+                    @endforeach
+                </div>
+            </section>
+        @endif
+
+        <!-- Servicios y productos vendidos -->
+        <section class="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-slate-200">
+            <div class="grid grid-cols-1 md:grid-cols-2">
+                <!-- Servicios vendidos -->
+                <div class="space-y-3 p-4">
+                    <div class="flex items-center justify-between gap-2">
+                        <span class="flex items-center gap-2 text-sm font-bold text-slate-800">
+                            <x-icon name="scissors" class="h-5 w-5 text-brand-600" /> Servicios vendidos
+                        </span>
+                        <span class="shrink-0 text-xs text-slate-400">{{ $services->count() }} ítems</span>
+                    </div>
+                    <div class="space-y-1.5">
+                        @forelse ($services as $row)
+                            <div class="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2.5">
+                                <div class="min-w-0">
+                                    <p class="truncate text-sm font-semibold text-slate-700">{{ $row['name'] }}</p>
+                                    <p class="text-xs text-slate-400">{{ $row['quantity'] }} atenciones</p>
+                                </div>
+                                <span class="shrink-0 text-sm font-bold text-brand-600">{{ money($row['total_usd']) }}</span>
+                            </div>
+                        @empty
+                            <p class="rounded-lg bg-slate-50 px-3 py-6 text-center text-xs text-slate-400">Sin servicios.</p>
+                        @endforelse
+                    </div>
+                </div>
+
+                <!-- Productos vendidos -->
+                <div class="space-y-3 border-t border-slate-200 p-4 md:border-l md:border-t-0">
+                    <div class="flex items-center justify-between gap-2">
+                        <span class="flex items-center gap-2 text-sm font-bold text-slate-800">
+                            <x-icon name="bag" class="h-5 w-5 text-brand-600" /> Productos vendidos
+                        </span>
+                        <span class="shrink-0 text-xs text-slate-400">{{ $products->count() }} ítems</span>
+                    </div>
+                    <div class="space-y-1.5">
+                        @forelse ($products as $row)
+                            <div class="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2">
+                                <div class="flex min-w-0 items-center gap-2.5">
+                                    <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-white text-xs font-bold text-slate-400 ring-1 ring-slate-200">{{ $loop->iteration }}</span>
+                                    <span class="truncate text-sm text-slate-700">{{ $row['name'] }}</span>
+                                </div>
+                                <div class="flex shrink-0 items-center gap-3">
+                                    <span class="text-xs text-slate-400">{{ $row['quantity'] }} cant</span>
+                                    <span class="text-sm font-bold text-slate-700">{{ money($row['total_usd']) }}</span>
+                                </div>
+                            </div>
+                        @empty
+                            <p class="rounded-lg bg-slate-50 px-3 py-6 text-center text-xs text-slate-400">Sin productos.</p>
+                        @endforelse
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        @unless ($isBarberClosing)
+        <!-- Por barbero -->
+        <section class="space-y-3 rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
+            <div class="flex items-center justify-between">
+                <span class="flex items-center gap-2 text-sm font-bold text-slate-800">
+                    <x-icon name="users" class="h-5 w-5 text-emerald-600" /> Por barbero
+                </span>
+                <span class="text-xs text-slate-400">{{ $barbers->count() }} responsables</span>
+            </div>
+            <div class="space-y-2">
+                @forelse ($barbers as $row)
+                    @php($words = preg_split('/\s+/', trim($row['name'] ?? '')))
+                    @php($initials = mb_strtoupper(mb_substr($words[0] ?? '', 0, 1).mb_substr($words[1] ?? '', 0, 1)))
+                    <div class="rounded-xl bg-slate-50 p-3">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <span class="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-600">{{ $initials }}</span>
+                                <span class="text-sm font-semibold text-slate-700">{{ $row['name'] }}</span>
+                            </div>
+                            <span class="rounded-full bg-white px-2 py-0.5 text-[11px] font-semibold text-slate-500 ring-1 ring-slate-200">{{ $row['tickets'] }} tickets</span>
+                        </div>
+                        <div class="mt-1.5 flex flex-wrap items-center justify-between gap-1 text-xs">
+                            <span class="text-slate-400">Producción: <strong class="font-bold text-slate-600">{{ money($row['total_usd']) }}</strong></span>
+                            <span class="font-semibold text-emerald-600">Comisión {{ money($row['commission_usd']) }}</span>
+                        </div>
+                        <div class="mt-1 flex flex-wrap items-center justify-between gap-1 text-xs">
+                            <span class="font-semibold text-emerald-600">Propinas {{ money($row['tip_usd'] ?? 0) }}</span>
+                            <span class="font-semibold text-rose-600">Retenciones {{ money($row['retentions_usd'] ?? 0) }}</span>
+                            <span class="font-bold text-emerald-700">Ganancia {{ money($row['earnings_usd'] ?? ($row['commission_usd'] + ($row['tip_usd'] ?? 0))) }}</span>
+                        </div>
+                    </div>
+                @empty
+                    <p class="rounded-xl bg-slate-50 px-3 py-6 text-center text-xs text-slate-400">Sin datos.</p>
+                @endforelse
+            </div>
+        </section>
+        @endunless
+
+        <!-- Por método de pago -->
+        <section class="space-y-3 rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
+            <div class="flex items-center justify-between">
+                <span class="flex items-center gap-2 text-sm font-bold text-slate-800">
+                    <x-icon name="dollar" class="h-5 w-5 text-emerald-600" /> Por método de pago
+                </span>
+                <span class="text-xs text-slate-400">{{ $methods->count() }} vías</span>
+            </div>
+            <div class="space-y-1.5">
+                @forelse ($methods as $row)
+                    <div class="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2">
+                        <div class="flex items-center gap-2.5">
+                            <x-icon :name="$methodIcon($row['name'])" class="h-[18px] w-[18px] text-slate-400" />
+                            <span class="text-sm font-medium text-slate-700">{{ $row['name'] }}</span>
+                            <span class="rounded bg-white px-1.5 py-0.5 text-[11px] font-semibold text-slate-400 ring-1 ring-slate-200">{{ $row['count'] }}</span>
+                        </div>
+                        <span class="text-sm font-bold text-slate-700">{{ money($row['total_usd']) }}</span>
+                    </div>
+                @empty
+                    <p class="rounded-lg bg-slate-50 px-3 py-6 text-center text-xs text-slate-400">Sin datos.</p>
+                @endforelse
+            </div>
+        </section>
+
+        @unless ($isBarberClosing)
+        <!-- Gastos del período -->
+        <section class="space-y-3 rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
+            <div class="flex items-center justify-between">
+                <span class="flex items-center gap-2 text-sm font-bold text-slate-800">
+                    <x-icon name="minus" class="h-5 w-5 text-rose-500" /> Gastos del período
+                </span>
+                <span class="text-xs text-slate-400">{{ $expenses->count() }} registro(s)</span>
+            </div>
+            <div class="space-y-1.5">
+                @forelse ($expenses as $row)
+                    <div class="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2.5">
+                        <div class="min-w-0">
+                            <p class="truncate text-sm font-semibold text-slate-700">{{ $row['concept'] }}</p>
+                            <p class="text-xs text-slate-400">{{ $row['date'] }}@if (! empty($row['notes'])) · {{ $row['notes'] }}@endif</p>
+                        </div>
+                        <span class="shrink-0 text-sm font-bold text-rose-600">- {{ money($row['amount_usd']) }}</span>
+                    </div>
+                @empty
+                    <p class="rounded-lg bg-slate-50 px-3 py-6 text-center text-xs text-slate-400">Sin gastos registrados en este período.</p>
+                @endforelse
+            </div>
+            @if ($expenses->isNotEmpty())
+                <div class="flex items-center justify-between rounded-lg bg-rose-50 px-3 py-2.5 ring-1 ring-rose-100">
+                    <span class="text-xs font-bold uppercase tracking-wider text-rose-700">Total gastos</span>
+                    <span class="text-sm font-extrabold text-rose-700">- {{ money($expensesTotal) }}</span>
+                </div>
+            @endif
+        </section>
+        @endunless
+
+        <!-- Cerrar / Reabrir -->
+        @unless ($liquidation->isClosed())
+            <section class="rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
+                <div class="flex items-center gap-2">
+                    <x-icon name="lock" class="h-5 w-5 text-rose-500" />
+                    <span class="text-sm font-bold text-slate-800">{{ $isBarberClosing ? 'Cerrar liquidación' : 'Cerrar período' }}</span>
+                </div>
+                <p class="mt-1 text-xs text-slate-400">
+                    @if ($isBarberClosing)
+                        Al cerrar, los montos de la liquidación quedan congelados. No bloquea la operación del estudio.
+                    @else
+                        Al cerrar, los totales quedan congelados y no se podrán registrar más ventas en este período.
+                    @endif
+                </p>
+                <form method="POST" action="{{ route('liquidations.close', $liquidation) }}" class="mt-3 space-y-3"
+                      onsubmit="return confirm('{{ $isBarberClosing ? '¿Confirmas el cierre de esta liquidación?' : '¿Confirmas el cierre? Esta acción bloquea el período.' }}');">
+                    @csrf
+                    <textarea name="notes" rows="2" placeholder="Notas del cierre (opcional)"
+                              class="block w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-brand-500 focus:bg-white focus:ring-brand-500">{{ old('notes') }}</textarea>
+                    <button type="submit"
+                            class="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-rose-500 to-rose-400 text-sm font-bold text-white shadow-md transition hover:opacity-95 active:scale-[0.985]">
+                        <x-icon name="lock" class="h-4 w-4" /> {{ $isBarberClosing ? 'Cerrar liquidación' : 'Cerrar y bloquear período' }}
+                    </button>
+                </form>
+            </section>
+        @else
+            <section class="rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
+                <div class="flex items-center gap-2">
+                    <x-icon name="refresh" class="h-5 w-5 text-brand-500" />
+                    <span class="text-sm font-bold text-slate-800">Reabrir período</span>
+                </div>
+                <p class="mt-1 text-xs text-slate-400">Si el cierre se hizo por error, puedes reabrirlo. Los totales se recalcularán automáticamente.</p>
+                <form method="POST" action="{{ route('liquidations.reopen', $liquidation) }}" class="mt-3"
+                      onsubmit="return confirm('¿Reabrir este período? Podrás registrar y corregir ventas de nuevo.');">
+                    @csrf
+                    <button type="submit"
+                            class="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-white text-sm font-semibold text-brand-700 ring-1 ring-brand-300 transition hover:bg-brand-50 active:scale-[0.985]">
+                        <x-icon name="refresh" class="h-4 w-4" /> Reabrir período
+                    </button>
+                </form>
+            </section>
+        @endunless
+    </div>
+</x-app-layout>

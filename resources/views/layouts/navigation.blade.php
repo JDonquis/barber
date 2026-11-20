@@ -62,6 +62,10 @@
                 <x-icon name="chart" class="h-5 w-5" />
                 Cierres
             </a>
+            <a href="{{ route('liquidations.index') }}" class="{{ $linkClass(request()->routeIs('liquidations.*')) }}">
+                <x-icon name="wallet" class="h-5 w-5" />
+                Liquidaciones
+            </a>
             <a href="{{ route('expenses.index') }}" class="{{ $linkClass(request()->routeIs('expenses.*')) }}">
                 <x-icon name="minus" class="h-5 w-5" />
                 Gastos

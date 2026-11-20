@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\BarberLiquidation;
 use App\Models\Closing;
 use App\Models\Sale;
 use App\Models\Service;
@@ -79,18 +80,17 @@ class TipTest extends TestCase
 
         $this->registerSale($admin, $service, $barber, 4);
 
-        $this->actingAs($admin)->post(route('closings.generate'), [
+        $this->actingAs($admin)->post(route('liquidations.store'), [
             'period_type' => 'diario',
             'date' => now()->toDateString(),
             'barber_id' => $barber->id,
         ])->assertRedirect();
 
-        $closing = Closing::query()->where('barber_id', $barber->id)->firstOrFail();
+        $closing = BarberLiquidation::query()->where('barber_id', $barber->id)->firstOrFail();
 
         $this->assertSame('14.00', $closing->total_usd);
         $this->assertSame('4.00', $closing->barber_commission_usd);
         $this->assertSame('4.00', $closing->barber_tips_usd);
-        $this->assertSame('6.00', $closing->shop_amount_usd);
         $this->assertSame(8.0, $closing->barberEarningsUsd());
         $this->assertSame(4.0, (float) $closing->details['barberos'][0]['tip_usd']);
         $this->assertSame(8.0, (float) $closing->details['barberos'][0]['earnings_usd']);
@@ -109,7 +109,7 @@ class TipTest extends TestCase
             'date' => now()->toDateString(),
         ])->assertRedirect();
 
-        $closing = Closing::query()->whereNull('barber_id')->firstOrFail();
+        $closing = Closing::query()->firstOrFail();
 
         $this->assertSame('12.00', $closing->total_usd);
         $this->assertSame('4.00', $closing->barber_commission_usd);

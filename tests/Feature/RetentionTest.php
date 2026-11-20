@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Models\Closing;
+use App\Models\BarberLiquidation;
 use App\Models\Retention;
 use App\Models\Sale;
 use App\Models\Service;
@@ -169,38 +169,37 @@ class RetentionTest extends TestCase
         $this->registerSale($admin, $service, $barber);
         $this->registerSale($admin, $service, $other);
 
-        $this->actingAs($admin)->post(route('closings.generate'), [
+        $this->actingAs($admin)->post(route('liquidations.store'), [
             'period_type' => 'diario',
             'date' => now()->toDateString(),
             'barber_id' => $barber->id,
         ])->assertRedirect();
 
-        $closing = Closing::query()->where('barber_id', $barber->id)->firstOrFail();
+        $closing = BarberLiquidation::query()->where('barber_id', $barber->id)->firstOrFail();
 
         $this->assertSame('4.00', $closing->barber_commission_usd);
         $this->assertSame('3.00', $closing->barber_retentions_usd);
         $this->assertSame(1.0, $closing->barberEarningsUsd());
-        $this->assertSame('9.00', $closing->shop_amount_usd);
         $this->assertCount(2, $closing->details['retenciones']);
 
         $this->actingAs($admin)
-            ->get(route('closings.show', $closing))
+            ->get(route('liquidations.show', $closing))
             ->assertOk()
             ->assertSee('Retenciones aplicadas')
             ->assertSee('Cuota de herramientas');
 
         $this->actingAs($admin)
-            ->get(route('closings.print', $closing))
+            ->get(route('liquidations.print', $closing))
             ->assertOk()
             ->assertSee('Retenciones aplicadas');
 
-        $this->actingAs($admin)->post(route('closings.generate'), [
+        $this->actingAs($admin)->post(route('liquidations.store'), [
             'period_type' => 'diario',
             'date' => now()->toDateString(),
             'barber_id' => $other->id,
         ])->assertRedirect();
 
-        $otherClosing = Closing::query()->where('barber_id', $other->id)->firstOrFail();
+        $otherClosing = BarberLiquidation::query()->where('barber_id', $other->id)->firstOrFail();
 
         $this->assertSame('1.00', $otherClosing->barber_retentions_usd);
         $this->assertSame(3.0, $otherClosing->barberEarningsUsd());
@@ -224,13 +223,13 @@ class RetentionTest extends TestCase
 
         $this->registerSale($admin, $service, $barber);
 
-        $this->actingAs($admin)->post(route('closings.generate'), [
+        $this->actingAs($admin)->post(route('liquidations.store'), [
             'period_type' => 'diario',
             'date' => now()->toDateString(),
             'barber_id' => $barber->id,
         ])->assertRedirect();
 
-        $closing = Closing::query()->where('barber_id', $barber->id)->firstOrFail();
+        $closing = BarberLiquidation::query()->where('barber_id', $barber->id)->firstOrFail();
 
         $this->assertSame('0.00', $closing->barber_retentions_usd);
         $this->assertSame(4.0, $closing->barberEarningsUsd());

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\BarberLiquidation;
 use App\Models\Closing;
 use App\Models\Company;
 use App\Models\Loan;
@@ -108,7 +109,7 @@ class LoanTest extends TestCase
             'date' => now()->toDateString(),
         ])->assertRedirect();
 
-        $closing = Closing::query()->whereNull('barber_id')->latest('id')->firstOrFail();
+        $closing = Closing::query()->latest('id')->firstOrFail();
         $loans = collect($closing->details['prestamos'] ?? []);
         $totals = $closing->details['prestamos_totales'];
 
@@ -153,13 +154,13 @@ class LoanTest extends TestCase
             'loan_date' => now()->subDays(8)->toDateString(),
         ]);
 
-        $this->actingAs($admin)->post(route('closings.generate'), [
+        $this->actingAs($admin)->post(route('liquidations.store'), [
             'period_type' => 'diario',
             'date' => now()->toDateString(),
             'barber_id' => $barber->id,
         ])->assertRedirect();
 
-        $closing = Closing::query()->where('barber_id', $barber->id)->latest('id')->firstOrFail();
+        $closing = BarberLiquidation::query()->where('barber_id', $barber->id)->latest('id')->firstOrFail();
         $loans = collect($closing->details['prestamos'] ?? []);
         $row = $loans->firstWhere('id', $loan->id);
 
@@ -171,7 +172,7 @@ class LoanTest extends TestCase
         $this->assertFalse($row['loaned_in_period']);
 
         $this->actingAs($admin)
-            ->get(route('closings.print', $closing))
+            ->get(route('liquidations.print', $closing))
             ->assertOk()
             ->assertSee('Préstamos del período')
             ->assertSee($barber->name);

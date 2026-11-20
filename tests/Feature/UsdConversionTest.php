@@ -269,6 +269,7 @@ class UsdConversionTest extends TestCase
             route('sales.create-service'),
             route('sales.create-product'),
             route('closings.index'),
+            route('liquidations.index'),
             route('settings.edit'),
             route('loans.index'),
             route('loans.create'),

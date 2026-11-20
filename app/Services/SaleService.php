@@ -249,7 +249,6 @@ class SaleService
     protected function assertPeriodOpen(\DateTimeInterface $moment): void
     {
         $closed = Closing::query()
-            ->whereNull('barber_id')
             ->where('status', Closing::STATUS_CLOSED)
             ->whereDate('period_start', '<=', $moment)
             ->whereDate('period_end', '>=', $moment)

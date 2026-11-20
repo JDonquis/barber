@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\Appointment;
+use App\Models\BarberLiquidation;
 use App\Models\Closing;
 use App\Models\Company;
 use App\Models\Customer;
@@ -126,6 +127,7 @@ class SeedDemoCompany extends Command
         SaleItem::query()->delete();
         StockMovement::query()->delete();
         Sale::query()->delete();
+        BarberLiquidation::query()->delete();
         Closing::query()->delete();
         Expense::query()->delete();
         Appointment::query()->delete();

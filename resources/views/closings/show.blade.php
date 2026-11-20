@@ -16,8 +16,8 @@
     ];
     $expensesTotal = (float) $closing->total_expenses_usd;
 
-    $isBarberClosing = $closing->barber_id !== null;
-    $barberName = $closing->barber->name ?? 'Barbero';
+    $isBarberClosing = false;
+    $barberName = null;
 
     $serviceQty = (int) $services->sum('quantity');
     $productQty = (int) $products->sum('quantity');
@@ -125,7 +125,7 @@
                 </div>
                 <span class="truncate text-lg font-bold tracking-tight text-slate-800">{{ money($barberEarnings) }}</span>
                 <span class="text-[11px] font-semibold text-emerald-600">
-                    {{ $isBarberClosing ? 'Comisión + propinas − retenciones' : 'A liquidar staff · '.$commissionPct.'%' }}
+                    {{ $isBarberClosing ? 'Comisión + propinas − retenciones' : 'Comisiones del período · '.$commissionPct.'%' }}
                 </span>
             </div>
 
@@ -528,7 +528,7 @@
                     @if ($isBarberClosing)
                         Al cerrar, los montos de la liquidación quedan congelados. No bloquea la operación del estudio.
                     @else
-                        Al cerrar, los totales quedan congelados y no se podrán registrar más ventas en este período.
+                        Al cerrar, los totales quedan congelados y no se podrán registrar más ventas en este período. Si es un cierre superior, también se cerrarán sus cierres hijos abiertos.
                     @endif
                 </p>
                 <form method="POST" action="{{ route('closings.close', $closing) }}" class="mt-3 space-y-3"
@@ -548,7 +548,7 @@
                     <x-icon name="refresh" class="h-5 w-5 text-brand-500" />
                     <span class="text-sm font-bold text-slate-800">Reabrir período</span>
                 </div>
-                <p class="mt-1 text-xs text-slate-400">Si el cierre se hizo por error, puedes reabrirlo. Los totales se recalcularán automáticamente.</p>
+                <p class="mt-1 text-xs text-slate-400">Si el cierre se hizo por error, puedes reabrirlo. También se reabrirán los cierres superiores e inferiores relacionados y los totales se recalcularán al volver a cerrar.</p>
                 <form method="POST" action="{{ route('closings.reopen', $closing) }}" class="mt-3"
                       onsubmit="return confirm('¿Reabrir este período? Podrás registrar y corregir ventas de nuevo.');">
                     @csrf

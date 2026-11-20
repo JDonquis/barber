@@ -10,7 +10,6 @@ use App\Services\ClosingService;
 use App\Services\RetentionService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 
 class ClosingController extends Controller
 {
@@ -18,8 +17,7 @@ class ClosingController extends Controller
 
     public function index()
     {
-        $closings = Closing::query()->with(['closedBy', 'barber'])->latest('period_start')->get();
-        $barbers = User::query()->barbers()->orderBy('name')->get();
+        $closings = Closing::query()->with('closedBy')->latest('period_start')->get();
 
         $monthStart = now()->startOfMonth();
         $monthRevenue = (float) Sale::query()->completed()->where('sold_at', '>=', $monthStart)->sum('total_usd');
@@ -43,7 +41,7 @@ class ClosingController extends Controller
         $monthRetentions = round($monthRetentions, 2);
         $monthShopAmount = round($monthRevenue - $monthCommission - $monthTips + $monthRetentions - $monthExpenses, 2);
 
-        return view('closings.index', compact('closings', 'barbers', 'monthRevenue', 'monthCommission', 'monthTips', 'monthRetentions', 'monthExpenses', 'monthShopAmount'));
+        return view('closings.index', compact('closings', 'monthRevenue', 'monthCommission', 'monthTips', 'monthRetentions', 'monthExpenses', 'monthShopAmount'));
     }
 
     public function generate(Request $request)
@@ -51,23 +49,15 @@ class ClosingController extends Controller
         $data = $request->validate([
             'period_type' => ['required', 'in:diario,semanal,mensual'],
             'date' => ['required', 'date'],
-            'barber_id' => ['nullable', 'integer', Rule::exists('users', 'id')->where('company_id', company_id())],
         ]);
-
-        $barber = null;
-
-        if (! empty($data['barber_id'])) {
-            $barber = User::query()->barbers()->findOrFail($data['barber_id']);
-        }
 
         $closing = $this->closings->generate(
             $data['period_type'],
             Carbon::parse($data['date']),
             $request->user(),
-            $barber,
         );
 
-        return redirect()->route('closings.show', $closing)->with('status', $barber ? 'Cierre de barbero generado.' : 'Reporte generado.');
+        return redirect()->route('closings.show', $closing)->with('status', 'Cierre de tienda generado.');
     }
 
     public function show(Closing $closing)

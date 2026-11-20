@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\ProfileController as AdminProfileController;
 use App\Http\Controllers\AppointmentAvailabilityController;
 use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\BarberController;
+use App\Http\Controllers\BarberLiquidationController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\ClientPortalController;
 use App\Http\Controllers\ClosingController;
@@ -137,6 +138,13 @@ Route::middleware(['auth', 'tenant'])->group(function () {
         Route::post('/closings/{closing}/close', [ClosingController::class, 'close'])->name('closings.close');
         Route::post('/closings/{closing}/reopen', [ClosingController::class, 'reopen'])->name('closings.reopen');
         Route::get('/closings/{closing}/print', [ClosingController::class, 'print'])->name('closings.print');
+
+        Route::get('/liquidations', [BarberLiquidationController::class, 'index'])->name('liquidations.index');
+        Route::post('/liquidations', [BarberLiquidationController::class, 'store'])->name('liquidations.store');
+        Route::get('/liquidations/{liquidation}', [BarberLiquidationController::class, 'show'])->name('liquidations.show');
+        Route::post('/liquidations/{liquidation}/close', [BarberLiquidationController::class, 'close'])->name('liquidations.close');
+        Route::post('/liquidations/{liquidation}/reopen', [BarberLiquidationController::class, 'reopen'])->name('liquidations.reopen');
+        Route::get('/liquidations/{liquidation}/print', [BarberLiquidationController::class, 'print'])->name('liquidations.print');
 
         Route::get('/appointments', [AppointmentController::class, 'index'])->name('appointments.index');
         Route::post('/appointments/{appointment}/status', [AppointmentController::class, 'updateStatus'])->name('appointments.status');

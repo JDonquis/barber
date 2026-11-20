@@ -37,6 +37,7 @@ class ResetSystem extends Command
         'sale_items',
         'stock_movements',
         'sales',
+        'barber_liquidations',
         'closings',
         'expenses',
         'products',

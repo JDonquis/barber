@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ $closing->barber_id !== null ? 'Liquidación de '.($closing->barber->name ?? 'Barbero') : 'Cierre '.ucfirst($closing->period_type) }} · {{ $shopName }}</title>
+    <title>Cierre {{ ucfirst($closing->period_type) }} · {{ $shopName }}</title>
     <style>
         :root {
             --text: #0f172a;
@@ -231,10 +231,10 @@
             </div>
             <div class="doc-meta">
                 <span class="doc-type">
-                    {{ $closing->barber_id !== null ? 'Liquidación · '.($closing->barber->name ?? 'Barbero') : 'Cierre '.ucfirst($closing->period_type) }}
+                    Cierre {{ ucfirst($closing->period_type) }}
                 </span>
                 <p class="muted">
-                    @if ($closing->barber_id !== null) {{ $closing->barber->name ?? 'Barbero' }} · @endif{{ $closing->period_start->format('d/m/Y') }} — {{ $closing->period_end->format('d/m/Y') }}<br>
+                    {{ $closing->period_start->format('d/m/Y') }} — {{ $closing->period_end->format('d/m/Y') }}<br>
                     Emitido: {{ now()->format('d/m/Y h:i a') }}
                 </p>
                 <span class="status {{ $closing->isClosed() ? 'closed' : 'open' }}">
@@ -258,8 +258,8 @@
             $barbers = collect($closing->details['barberos'] ?? [])
                 ->reject(fn ($row) => in_array($row['name'] ?? '', ['Sin barbero', 'Venta tienda'], true))
                 ->values();
-            $isBarberClosing = $closing->barber_id !== null;
-            $barberName = $closing->barber->name ?? 'Barbero';
+            $isBarberClosing = false;
+            $barberName = null;
             $serviceQty = (int) $services->sum('quantity');
             $productQty = (int) $products->sum('quantity');
             $barberEarnings = $closing->barberEarningsUsd();
@@ -295,7 +295,7 @@
                 <div class="kpi">
                     <div class="label">Comisiones + propinas − ret.</div>
                     <div class="value">{{ money($barberEarnings) }}</div>
-                    <div class="hint">A liquidar staff · Ret. {{ money($closing->barber_retentions_usd) }}</div>
+                    <div class="hint">Comisiones del período · Ret. {{ money($closing->barber_retentions_usd) }}</div>
                 </div>
                 <div class="kpi">
                     <div class="label">Gastos</div>

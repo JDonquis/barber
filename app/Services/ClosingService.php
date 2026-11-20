@@ -83,6 +83,7 @@ class ClosingService
             $byPayment[$payment]['total_ves'] = ($byPayment[$payment]['total_ves'] ?? 0) + (float) $sale->total_ves;
 
             $barberKey = $sale->barber_id ?? 0;
+            $byBarber[$barberKey]['barber_id'] = $sale->barber_id;
             $byBarber[$barberKey]['name'] = $sale->barber->name ?? 'Venta tienda';
             $byBarber[$barberKey]['tickets'] = ($byBarber[$barberKey]['tickets'] ?? 0) + 1;
             $byBarber[$barberKey]['total_usd'] = ($byBarber[$barberKey]['total_usd'] ?? 0) + (float) $sale->total_usd - $tip;
@@ -238,23 +239,18 @@ class ClosingService
     }
 
     /**
-     * Create (or refresh) an open closing record for the given period.
+     * Create (or refresh) an open shop closing for the given period.
      */
-    public function generate(string $type, ?Carbon $date = null, ?User $user = null, ?User $barber = null): Closing
+    public function generate(string $type, ?Carbon $date = null, ?User $user = null): Closing
     {
         [$start, $end] = $this->periodRange($type, $date);
-        $summary = $this->summarize($start, $end, $barber);
+        $summary = $this->summarize($start, $end);
         $referenceRate = $this->rates->referenceRate();
         $averageRate = $summary['total_usd'] > 0
             ? round($summary['total_ves'] / $summary['total_usd'], 4)
             : 0;
 
-        $closing = Closing::query()->firstOrNew([
-            'barber_id' => $barber?->id,
-            'period_type' => $type,
-            'period_start' => $start->toDateString(),
-            'period_end' => $end->toDateString(),
-        ]);
+        $closing = $this->findOrNewPeriod($type, $start, $end);
 
         if ($closing->exists && $closing->isClosed()) {
             return $closing;
@@ -271,11 +267,15 @@ class ClosingService
         $closing->closed_at = null;
         $closing->save();
 
-        return $closing;
+        if ($user) {
+            $this->reopenAncestors($closing, $user);
+        }
+
+        return $closing->refresh();
     }
 
     /**
-     * Freeze a closing so its totals cannot change.
+     * Close a shop period, its open descendants and any parent that is now fully closed.
      */
     public function close(Closing $closing, User $user, ?string $notes = null): Closing
     {
@@ -283,8 +283,56 @@ class ClosingService
             return $closing;
         }
 
+        $descendants = $this->descendants($closing)
+            ->sortBy(fn (Closing $item) => $this->level($item->period_type));
+
+        foreach ($descendants as $descendant) {
+            if (! $descendant->isClosed()) {
+                $this->closeSingle($descendant, $user);
+            }
+        }
+
+        $this->closeSingle($closing, $user, $notes);
+        $this->closeEligibleAncestors($closing, $user);
+
+        return $closing->fresh();
+    }
+
+    /**
+     * Reopen a closing together with every related ancestor and descendant.
+     */
+    public function reopen(Closing $closing, User $user): Closing
+    {
+        $this->reopenSingle($closing, $user);
+
+        foreach ($this->ancestors($closing) as $ancestor) {
+            $this->reopenSingle($ancestor, $user);
+        }
+
+        foreach ($this->descendants($closing) as $descendant) {
+            $this->reopenSingle($descendant, $user);
+        }
+
+        return $closing->fresh();
+    }
+
+    public function isPeriodClosed(Carbon $moment): bool
+    {
+        return Closing::query()
+            ->where('status', Closing::STATUS_CLOSED)
+            ->whereDate('period_start', '<=', $moment)
+            ->whereDate('period_end', '>=', $moment)
+            ->exists();
+    }
+
+    protected function closeSingle(Closing $closing, User $user, ?string $notes = null): Closing
+    {
+        if ($closing->isClosed()) {
+            return $closing;
+        }
+
         [$start, $end] = [$closing->period_start->copy()->startOfDay(), $closing->period_end->copy()->endOfDay()];
-        $summary = $this->summarize($start, $end, $closing->barber);
+        $summary = $this->summarize($start, $end);
         $referenceRate = $this->rates->referenceRate();
         $averageRate = $summary['total_usd'] > 0
             ? round($summary['total_ves'] / $summary['total_usd'], 4)
@@ -307,13 +355,10 @@ class ClosingService
         return $closing;
     }
 
-    /**
-     * Reopen a previously closed period so corrections can be made.
-     */
-    public function reopen(Closing $closing, User $user): Closing
+    protected function reopenSingle(Closing $closing, User $user): void
     {
         if (! $closing->isClosed()) {
-            return $closing;
+            return;
         }
 
         $closing->update([
@@ -321,17 +366,104 @@ class ClosingService
             'reopened_by' => $user->id,
             'reopened_at' => now(),
         ]);
-
-        return $closing->refresh();
     }
 
-    public function isPeriodClosed(Carbon $moment): bool
+    protected function reopenAncestors(Closing $closing, User $user): void
+    {
+        foreach ($this->ancestors($closing) as $ancestor) {
+            $this->reopenSingle($ancestor, $user);
+        }
+    }
+
+    protected function closeEligibleAncestors(Closing $closing, User $user): void
+    {
+        foreach ($this->ancestors($closing) as $ancestor) {
+            if ($ancestor->isClosed()) {
+                continue;
+            }
+
+            $hasOpenDescendant = $this->descendants($ancestor)
+                ->contains(fn (Closing $descendant) => ! $descendant->isClosed());
+
+            if ($hasOpenDescendant) {
+                continue;
+            }
+
+            $this->closeSingle($ancestor, $user);
+            $this->closeEligibleAncestors($ancestor, $user);
+        }
+    }
+
+    protected function findOrNewPeriod(string $type, Carbon $start, Carbon $end): Closing
+    {
+        return Closing::query()->firstOrNew([
+            'period_type' => $type,
+            'period_start' => $start->toDateString(),
+            'period_end' => $end->toDateString(),
+        ]);
+    }
+
+    /**
+     * @return Collection<int, Closing>
+     */
+    protected function ancestors(Closing $closing): Collection
     {
         return Closing::query()
-            ->whereNull('barber_id')
-            ->where('status', Closing::STATUS_CLOSED)
-            ->whereDate('period_start', '<=', $moment)
-            ->whereDate('period_end', '>=', $moment)
-            ->exists();
+            ->whereIn('period_type', $this->higherLevels($closing->period_type))
+            ->whereDate('period_start', '<=', $closing->period_start)
+            ->whereDate('period_end', '>=', $closing->period_end)
+            ->orderBy('period_start')
+            ->get()
+            ->sortBy(fn (Closing $item) => $this->level($item->period_type))
+            ->values();
+    }
+
+    /**
+     * @return Collection<int, Closing>
+     */
+    protected function descendants(Closing $closing): Collection
+    {
+        return Closing::query()
+            ->whereIn('period_type', $this->lowerLevels($closing->period_type))
+            ->whereDate('period_start', '>=', $closing->period_start)
+            ->whereDate('period_end', '<=', $closing->period_end)
+            ->orderBy('period_start')
+            ->get()
+            ->sortBy(fn (Closing $item) => $this->level($item->period_type))
+            ->values();
+    }
+
+    protected function level(string $type): int
+    {
+        return match ($type) {
+            Closing::PERIOD_DAILY => 1,
+            Closing::PERIOD_WEEKLY => 2,
+            Closing::PERIOD_MONTHLY => 3,
+            default => 0,
+        };
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    protected function higherLevels(string $type): array
+    {
+        return match ($type) {
+            Closing::PERIOD_DAILY => [Closing::PERIOD_WEEKLY, Closing::PERIOD_MONTHLY],
+            Closing::PERIOD_WEEKLY => [Closing::PERIOD_MONTHLY],
+            default => [],
+        };
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    protected function lowerLevels(string $type): array
+    {
+        return match ($type) {
+            Closing::PERIOD_MONTHLY => [Closing::PERIOD_WEEKLY, Closing::PERIOD_DAILY],
+            Closing::PERIOD_WEEKLY => [Closing::PERIOD_DAILY],
+            default => [],
+        };
     }
 }
