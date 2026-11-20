@@ -137,7 +137,7 @@
 
                 <button type="submit"
                         class="flex h-[50px] w-full items-center justify-center gap-2 rounded-xl bg-emerald-500 text-sm font-bold text-white shadow-md shadow-emerald-500/25 transition hover:bg-emerald-600 active:scale-[0.985]">
-                    <x-icon name="check" class="h-5 w-5" /> Calcular liquidación
+                    <x-icon name="check" class="h-5 w-5" /> Calcular y cerrar liquidación
                 </button>
             </form>
         </section>

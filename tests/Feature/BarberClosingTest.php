@@ -76,7 +76,7 @@ class BarberClosingTest extends TestCase
         $this->assertSame('10.00', $liquidation->total_usd);
         $this->assertSame('4.00', $liquidation->barber_commission_usd);
         $this->assertSame(1, $liquidation->ticket_count);
-        $this->assertSame(BarberLiquidation::STATUS_OPEN, $liquidation->status);
+        $this->assertSame(BarberLiquidation::STATUS_CLOSED, $liquidation->status);
     }
 
     public function test_barber_liquidation_only_includes_that_barbers_sales(): void
@@ -302,7 +302,7 @@ class BarberClosingTest extends TestCase
         ])->assertRedirect();
 
         $liquidation = BarberLiquidation::query()->where('barber_id', $barber->id)->firstOrFail();
-        $this->actingAs($admin)->post(route('liquidations.close', $liquidation), [])->assertRedirect();
+        $this->assertTrue($liquidation->isClosed());
 
         $this->actingAs($admin)
             ->get(route('liquidations.index'))

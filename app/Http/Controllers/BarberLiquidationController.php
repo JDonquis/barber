@@ -53,8 +53,10 @@ class BarberLiquidationController extends Controller
             $request->user(),
         );
 
+        $liquidation = $this->liquidations->close($liquidation, $request->user());
+
         return redirect()->route('liquidations.show', $liquidation)
-            ->with('status', 'Liquidación generada.');
+            ->with('status', 'Liquidación calculada y cerrada. El saldo pendiente fue actualizado.');
     }
 
     public function show(BarberLiquidation $liquidation)
