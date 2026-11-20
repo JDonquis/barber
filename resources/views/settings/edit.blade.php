@@ -13,15 +13,78 @@
         commission: {{ (float) old('commission_rate', $values['commission_rate'] ?? 0) }},
         conversionEnabled: {{ (string) old('usd_conversion_enabled', $values['usd_conversion_enabled'] ?? '1') === '1' ? 'true' : 'false' }},
         localCurrency: @js(old('local_currency', $values['local_currency'] ?? 'VES')),
-        methods: @js(old('payment_methods', $values['payment_methods'] ?? '')),
+        paymentMethods: @js(array_values(array_filter(array_map('trim', explode(',', (string) old('payment_methods', $values['payment_methods'] ?? '')))))),
+        newMethod: '',
+        editingIndex: null,
+        editingValue: '',
+        methodError: '',
         barberList: @js($barbersData),
         barberSelected: @js(old('barber_id')),
         barberRate: @js(old('barber_commission_rate')),
         barberUseBase: {{ old('barber_use_base') ? 'true' : 'false' }},
         init() {
-            ['conversionEnabled', 'localCurrency', 'commission', 'methods', 'barberSelected', 'barberRate', 'barberUseBase'].forEach((key) => {
+            ['conversionEnabled', 'localCurrency', 'commission', 'barberSelected', 'barberRate', 'barberUseBase'].forEach((key) => {
                 this.$watch(key, () => { this.dirty = true; });
             });
+
+            this.$watch('paymentMethods', () => { this.dirty = true; }, { deep: true });
+        },
+        addMethod() {
+            const name = (this.newMethod || '').trim();
+
+            if (! name) {
+                this.methodError = 'Escribe el nombre del método de pago.';
+                return;
+            }
+
+            if (this.paymentMethods.some((method) => method.toLowerCase() === name.toLowerCase())) {
+                this.methodError = 'Ese método ya está en la lista.';
+                return;
+            }
+
+            this.paymentMethods.push(name);
+            this.newMethod = '';
+            this.methodError = '';
+        },
+        startMethodEdit(index) {
+            this.editingIndex = index;
+            this.editingValue = this.paymentMethods[index];
+            this.methodError = '';
+        },
+        saveMethodEdit(index) {
+            const name = (this.editingValue || '').trim();
+
+            if (! name) {
+                this.methodError = 'Escribe el nombre del método de pago.';
+                return;
+            }
+
+            if (this.paymentMethods.some((method, position) => position !== index && method.toLowerCase() === name.toLowerCase())) {
+                this.methodError = 'Ese método ya está en la lista.';
+                return;
+            }
+
+            this.paymentMethods[index] = name;
+            this.editingIndex = null;
+            this.editingValue = '';
+            this.methodError = '';
+        },
+        cancelMethodEdit() {
+            this.editingIndex = null;
+            this.editingValue = '';
+            this.methodError = '';
+        },
+        removeMethod(index) {
+            this.paymentMethods.splice(index, 1);
+
+            if (this.editingIndex === index) {
+                this.editingIndex = null;
+                this.editingValue = '';
+            } else if (this.editingIndex !== null && this.editingIndex > index) {
+                this.editingIndex--;
+            }
+
+            this.methodError = '';
         },
         get selectedBarber() { return this.barberList.find((barber) => String(barber.id) === String(this.barberSelected)); },
         selectBarberCommission(id) {
@@ -31,9 +94,6 @@
             this.barberUseBase = ! custom;
             this.barberRate = custom ? Number(barber.rate) : '';
         },
-        get methodList() {
-            return (this.methods || '').split(',').map((method) => method.trim()).filter(Boolean);
-        }
     }">
         <!-- Encabezado -->
         <div>
@@ -412,23 +472,83 @@
                     </div>
                 </div>
 
-                <div class="space-y-1.5">
-                    <x-input-label for="payment_methods" value="Métodos habilitados para clientes" />
-                    <input id="payment_methods" name="payment_methods" type="text" x-model="methods"
-                           placeholder="{{ usd_conversion_enabled() ? 'Efectivo '.local_currency().', Efectivo USD, Pago móvil, Transferencia, Zelle' : 'Efectivo '.local_currency().', Pago móvil, Transferencia' }}"
-                           class="block h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-700 placeholder:text-slate-400 focus:border-brand-500 focus:bg-white focus:ring-brand-500" />
-                    <div class="flex flex-wrap gap-1.5 rounded-xl bg-slate-50 p-2.5">
-                        <template x-for="method in methodList" :key="method">
-                            <span class="inline-flex items-center gap-1 rounded-lg bg-white px-3 py-1.5 text-xs text-slate-700 ring-1 ring-slate-200">
-                                <x-icon name="check" class="h-3.5 w-3.5 text-emerald-500" />
-                                <span x-text="method"></span>
-                            </span>
-                        </template>
-                        <template x-if="methodList.length === 0">
-                            <span class="px-1 text-xs text-slate-400">Sin métodos configurados.</span>
+                <div class="space-y-2.5">
+                    <div class="flex items-center justify-between gap-2">
+                        <x-input-label value="Métodos habilitados para clientes" />
+                        <span class="text-[11px] font-medium text-slate-400"><span x-text="paymentMethods.length"></span> método(s)</span>
+                    </div>
+
+                    <input type="hidden" name="payment_methods" :value="paymentMethods.join(', ')">
+
+                    <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                        <template x-for="(method, index) in paymentMethods" :key="method + '-' + index">
+                            <div class="rounded-xl bg-slate-50 p-3 ring-1 ring-slate-200">
+                                <template x-if="editingIndex !== index">
+                                    <div class="flex items-center justify-between gap-2">
+                                        <div class="flex min-w-0 items-center gap-2">
+                                            <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-emerald-600 ring-1 ring-slate-200">
+                                                <x-icon name="card" class="h-4 w-4" />
+                                            </span>
+                                            <span class="truncate text-sm font-semibold text-slate-700" x-text="method"></span>
+                                        </div>
+                                        <div class="flex shrink-0 items-center gap-1">
+                                            <button type="button" @click="startMethodEdit(index)" title="Editar método"
+                                                    class="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-slate-500 ring-1 ring-slate-200 transition hover:text-brand-600 active:scale-95">
+                                                <x-icon name="edit" class="h-3.5 w-3.5" />
+                                            </button>
+                                            <button type="button" @click="removeMethod(index)" title="Eliminar método"
+                                                    class="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-slate-500 ring-1 ring-slate-200 transition hover:text-rose-600 active:scale-95">
+                                                <x-icon name="trash" class="h-3.5 w-3.5" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                </template>
+
+                                <template x-if="editingIndex === index">
+                                    <div class="space-y-2">
+                                        <input type="text" x-model="editingValue"
+                                               @input.stop @change.stop
+                                               @keydown.enter.prevent="saveMethodEdit(index)"
+                                               @keydown.escape.prevent="cancelMethodEdit()"
+                                               class="block h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 focus:border-brand-500 focus:ring-brand-500" />
+                                        <div class="flex items-center justify-end gap-1">
+                                            <button type="button" @click="cancelMethodEdit()" title="Cancelar"
+                                                    class="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-slate-500 ring-1 ring-slate-200 transition hover:bg-slate-100">
+                                                <x-icon name="x" class="h-4 w-4" />
+                                            </button>
+                                            <button type="button" @click="saveMethodEdit(index)" title="Guardar método"
+                                                    class="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500 text-white shadow-sm transition hover:bg-emerald-600">
+                                                <x-icon name="check" class="h-4 w-4" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
                         </template>
                     </div>
-                    <p class="text-[11px] text-slate-400">Sepáralos con comas; se usan en el sistema POS.</p>
+
+                    <template x-if="paymentMethods.length === 0">
+                        <p class="rounded-xl bg-slate-50 px-4 py-5 text-center text-xs text-slate-400 ring-1 ring-slate-200">
+                            Sin métodos configurados. Agrega el primero.
+                        </p>
+                    </template>
+
+                    <div class="rounded-xl border border-dashed border-slate-300 p-2.5">
+                        <div class="flex gap-2">
+                            <input type="text" x-model="newMethod"
+                                   @input.stop @change.stop
+                                   @keydown.enter.prevent="addMethod()"
+                                   placeholder="Ej. Pago móvil, Transferencia, Nequi..."
+                                   class="block h-11 min-w-0 flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-brand-500 focus:bg-white focus:ring-brand-500" />
+                            <button type="button" @click="addMethod()"
+                                    class="inline-flex h-11 shrink-0 items-center gap-1.5 rounded-xl bg-brand-500 px-3 text-xs font-bold text-white shadow-sm transition hover:bg-brand-400 active:scale-95">
+                                <x-icon name="plus" class="h-4 w-4" /> Agregar
+                            </button>
+                        </div>
+                        <p x-show="methodError" x-cloak x-text="methodError" class="mt-1.5 text-[11px] font-medium text-rose-600"></p>
+                    </div>
+
+                    <p class="text-[11px] text-slate-400">Estos métodos se usan en el sistema POS. Puedes agregarlos, editarlos o eliminar los que ya no uses.</p>
                 </div>
 
                 <div class="space-y-2">
