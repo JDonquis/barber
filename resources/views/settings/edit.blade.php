@@ -8,7 +8,8 @@
         <h1 class="text-lg font-semibold text-slate-800">Configuración</h1>
     </x-slot>
 
-    <div class="max-w-2xl mx-auto space-y-4" x-data="{
+    <div class="max-w-2xl mx-auto space-y-4" :class="dirty ? 'pb-24 sm:pb-0' : ''" x-data="{
+        dirty: false,
         commission: {{ (float) old('commission_rate', $values['commission_rate'] ?? 0) }},
         conversionEnabled: {{ (string) old('usd_conversion_enabled', $values['usd_conversion_enabled'] ?? '1') === '1' ? 'true' : 'false' }},
         localCurrency: @js(old('local_currency', $values['local_currency'] ?? 'VES')),
@@ -17,6 +18,11 @@
         barberSelected: @js(old('barber_id')),
         barberRate: @js(old('barber_commission_rate')),
         barberUseBase: {{ old('barber_use_base') ? 'true' : 'false' }},
+        init() {
+            ['conversionEnabled', 'localCurrency', 'commission', 'methods', 'barberSelected', 'barberRate', 'barberUseBase'].forEach((key) => {
+                this.$watch(key, () => { this.dirty = true; });
+            });
+        },
         get selectedBarber() { return this.barberList.find((barber) => String(barber.id) === String(this.barberSelected)); },
         selectBarberCommission(id) {
             this.barberSelected = String(id);
@@ -113,7 +119,8 @@
             </div>
         </section>
 
-        <form method="POST" action="{{ route('settings.update') }}" class="space-y-4">
+        <form id="settings-form" method="POST" action="{{ route('settings.update') }}" class="space-y-4"
+              @input="dirty = true" @change="dirty = true">
             @csrf
             @method('PUT')
 
@@ -489,13 +496,6 @@
                 </div>
             </section>
 
-            <!-- Guardar -->
-            <div class="pt-1">
-                <button type="submit"
-                        class="flex h-[52px] w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-500 to-brand-400 text-sm font-extrabold uppercase tracking-wider text-white shadow-lg shadow-brand-500/30 transition-all hover:opacity-95 active:scale-[0.985]">
-                    <x-icon name="check" class="h-5 w-5" /> Guardar configuración
-                </button>
-            </div>
         </form>
 
         <!-- Compartir acceso por QR -->
@@ -573,5 +573,18 @@
                 </div>
             </div>
         </section>
+
+        <!-- Guardar cambios (flotante en móvil) -->
+        <div x-cloak x-show="dirty" class="pointer-events-none fixed inset-x-0 bottom-0 z-40 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-8 bg-gradient-to-t from-slate-100 via-slate-100/95 to-transparent sm:hidden">
+            <button type="submit" form="settings-form"
+                    class="pointer-events-auto flex h-[52px] w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-500 to-brand-400 text-sm font-extrabold uppercase tracking-wider text-white shadow-lg shadow-brand-500/30 transition-all hover:opacity-95 active:scale-[0.985]">
+                <x-icon name="check" class="h-5 w-5" /> Guardar cambios
+            </button>
+        </div>
+
+        <button x-cloak x-show="dirty" type="submit" form="settings-form"
+                class="fixed bottom-6 right-6 z-40 hidden items-center gap-2 rounded-full bg-gradient-to-r from-brand-500 to-brand-400 px-5 py-3 text-sm font-bold text-white shadow-xl shadow-brand-500/30 transition-all hover:opacity-95 active:scale-[0.985] sm:inline-flex">
+            <x-icon name="check" class="h-5 w-5" /> Guardar cambios
+        </button>
     </div>
 </x-app-layout>
