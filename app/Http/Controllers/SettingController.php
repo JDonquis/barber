@@ -8,6 +8,7 @@ use App\Models\LoanPayment;
 use App\Models\Sale;
 use App\Models\User;
 use App\Services\ExchangeRateService;
+use App\Services\QrLoginService;
 use App\Services\SettingService;
 use App\Services\TenantManager;
 use Illuminate\Http\Request;
@@ -16,16 +17,19 @@ use Illuminate\Validation\ValidationException;
 
 class SettingController extends Controller
 {
-    public function __construct(protected SettingService $settings) {}
+    public function __construct(protected SettingService $settings, protected QrLoginService $qrLogin) {}
 
-    public function edit()
+    public function edit(Request $request)
     {
         $baseCommission = (float) $this->settings->get('commission_rate', 0);
         $barbers = User::query()->barbers()->orderBy('name')->get();
+        $qrLogin = $this->qrLogin->tokenFor($request->user());
 
         return view('settings.edit', [
             'values' => $this->settings->all(),
             'baseCommission' => $baseCommission,
+            'qrLoginUrl' => route('qr-login.consume', $qrLogin['token']),
+            'qrLoginExpiresAt' => $qrLogin['expires_at']->getTimestampMs(),
             'barbersData' => $barbers->map(fn (User $barber) => [
                 'id' => $barber->id,
                 'name' => $barber->name,

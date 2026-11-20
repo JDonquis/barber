@@ -449,5 +449,81 @@
                 </button>
             </div>
         </form>
+
+        <!-- Compartir acceso por QR -->
+        <section class="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200"
+                 x-data="qrLogin({ url: @js($qrLoginUrl), expiresAt: {{ (int) $qrLoginExpiresAt }} })">
+            <div class="flex items-start justify-between gap-3">
+                <div class="flex items-center gap-3">
+                    <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-100 text-brand-600">
+                        <x-icon name="smartphone" class="h-5 w-5" />
+                    </span>
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-800">Compartir acceso por QR</h3>
+                        <p class="text-xs text-slate-400">Inicia sesión en otro dispositivo con tu usuario</p>
+                    </div>
+                </div>
+                <span class="inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide"
+                      :class="expired ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'">
+                    <span class="h-1.5 w-1.5 rounded-full" :class="expired ? 'bg-rose-500' : 'animate-pulse bg-emerald-500'"></span>
+                    <span x-text="expired ? 'Vencido' : 'Vence en ' + remainingLabel"></span>
+                </span>
+            </div>
+
+            <div class="mt-4 flex flex-col items-center gap-5 sm:flex-row sm:items-start">
+                <div class="relative shrink-0 rounded-2xl bg-white p-3 ring-1 ring-slate-200">
+                    <canvas x-ref="canvas" width="240" height="240"
+                            class="h-[240px] w-[240px] max-w-full rounded-xl bg-white"></canvas>
+                    <div x-cloak x-show="expired"
+                         class="absolute inset-3 flex flex-col items-center justify-center gap-2 rounded-xl bg-white/90 text-center">
+                        <span class="flex h-11 w-11 items-center justify-center rounded-full bg-rose-100 text-rose-600">
+                            <x-icon name="clock" class="h-5 w-5" />
+                        </span>
+                        <span class="text-sm font-bold text-slate-700">Código vencido</span>
+                        <span class="px-4 text-[11px] text-slate-400">Genera uno nuevo para seguir compartiendo el acceso.</span>
+                    </div>
+                </div>
+
+                <div class="w-full min-w-0 flex-1 space-y-3">
+                    <div>
+                        <p class="text-sm font-semibold text-slate-700">Escanea el código desde el otro dispositivo</p>
+                        <p class="mt-0.5 text-xs leading-relaxed text-slate-400">
+                            Al leerlo, ese dispositivo iniciará sesión automáticamente como
+                            <strong class="text-slate-600">{{ auth()->user()->name }}</strong>.
+                        </p>
+                    </div>
+
+                    <div class="flex items-start gap-2 rounded-xl bg-amber-50 p-3 text-[11px] leading-relaxed text-amber-800 ring-1 ring-amber-200">
+                        <x-icon name="alert" class="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
+                        <span>No compartas este código con personas en las que no confíes. Es de un solo uso y vence en {{ \App\Services\QrLoginService::TTL_MINUTES }} minutos.</span>
+                    </div>
+
+                    <div class="space-y-1.5">
+                        <x-input-label value="Enlace de acceso" />
+                        <div class="flex gap-2">
+                            <input type="text" readonly value="{{ $qrLoginUrl }}" onclick="this.select()"
+                                   class="block h-11 min-w-0 flex-1 truncate rounded-xl border border-slate-200 bg-slate-50 px-3 text-xs text-slate-500 focus:border-brand-500 focus:bg-white focus:ring-brand-500" />
+                            <button type="button" @click="copyLink()"
+                                    class="inline-flex h-11 shrink-0 items-center gap-1.5 rounded-xl bg-slate-100 px-3 text-xs font-semibold text-slate-700 transition hover:bg-slate-200 active:scale-[0.985]">
+                                <x-icon name="copy" class="h-4 w-4 text-brand-500" />
+                                <span x-text="copied ? 'Copiado' : 'Copiar'"></span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <form method="POST" action="{{ route('settings.qr-login.regenerate') }}">
+                        @csrf
+                        <button type="submit"
+                                class="inline-flex h-11 items-center gap-2 rounded-xl border border-brand-200 bg-brand-50 px-4 text-sm font-semibold text-brand-700 transition hover:bg-brand-100 active:scale-[0.985]">
+                            <x-icon name="refresh" class="h-4 w-4" /> Generar nuevo QR
+                        </button>
+                    </form>
+
+                    <p class="text-[11px] leading-tight text-slate-400">
+                        El código se invalida al usarse o al vencer. Si generas uno nuevo, el anterior deja de funcionar.
+                    </p>
+                </div>
+            </div>
+        </section>
     </div>
 </x-app-layout>

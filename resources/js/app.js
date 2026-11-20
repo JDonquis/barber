@@ -1,8 +1,66 @@
 import './bootstrap';
 
 import Alpine from 'alpinejs';
+import QRCode from 'qrcode';
 
 window.Alpine = Alpine;
+
+Alpine.data('qrLogin', ({ url, expiresAt }) => ({
+    url,
+    expiresAt,
+    remaining: 0,
+    timer: null,
+    copied: false,
+    init() {
+        this.render();
+        this.updateRemaining();
+        this.timer = setInterval(() => this.updateRemaining(), 1000);
+    },
+    destroy() {
+        if (this.timer) {
+            clearInterval(this.timer);
+            this.timer = null;
+        }
+    },
+    updateRemaining() {
+        this.remaining = Math.max(0, Math.floor((this.expiresAt - Date.now()) / 1000));
+
+        if (this.remaining === 0 && this.timer) {
+            clearInterval(this.timer);
+            this.timer = null;
+        }
+    },
+    get expired() {
+        return this.remaining <= 0;
+    },
+    get remainingLabel() {
+        const minutes = Math.floor(this.remaining / 60);
+        const seconds = String(this.remaining % 60).padStart(2, '0');
+
+        return minutes + ':' + seconds;
+    },
+    async render() {
+        if (! this.url || ! this.$refs.canvas) {
+            return;
+        }
+
+        try {
+            await QRCode.toCanvas(this.$refs.canvas, this.url, {
+                width: 240,
+                margin: 1,
+                errorCorrectionLevel: 'M',
+                color: { dark: '#0f172a', light: '#ffffff' },
+            });
+        } catch {}
+    },
+    async copyLink() {
+        try {
+            await navigator.clipboard.writeText(this.url);
+            this.copied = true;
+            setTimeout(() => { this.copied = false; }, 1800);
+        } catch {}
+    },
+}));
 
 Alpine.start();
 

@@ -20,6 +20,7 @@ use App\Http\Controllers\LoanPaymentController;
 use App\Http\Controllers\PasswordResetRequestController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\QrLoginController;
 use App\Http\Controllers\RetentionController;
 use App\Http\Controllers\SaleController;
 use App\Http\Controllers\ServiceController;
@@ -38,6 +39,10 @@ Route::get('/', function () {
         ? redirect()->route('admin.companies.index')
         : redirect()->route('dashboard');
 });
+
+Route::get('/qr-login/{token}', [QrLoginController::class, 'consume'])
+    ->middleware('throttle:20,1')
+    ->name('qr-login.consume');
 
 Route::get('/reservar/{company:slug}/manifest.webmanifest', [CompanyPwaController::class, 'manifest'])->name('booking.manifest');
 Route::get('/reservar/{company:slug}/icon-{size}.png', [CompanyPwaController::class, 'icon'])
@@ -148,6 +153,7 @@ Route::middleware(['auth', 'tenant'])->group(function () {
 
         Route::get('/settings', [SettingController::class, 'edit'])->name('settings.edit');
         Route::put('/settings', [SettingController::class, 'update'])->name('settings.update');
+        Route::post('/settings/qr-login', [QrLoginController::class, 'regenerate'])->name('settings.qr-login.regenerate');
         Route::post('/exchange-rate/refresh', [ExchangeRateController::class, 'refresh'])->name('exchange-rate.refresh');
         Route::post('/exchange-rate/clear-manual', [ExchangeRateController::class, 'clearManual'])->name('exchange-rate.clear-manual');
     });
