@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Closing;
 use App\Models\Expense;
 use App\Models\Product;
 use App\Models\Sale;
@@ -99,14 +100,52 @@ class DashboardController extends Controller
 
     protected function topBarbers($monthStart, $monthEnd)
     {
+        $closedClosings = Closing::query()
+            ->where('status', Closing::STATUS_CLOSED)
+            ->get(['id', 'barber_id', 'period_start', 'period_end', 'closed_at', 'updated_at']);
+
         return User::query()->barbers()
             ->withCount(['barberSales as tickets' => fn ($q) => $q->completed()->whereBetween('sold_at', [$monthStart, $monthEnd])])
             ->withSum(['barberSales as commission' => fn ($q) => $q->completed()->whereBetween('sold_at', [$monthStart, $monthEnd])], 'barber_commission_usd')
             ->withSum(['barberSales as tips' => fn ($q) => $q->completed()->whereBetween('sold_at', [$monthStart, $monthEnd])], 'tip_usd')
             ->get()
-            ->each(fn (User $barber) => $barber->earnings = round((float) $barber->commission + (float) $barber->tips, 2))
+            ->each(function (User $barber) use ($closedClosings) {
+                $barber->earnings = round((float) $barber->commission + (float) $barber->tips, 2);
+
+                $outstanding = $this->outstandingSalesQuery($barber->id, $closedClosings)
+                    ->selectRaw('COALESCE(SUM(barber_commission_usd), 0) as commission, COALESCE(SUM(tip_usd), 0) as tips')
+                    ->first();
+
+                $barber->outstanding_commission = round((float) ($outstanding->commission ?? 0), 2);
+                $barber->outstanding_tips = round((float) ($outstanding->tips ?? 0), 2);
+                $barber->outstanding = round($barber->outstanding_commission + $barber->outstanding_tips, 2);
+            })
             ->sortByDesc('earnings')
-            ->take(5)
             ->values();
+    }
+
+    protected function outstandingSalesQuery(int $barberId, $closedClosings)
+    {
+        $query = Sale::query()
+            ->completed()
+            ->where('barber_id', $barberId);
+
+        foreach ($closedClosings as $closing) {
+            if ($closing->barber_id !== null && (int) $closing->barber_id !== $barberId) {
+                continue;
+            }
+
+            $start = $closing->period_start->copy()->startOfDay();
+            $end = $closing->period_end->copy()->endOfDay();
+            $cutoff = $closing->closed_at ?? $closing->updated_at ?? now();
+
+            $query->where(function ($query) use ($start, $end, $cutoff) {
+                $query->where('sold_at', '<', $start)
+                    ->orWhere('sold_at', '>', $end)
+                    ->orWhere('sold_at', '>', $cutoff);
+            });
+        }
+
+        return $query;
     }
 }

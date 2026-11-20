@@ -43,6 +43,59 @@ class BarberClosingTest extends TestCase
         ])->assertRedirect();
     }
 
+    private function outstandingFor(User $admin, User $barber): float
+    {
+        $topBarbers = $this->actingAs($admin)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->viewData('topBarbers');
+
+        return (float) ($topBarbers->firstWhere('id', $barber->id)?->outstanding ?? 0);
+    }
+
+    public function test_dashboard_ranking_outstanding_balance_drops_after_closings(): void
+    {
+        $this->setting('commission_rate', 40);
+        $service = $this->service(10);
+        $admin = $this->admin();
+        $barber = $this->barber();
+        $other = $this->barber();
+
+        $this->registerSale($admin, $service, $barber);
+        $this->registerSale($admin, $service, $other);
+
+        $this->assertSame(4.0, $this->outstandingFor($admin, $barber));
+        $this->assertSame(4.0, $this->outstandingFor($admin, $other));
+
+        $this->actingAs($admin)->post(route('closings.generate'), [
+            'period_type' => 'diario',
+            'date' => now()->toDateString(),
+            'barber_id' => $barber->id,
+        ])->assertRedirect();
+
+        $closing = Closing::query()->where('barber_id', $barber->id)->firstOrFail();
+        $this->actingAs($admin)->post(route('closings.close', $closing), [])->assertRedirect();
+
+        $this->assertSame(0.0, $this->outstandingFor($admin, $barber));
+        $this->assertSame(4.0, $this->outstandingFor($admin, $other));
+
+        $this->travel(1)->minutes();
+        $this->registerSale($admin, $service, $barber);
+
+        $this->assertSame(4.0, $this->outstandingFor($admin, $barber));
+
+        $this->actingAs($admin)->post(route('closings.generate'), [
+            'period_type' => 'diario',
+            'date' => now()->toDateString(),
+        ])->assertRedirect();
+
+        $general = Closing::query()->whereNull('barber_id')->latest('id')->firstOrFail();
+        $this->actingAs($admin)->post(route('closings.close', $general), [])->assertRedirect();
+
+        $this->assertSame(0.0, $this->outstandingFor($admin, $barber));
+        $this->assertSame(0.0, $this->outstandingFor($admin, $other));
+    }
+
     public function test_admin_can_generate_a_barber_closing_for_a_period(): void
     {
         $this->setting('commission_rate', 40);

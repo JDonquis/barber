@@ -214,9 +214,9 @@
                         <span class="flex items-center gap-2 text-sm font-bold text-slate-800">
                             <x-icon name="chart" class="h-5 w-5 text-brand-500" /> Ranking de barberos
                         </span>
-                        <span class="text-[11px] text-slate-400">Calculado por ganancias: comisión + propinas</span>
+                        <span class="text-[11px] text-slate-400">Ganancias del mes y saldo pendiente al día de hoy</span>
                     </div>
-                    <span class="rounded bg-slate-100 px-2 py-0.5 text-[11px] font-bold text-brand-600">Mes en curso</span>
+                    <span class="rounded bg-slate-100 px-2 py-0.5 text-[11px] font-bold text-brand-600">Saldo al día</span>
                 </div>
 
                 <div class="space-y-2">
@@ -241,9 +241,10 @@
                                     </div>
                                 </div>
                                 <div class="shrink-0 text-right">
-                                    <span class="block text-sm font-extrabold {{ $index === 0 ? 'text-brand-600' : 'text-slate-700' }}">{{ money($barber->earnings ?? 0) }}</span>
-                                    <span class="text-[10px] uppercase tracking-wide text-slate-400">Ganancias</span>
-                                    <span class="block text-[10px] text-slate-400">Comisión {{ money($barber->commission ?? 0) }} · Propinas {{ money($barber->tips ?? 0) }}</span>
+                                    <span class="block text-sm font-extrabold {{ ($barber->outstanding ?? 0) > 0 ? ($index === 0 ? 'text-brand-600' : 'text-slate-700') : 'text-emerald-600' }}">{{ money($barber->outstanding ?? 0) }}</span>
+                                    <span class="text-[10px] uppercase tracking-wide text-slate-400">Saldo por pagar</span>
+                                    <span class="block text-[10px] text-slate-400">Ganancia mes {{ money($barber->earnings ?? 0) }}</span>
+                                    <span class="block text-[10px] text-slate-400">Com. {{ money($barber->commission ?? 0) }} · Prop. {{ money($barber->tips ?? 0) }}</span>
                                 </div>
                             </div>
                             <div class="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
