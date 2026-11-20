@@ -8,6 +8,7 @@ use App\Models\Sale;
 use App\Models\Service;
 use App\Models\Setting;
 use App\Models\User;
+use App\Services\BarberLiquidationService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -80,11 +81,9 @@ class TipTest extends TestCase
 
         $this->registerSale($admin, $service, $barber, 4);
 
-        $this->actingAs($admin)->post(route('liquidations.store'), [
-            'period_type' => 'diario',
-            'date' => now()->toDateString(),
-            'barber_id' => $barber->id,
-        ])->assertRedirect();
+        $service = app(BarberLiquidationService::class);
+        $closing = $service->generate('diario', now(), $barber, $admin);
+        $service->close($closing, $admin);
 
         $closing = BarberLiquidation::query()->where('barber_id', $barber->id)->firstOrFail();
 

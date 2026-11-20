@@ -8,6 +8,7 @@ use App\Models\Company;
 use App\Models\Loan;
 use App\Models\LoanPayment;
 use App\Models\User;
+use App\Services\BarberLiquidationService;
 use App\Services\TenantManager;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -154,11 +155,9 @@ class LoanTest extends TestCase
             'loan_date' => now()->subDays(8)->toDateString(),
         ]);
 
-        $this->actingAs($admin)->post(route('liquidations.store'), [
-            'period_type' => 'diario',
-            'date' => now()->toDateString(),
-            'barber_id' => $barber->id,
-        ])->assertRedirect();
+        $service = app(BarberLiquidationService::class);
+        $closing = $service->generate('diario', now(), $barber, $admin);
+        $service->close($closing, $admin);
 
         $closing = BarberLiquidation::query()->where('barber_id', $barber->id)->latest('id')->firstOrFail();
         $loans = collect($closing->details['prestamos'] ?? []);

@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Models\BarberLiquidation;
+use App\Models\BarberPayment;
 use App\Models\Closing;
 use App\Models\Sale;
 use App\Models\Service;
@@ -54,60 +54,34 @@ class BarberClosingTest extends TestCase
         return (float) ($topBarbers->firstWhere('id', $barber->id)?->outstanding ?? 0);
     }
 
-    public function test_admin_can_generate_a_barber_liquidation_for_a_period(): void
+    private function registerPayment(User $admin, User $barber, float $amount): BarberPayment
     {
-        $this->setting('commission_rate', 40);
-        $service = $this->service(10);
-        $admin = $this->admin();
-        $barber = $this->barber();
-        $other = $this->barber();
-
-        $this->registerSale($admin, $service, $barber);
-        $this->registerSale($admin, $service, $other);
-
         $this->actingAs($admin)->post(route('liquidations.store'), [
-            'period_type' => 'diario',
-            'date' => now()->toDateString(),
             'barber_id' => $barber->id,
-        ])->assertRedirect();
+            'amount' => $amount,
+            'payment_date' => now()->toDateString(),
+        ])->assertRedirect()->assertSessionHasNoErrors();
 
-        $liquidation = BarberLiquidation::query()->where('barber_id', $barber->id)->firstOrFail();
-
-        $this->assertSame('10.00', $liquidation->total_usd);
-        $this->assertSame('4.00', $liquidation->barber_commission_usd);
-        $this->assertSame(1, $liquidation->ticket_count);
-        $this->assertSame(BarberLiquidation::STATUS_CLOSED, $liquidation->status);
+        return BarberPayment::query()->latest('id')->firstOrFail();
     }
 
-    public function test_barber_liquidation_only_includes_that_barbers_sales(): void
+    public function test_admin_can_register_a_payment_and_the_balance_drops(): void
     {
         $this->setting('commission_rate', 40);
         $service = $this->service(10);
         $admin = $this->admin();
         $barber = $this->barber();
-        $other = $this->barber();
 
         $this->registerSale($admin, $service, $barber);
+        $this->assertSame(4.0, $this->outstandingFor($admin, $barber));
 
-        $this->actingAs($admin)->post(route('sales.store-service'), [
-            'service_id' => $service->id,
-            'barber_id' => $other->id,
-            'payment_currency' => 'USD',
-        ]);
+        $payment = $this->registerPayment($admin, $barber, 2);
 
-        $this->actingAs($admin)->post(route('liquidations.store'), [
-            'period_type' => 'mensual',
-            'date' => now()->toDateString(),
-            'barber_id' => $other->id,
-        ]);
-
-        $liquidation = BarberLiquidation::query()->where('barber_id', $other->id)->firstOrFail();
-
-        $this->assertSame('10.00', $liquidation->total_usd);
-        $this->assertSame(1, $liquidation->ticket_count);
+        $this->assertSame('2.00', $payment->amount_usd);
+        $this->assertSame(2.0, $this->outstandingFor($admin, $barber));
     }
 
-    public function test_a_closed_barber_liquidation_does_not_block_new_sales(): void
+    public function test_payment_cannot_exceed_the_pending_balance(): void
     {
         $this->setting('commission_rate', 40);
         $service = $this->service(10);
@@ -117,25 +91,35 @@ class BarberClosingTest extends TestCase
         $this->registerSale($admin, $service, $barber);
 
         $this->actingAs($admin)->post(route('liquidations.store'), [
-            'period_type' => 'diario',
-            'date' => now()->toDateString(),
             'barber_id' => $barber->id,
-        ]);
+            'amount' => 5,
+            'payment_date' => now()->toDateString(),
+        ])->assertSessionHasErrors('amount');
 
-        $liquidation = BarberLiquidation::query()->where('barber_id', $barber->id)->firstOrFail();
-        $this->actingAs($admin)->post(route('liquidations.close', $liquidation), [])->assertRedirect();
-        $this->assertTrue($liquidation->fresh()->isClosed());
-
-        $this->actingAs($admin)->post(route('sales.store-service'), [
-            'service_id' => $service->id,
-            'barber_id' => $barber->id,
-            'payment_currency' => 'USD',
-        ])->assertSessionMissing('error');
-
-        $this->assertSame(2, Sale::count());
+        $this->assertSame(0, BarberPayment::query()->count());
+        $this->assertSame(4.0, $this->outstandingFor($admin, $barber));
     }
 
-    public function test_barber_liquidation_pages_render(): void
+    public function test_deleting_a_payment_restores_the_balance(): void
+    {
+        $this->setting('commission_rate', 40);
+        $service = $this->service(10);
+        $admin = $this->admin();
+        $barber = $this->barber();
+
+        $this->registerSale($admin, $service, $barber);
+        $payment = $this->registerPayment($admin, $barber, 4);
+
+        $this->assertSame(0.0, $this->outstandingFor($admin, $barber));
+
+        $this->actingAs($admin)->delete(route('liquidations.payments.destroy', $payment))
+            ->assertRedirect(route('liquidations.index'));
+
+        $this->assertSame(0, BarberPayment::query()->count());
+        $this->assertSame(4.0, $this->outstandingFor($admin, $barber));
+    }
+
+    public function test_liquidations_index_shows_balances_and_payment_history(): void
     {
         $this->setting('commission_rate', 40);
         $service = $this->service(10);
@@ -144,29 +128,26 @@ class BarberClosingTest extends TestCase
 
         $this->registerSale($admin, $service, $barber);
 
-        $this->actingAs($admin)->post(route('liquidations.store'), [
-            'period_type' => 'diario',
-            'date' => now()->toDateString(),
-            'barber_id' => $barber->id,
-        ]);
-
-        $liquidation = BarberLiquidation::query()->firstOrFail();
-
-        $this->actingAs($admin)->get(route('liquidations.index'))
+        $this->actingAs($admin)
+            ->get(route('liquidations.index'))
             ->assertOk()
-            ->assertSee('Liquidaciones');
-
-        $this->actingAs($admin)->get(route('liquidations.show', $liquidation))
-            ->assertOk()
+            ->assertSee('Saldo pendiente por barbero')
             ->assertSee($barber->name)
-            ->assertSee('a pagar');
+            ->assertSee('Toca para seleccionar')
+            ->assertSee('Pagar')
+            ->assertSee(money(4))
+            ->assertSee('No hay pagos registrados todavía');
 
-        $this->actingAs($admin)->get(route('liquidations.print', $liquidation))
+        $this->registerPayment($admin, $barber, 4);
+
+        $this->actingAs($admin)
+            ->get(route('liquidations.index'))
             ->assertOk()
-            ->assertSee($barber->name);
+            ->assertSee('Al día')
+            ->assertSee('Pagos registrados');
     }
 
-    public function test_dashboard_ranking_outstanding_balance_drops_after_liquidations(): void
+    public function test_dashboard_ranking_outstanding_balance_drops_after_payments(): void
     {
         $this->setting('commission_rate', 40);
         $service = $this->service(10);
@@ -180,14 +161,7 @@ class BarberClosingTest extends TestCase
         $this->assertSame(4.0, $this->outstandingFor($admin, $barber));
         $this->assertSame(4.0, $this->outstandingFor($admin, $other));
 
-        $this->actingAs($admin)->post(route('liquidations.store'), [
-            'period_type' => 'diario',
-            'date' => now()->toDateString(),
-            'barber_id' => $barber->id,
-        ])->assertRedirect();
-
-        $liquidation = BarberLiquidation::query()->where('barber_id', $barber->id)->firstOrFail();
-        $this->actingAs($admin)->post(route('liquidations.close', $liquidation), [])->assertRedirect();
+        $this->registerPayment($admin, $barber, 4);
 
         $this->assertSame(0.0, $this->outstandingFor($admin, $barber));
         $this->assertSame(4.0, $this->outstandingFor($admin, $other));
@@ -277,36 +251,24 @@ class BarberClosingTest extends TestCase
         $this->assertTrue($barber->exists());
     }
 
-    public function test_liquidations_index_shows_the_outstanding_balance_for_each_barber(): void
+    public function test_pay_all_registers_the_full_balance_for_every_barber(): void
     {
         $this->setting('commission_rate', 40);
         $service = $this->service(10);
         $admin = $this->admin();
         $barber = $this->barber();
+        $other = $this->barber();
 
         $this->registerSale($admin, $service, $barber);
+        $this->registerSale($admin, $service, $other);
 
-        $this->actingAs($admin)
-            ->get(route('liquidations.index'))
-            ->assertOk()
-            ->assertSee('Saldo pendiente por barbero')
-            ->assertSee($barber->name)
-            ->assertSee('Toca para seleccionar')
-            ->assertSee('Liquidar')
-            ->assertSee(money(4));
+        $this->actingAs($admin)->post(route('liquidations.pay-all'))
+            ->assertRedirect(route('liquidations.index'))
+            ->assertSessionHasNoErrors();
 
-        $this->actingAs($admin)->post(route('liquidations.store'), [
-            'period_type' => 'diario',
-            'date' => now()->toDateString(),
-            'barber_id' => $barber->id,
-        ])->assertRedirect();
-
-        $liquidation = BarberLiquidation::query()->where('barber_id', $barber->id)->firstOrFail();
-        $this->assertTrue($liquidation->isClosed());
-
-        $this->actingAs($admin)
-            ->get(route('liquidations.index'))
-            ->assertOk()
-            ->assertSee('Al día');
+        $this->assertSame(2, BarberPayment::query()->count());
+        $this->assertSame(0.0, $this->outstandingFor($admin, $barber));
+        $this->assertSame(0.0, $this->outstandingFor($admin, $other));
+        $this->assertSame(8.0, (float) BarberPayment::query()->sum('amount_usd'));
     }
 }

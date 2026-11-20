@@ -8,6 +8,7 @@ use App\Models\Sale;
 use App\Models\Service;
 use App\Models\Setting;
 use App\Models\User;
+use App\Services\BarberLiquidationService;
 use App\Services\SettingService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -169,11 +170,9 @@ class RetentionTest extends TestCase
         $this->registerSale($admin, $service, $barber);
         $this->registerSale($admin, $service, $other);
 
-        $this->actingAs($admin)->post(route('liquidations.store'), [
-            'period_type' => 'diario',
-            'date' => now()->toDateString(),
-            'barber_id' => $barber->id,
-        ])->assertRedirect();
+        $service = app(BarberLiquidationService::class);
+        $closing = $service->generate('diario', now(), $barber, $admin);
+        $service->close($closing, $admin);
 
         $closing = BarberLiquidation::query()->where('barber_id', $barber->id)->firstOrFail();
 
@@ -193,11 +192,8 @@ class RetentionTest extends TestCase
             ->assertOk()
             ->assertSee('Retenciones aplicadas');
 
-        $this->actingAs($admin)->post(route('liquidations.store'), [
-            'period_type' => 'diario',
-            'date' => now()->toDateString(),
-            'barber_id' => $other->id,
-        ])->assertRedirect();
+        $otherClosing = $service->generate('diario', now(), $other, $admin);
+        $service->close($otherClosing, $admin);
 
         $otherClosing = BarberLiquidation::query()->where('barber_id', $other->id)->firstOrFail();
 
@@ -223,11 +219,9 @@ class RetentionTest extends TestCase
 
         $this->registerSale($admin, $service, $barber);
 
-        $this->actingAs($admin)->post(route('liquidations.store'), [
-            'period_type' => 'diario',
-            'date' => now()->toDateString(),
-            'barber_id' => $barber->id,
-        ])->assertRedirect();
+        $service = app(BarberLiquidationService::class);
+        $closing = $service->generate('diario', now(), $barber, $admin);
+        $service->close($closing, $admin);
 
         $closing = BarberLiquidation::query()->where('barber_id', $barber->id)->firstOrFail();
 

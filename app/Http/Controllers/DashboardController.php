@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\BarberLiquidation;
+use App\Models\BarberPayment;
 use App\Models\Expense;
 use App\Models\Product;
 use App\Models\Sale;
@@ -104,12 +105,17 @@ class DashboardController extends Controller
             ->where('status', BarberLiquidation::STATUS_CLOSED)
             ->get(['id', 'barber_id', 'period_start', 'period_end', 'closed_at', 'updated_at']);
 
+        $paidByBarber = BarberPayment::query()
+            ->selectRaw('barber_id, COALESCE(SUM(amount_usd), 0) as total')
+            ->groupBy('barber_id')
+            ->pluck('total', 'barber_id');
+
         return User::query()->barbers()
             ->withCount(['barberSales as tickets' => fn ($q) => $q->completed()->whereBetween('sold_at', [$monthStart, $monthEnd])])
             ->withSum(['barberSales as commission' => fn ($q) => $q->completed()->whereBetween('sold_at', [$monthStart, $monthEnd])], 'barber_commission_usd')
             ->withSum(['barberSales as tips' => fn ($q) => $q->completed()->whereBetween('sold_at', [$monthStart, $monthEnd])], 'tip_usd')
             ->get()
-            ->each(function (User $barber) use ($closedLiquidations) {
+            ->each(function (User $barber) use ($closedLiquidations, $paidByBarber) {
                 $barber->earnings = round((float) $barber->commission + (float) $barber->tips, 2);
 
                 $outstanding = $this->outstandingSalesQuery($barber->id, $closedLiquidations)
@@ -118,7 +124,9 @@ class DashboardController extends Controller
 
                 $barber->outstanding_commission = round((float) ($outstanding->commission ?? 0), 2);
                 $barber->outstanding_tips = round((float) ($outstanding->tips ?? 0), 2);
-                $barber->outstanding = round($barber->outstanding_commission + $barber->outstanding_tips, 2);
+                $gross = round($barber->outstanding_commission + $barber->outstanding_tips, 2);
+                $paid = round((float) ($paidByBarber[$barber->id] ?? 0), 2);
+                $barber->outstanding = max(0, round($gross - $paid, 2));
             })
             ->sortByDesc('earnings')
             ->values();

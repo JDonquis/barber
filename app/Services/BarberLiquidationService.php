@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\BarberLiquidation;
+use App\Models\BarberPayment;
 use App\Models\Sale;
 use App\Models\User;
 use Carbon\Carbon;
@@ -15,7 +16,6 @@ class BarberLiquidationService
         protected ExchangeRateService $rates,
     ) {}
 
-
     /**
      * Outstanding balance for every barber as of today.
      *
@@ -27,19 +27,31 @@ class BarberLiquidationService
             ->where('status', BarberLiquidation::STATUS_CLOSED)
             ->get(['id', 'barber_id', 'period_start', 'period_end', 'closed_at', 'updated_at']);
 
+        $paidByBarber = BarberPayment::query()
+            ->selectRaw('barber_id, COALESCE(SUM(amount_usd), 0) as total')
+            ->groupBy('barber_id')
+            ->pluck('total', 'barber_id');
+
         return User::query()
             ->barbers()
             ->orderBy('name')
             ->get()
-            ->each(function (User $barber) use ($closedLiquidations) {
+            ->each(function (User $barber) use ($closedLiquidations, $paidByBarber) {
                 $totals = $this->outstandingSalesQuery($barber->id, $closedLiquidations)
                     ->selectRaw('COALESCE(SUM(barber_commission_usd), 0) as commission, COALESCE(SUM(tip_usd), 0) as tips')
                     ->first();
 
                 $barber->outstanding_commission = round((float) ($totals->commission ?? 0), 2);
                 $barber->outstanding_tips = round((float) ($totals->tips ?? 0), 2);
-                $barber->outstanding = round($barber->outstanding_commission + $barber->outstanding_tips, 2);
+                $barber->paid_total = round((float) ($paidByBarber[$barber->id] ?? 0), 2);
+                $barber->gross_outstanding = round($barber->outstanding_commission + $barber->outstanding_tips, 2);
+                $barber->outstanding = max(0, round($barber->gross_outstanding - $barber->paid_total, 2));
             });
+    }
+
+    public function balanceForBarber(User $barber): float
+    {
+        return (float) ($this->balances()->firstWhere('id', $barber->id)?->outstanding ?? 0);
     }
 
     protected function outstandingSalesQuery(int $barberId, Collection $closedLiquidations)

@@ -141,6 +141,8 @@ Route::middleware(['auth', 'tenant'])->group(function () {
 
         Route::get('/liquidations', [BarberLiquidationController::class, 'index'])->name('liquidations.index');
         Route::post('/liquidations', [BarberLiquidationController::class, 'store'])->name('liquidations.store');
+        Route::post('/liquidations/pay-all', [BarberLiquidationController::class, 'payAll'])->name('liquidations.pay-all');
+        Route::delete('/liquidations/payments/{payment}', [BarberLiquidationController::class, 'destroyPayment'])->name('liquidations.payments.destroy');
         Route::get('/liquidations/{liquidation}', [BarberLiquidationController::class, 'show'])->name('liquidations.show');
         Route::post('/liquidations/{liquidation}/close', [BarberLiquidationController::class, 'close'])->name('liquidations.close');
         Route::post('/liquidations/{liquidation}/reopen', [BarberLiquidationController::class, 'reopen'])->name('liquidations.reopen');
