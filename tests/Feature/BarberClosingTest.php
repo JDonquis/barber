@@ -276,4 +276,37 @@ class BarberClosingTest extends TestCase
         $this->assertTrue($service->exists());
         $this->assertTrue($barber->exists());
     }
+
+    public function test_liquidations_index_shows_the_outstanding_balance_for_each_barber(): void
+    {
+        $this->setting('commission_rate', 40);
+        $service = $this->service(10);
+        $admin = $this->admin();
+        $barber = $this->barber();
+
+        $this->registerSale($admin, $service, $barber);
+
+        $this->actingAs($admin)
+            ->get(route('liquidations.index'))
+            ->assertOk()
+            ->assertSee('Saldo pendiente por barbero')
+            ->assertSee($barber->name)
+            ->assertSee('Toca para seleccionar')
+            ->assertSee('Liquidar')
+            ->assertSee(money(4));
+
+        $this->actingAs($admin)->post(route('liquidations.store'), [
+            'period_type' => 'diario',
+            'date' => now()->toDateString(),
+            'barber_id' => $barber->id,
+        ])->assertRedirect();
+
+        $liquidation = BarberLiquidation::query()->where('barber_id', $barber->id)->firstOrFail();
+        $this->actingAs($admin)->post(route('liquidations.close', $liquidation), [])->assertRedirect();
+
+        $this->actingAs($admin)
+            ->get(route('liquidations.index'))
+            ->assertOk()
+            ->assertSee('Al día');
+    }
 }

@@ -3,7 +3,7 @@
         <h1 class="text-lg font-semibold text-slate-800">Liquidaciones de barberos</h1>
     </x-slot>
 
-    <div class="max-w-2xl mx-auto space-y-4" x-data="{ open: {{ $errors->any() ? 'true' : 'false' }} }">
+    <div class="max-w-2xl mx-auto space-y-4" x-data="{ open: {{ $errors->any() ? 'true' : 'false' }}, barberId: @js(old('barber_id', '')) }">
         <section class="flex items-start justify-between gap-3">
             <div class="min-w-0">
                 <span class="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-widest text-emerald-600">
@@ -21,6 +21,54 @@
             </button>
         </section>
 
+        @if ($barberBalances->isNotEmpty())
+            <section class="space-y-2.5 rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
+                <div class="flex items-center justify-between gap-2">
+                    <div>
+                        <h3 class="flex items-center gap-2 text-sm font-bold text-slate-800">
+                            <x-icon name="users" class="h-4 w-4 text-emerald-600" /> Saldo pendiente por barbero
+                        </h3>
+                        <p class="text-[11px] text-slate-400">Comisión + propinas de ventas aún no liquidadas.</p>
+                    </div>
+                    <span class="rounded-full bg-slate-100 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-500">Al día de hoy</span>
+                </div>
+
+                <div class="space-y-2">
+                    @foreach ($barberBalances as $barberBalance)
+                        @php
+                            $words = preg_split('/\s+/', trim($barberBalance->name));
+                            $initials = mb_strtoupper(mb_substr($words[0] ?? '', 0, 1).mb_substr($words[1] ?? '', 0, 1));
+                        @endphp
+                        <div class="flex items-center justify-between gap-3 rounded-xl bg-slate-50 p-3">
+                            <div class="flex min-w-0 items-center gap-2.5">
+                                <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-700">{{ $initials }}</span>
+                                <div class="min-w-0">
+                                    <span class="block truncate text-sm font-semibold text-slate-700">{{ $barberBalance->name }}</span>
+                                    <span class="block text-[10px] text-slate-400">
+                                        Com. {{ money($barberBalance->outstanding_commission) }} · Prop. {{ money($barberBalance->outstanding_tips) }}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="flex shrink-0 items-center gap-2">
+                                <div class="text-right">
+                                    <span class="block text-sm font-extrabold {{ $barberBalance->outstanding > 0 ? 'text-brand-600' : 'text-emerald-600' }}">{{ money($barberBalance->outstanding) }}</span>
+                                    <span class="text-[10px] uppercase tracking-wide text-slate-400">Por pagar</span>
+                                </div>
+                                @if ($barberBalance->outstanding > 0)
+                                    <button type="button" @click="open = true; barberId = '{{ $barberBalance->id }}'"
+                                            class="flex h-9 items-center justify-center rounded-lg bg-emerald-500 px-3 text-[11px] font-bold text-white shadow-sm transition hover:bg-emerald-600 active:scale-95">
+                                        Liquidar
+                                    </button>
+                                @else
+                                    <span class="rounded-lg bg-emerald-50 px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wide text-emerald-700 ring-1 ring-emerald-100">Al día</span>
+                                @endif
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </section>
+        @endif
+
         <section x-cloak x-show="open" x-transition.opacity class="rounded-xl bg-white p-4 shadow-lg ring-1 ring-slate-200">
             <form method="POST" action="{{ route('liquidations.store') }}" class="space-y-3">
                 @csrf
@@ -31,30 +79,53 @@
                     <span class="text-[11px] text-slate-400">Barbero + período</span>
                 </div>
 
-                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    <div class="space-y-1.5">
-                        <label for="barber_id" class="text-xs font-medium text-slate-500">Barbero *</label>
-                        <select id="barber_id" name="barber_id" required
-                                class="block h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-700 focus:border-emerald-500 focus:bg-white focus:ring-emerald-500">
-                            <option value="">Selecciona un barbero</option>
-                            @foreach ($barbers as $barber)
-                                <option value="{{ $barber->id }}" @selected(old('barber_id') == $barber->id)>
-                                    {{ $barber->name }}{{ $barber->active ? '' : ' (inactivo)' }}
-                                </option>
-                            @endforeach
-                        </select>
-                        <x-input-error :messages="$errors->get('barber_id')" />
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between">
+                        <label class="text-xs font-medium text-slate-500">Barbero *</label>
+                        <span class="text-[11px] text-slate-400">Toca para seleccionar</span>
                     </div>
 
-                    <div class="space-y-1.5">
-                        <label for="period_type" class="text-xs font-medium text-slate-500">Período *</label>
-                        <select id="period_type" name="period_type"
-                                class="block h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-700 focus:border-emerald-500 focus:bg-white focus:ring-emerald-500">
-                            <option value="diario" @selected(old('period_type') === 'diario')>Diario</option>
-                            <option value="semanal" @selected(old('period_type') === 'semanal')>Semanal</option>
-                            <option value="mensual" @selected(old('period_type') === 'mensual')>Mensual</option>
-                        </select>
-                    </div>
+                    @if ($barbers->isEmpty())
+                        <p class="rounded-xl bg-slate-50 px-4 py-6 text-center text-xs text-slate-400">No hay barberos registrados.</p>
+                    @else
+                        <div class="grid grid-cols-3 gap-2 sm:grid-cols-4">
+                            @foreach ($barbers as $barber)
+                                @php
+                                    $words = preg_split('/\s+/', trim($barber->name));
+                                    $initials = mb_strtoupper(mb_substr($words[0] ?? '', 0, 1).mb_substr($words[1] ?? '', 0, 1));
+                                @endphp
+                                <button type="button" @click="barberId = '{{ $barber->id }}'"
+                                        :class="barberId === '{{ $barber->id }}' ? 'ring-2 ring-emerald-500 bg-emerald-50' : 'bg-slate-50 hover:bg-slate-100'"
+                                        class="flex flex-col items-center gap-1.5 rounded-xl p-2.5 transition active:scale-95">
+                                    <span class="flex h-11 w-11 items-center justify-center rounded-full text-sm font-bold transition"
+                                          :class="barberId === '{{ $barber->id }}' ? 'bg-emerald-500 text-white' : 'bg-slate-200 text-slate-600'">
+                                        {{ $initials }}
+                                    </span>
+                                    <span class="w-full truncate text-center text-xs font-medium transition"
+                                          :class="barberId === '{{ $barber->id }}' ? 'text-emerald-700 font-semibold' : 'text-slate-600'">
+                                        {{ $barber->name }}
+                                    </span>
+                                    <span class="rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide"
+                                          :class="barberId === '{{ $barber->id }}' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-500'">
+                                        {{ $barber->active ? 'Activo' : 'Inactivo' }}
+                                    </span>
+                                </button>
+                            @endforeach
+                        </div>
+                    @endif
+
+                    <input type="hidden" name="barber_id" :value="barberId">
+                    <x-input-error :messages="$errors->get('barber_id')" />
+                </div>
+
+                <div class="space-y-1.5">
+                    <label for="period_type" class="text-xs font-medium text-slate-500">Período *</label>
+                    <select id="period_type" name="period_type"
+                            class="block h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-700 focus:border-emerald-500 focus:bg-white focus:ring-emerald-500">
+                        <option value="diario" @selected(old('period_type') === 'diario')>Diario</option>
+                        <option value="semanal" @selected(old('period_type') === 'semanal')>Semanal</option>
+                        <option value="mensual" @selected(old('period_type') === 'mensual')>Mensual</option>
+                    </select>
                 </div>
 
                 <div class="space-y-1.5">

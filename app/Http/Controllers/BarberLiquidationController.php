@@ -16,6 +16,7 @@ class BarberLiquidationController extends Controller
     public function index(Request $request)
     {
         $barbers = User::query()->barbers()->orderBy('name')->get();
+        $barberBalances = $this->liquidations->balances()->sortByDesc('outstanding')->values();
         $barberId = $request->input('barber_id');
 
         $liquidations = BarberLiquidation::query()
@@ -25,7 +26,7 @@ class BarberLiquidationController extends Controller
             ->latest('id')
             ->get();
 
-        return view('liquidations.index', compact('liquidations', 'barbers', 'barberId'));
+        return view('liquidations.index', compact('liquidations', 'barbers', 'barberBalances', 'barberId'));
     }
 
     public function store(Request $request)

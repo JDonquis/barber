@@ -3,8 +3,10 @@
 namespace App\Services;
 
 use App\Models\BarberLiquidation;
+use App\Models\Sale;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Support\Collection;
 
 class BarberLiquidationService
 {
@@ -12,6 +14,58 @@ class BarberLiquidationService
         protected ClosingService $closings,
         protected ExchangeRateService $rates,
     ) {}
+
+
+    /**
+     * Outstanding balance for every barber as of today.
+     *
+     * @return Collection<int, User>
+     */
+    public function balances(): Collection
+    {
+        $closedLiquidations = BarberLiquidation::query()
+            ->where('status', BarberLiquidation::STATUS_CLOSED)
+            ->get(['id', 'barber_id', 'period_start', 'period_end', 'closed_at', 'updated_at']);
+
+        return User::query()
+            ->barbers()
+            ->orderBy('name')
+            ->get()
+            ->each(function (User $barber) use ($closedLiquidations) {
+                $totals = $this->outstandingSalesQuery($barber->id, $closedLiquidations)
+                    ->selectRaw('COALESCE(SUM(barber_commission_usd), 0) as commission, COALESCE(SUM(tip_usd), 0) as tips')
+                    ->first();
+
+                $barber->outstanding_commission = round((float) ($totals->commission ?? 0), 2);
+                $barber->outstanding_tips = round((float) ($totals->tips ?? 0), 2);
+                $barber->outstanding = round($barber->outstanding_commission + $barber->outstanding_tips, 2);
+            });
+    }
+
+    protected function outstandingSalesQuery(int $barberId, Collection $closedLiquidations)
+    {
+        $query = Sale::query()
+            ->completed()
+            ->where('barber_id', $barberId);
+
+        foreach ($closedLiquidations as $liquidation) {
+            if ((int) $liquidation->barber_id !== $barberId) {
+                continue;
+            }
+
+            $start = $liquidation->period_start->copy()->startOfDay();
+            $end = $liquidation->period_end->copy()->endOfDay();
+            $cutoff = $liquidation->closed_at ?? $liquidation->updated_at ?? now();
+
+            $query->where(function ($query) use ($start, $end, $cutoff) {
+                $query->where('sold_at', '<', $start)
+                    ->orWhere('sold_at', '>', $end)
+                    ->orWhere('sold_at', '>', $cutoff);
+            });
+        }
+
+        return $query;
+    }
 
     public function generate(string $type, Carbon $date, User $barber, ?User $user = null): BarberLiquidation
     {
