@@ -5,13 +5,17 @@ namespace App\Http\Controllers;
 use App\Models\Closing;
 use App\Models\Loan;
 use App\Models\LoanPayment;
+use App\Models\Product;
+use App\Models\Retention;
 use App\Models\Sale;
+use App\Models\Service;
 use App\Models\User;
 use App\Services\ExchangeRateService;
 use App\Services\QrLoginService;
 use App\Services\SettingService;
 use App\Services\TenantManager;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
@@ -51,7 +55,8 @@ class SettingController extends Controller
             'payment_methods' => ['nullable', 'string', 'max:255'],
             'local_currency' => ['nullable', 'in:VES,COP'],
             'timezone' => ['nullable', 'in:America/Caracas,America/Bogota'],
-            'dolar_api_source' => ['required', 'in:oficial,paralelo'],
+            'dolar_api_source' => ['nullable', 'in:oficial,paralelo'],
+            'usd_conversion_enabled' => ['nullable', 'boolean'],
             'exchange_rate_manual' => ['nullable', 'numeric', 'min:0'],
             'exchange_rate_fallback' => ['nullable', 'numeric', 'min:0'],
             'barber_id' => ['nullable', 'integer', Rule::exists('users', 'id')->where('company_id', company_id())],
@@ -65,6 +70,30 @@ class SettingController extends Controller
         $localCurrency = $data['local_currency'] ?? $previousCurrency;
         $company = app(TenantManager::class)->get();
         $timezone = $data['timezone'] ?? ($company?->timezone ?: ($localCurrency === 'COP' ? 'America/Bogota' : 'America/Caracas'));
+        $conversionWasEnabled = (string) $this->settings->get('usd_conversion_enabled', '1') === '1';
+        $conversionEnabled = $request->has('usd_conversion_enabled')
+            ? $request->boolean('usd_conversion_enabled')
+            : $conversionWasEnabled;
+        $conversionChanged = $conversionWasEnabled !== $conversionEnabled;
+        $conversionRate = 0.0;
+
+        if ($conversionChanged) {
+            $submittedManual = (float) ($data['exchange_rate_manual'] ?? 0);
+
+            if ($submittedManual > 0) {
+                $conversionRate = $submittedManual;
+            } else {
+                $conversionRate = $conversionEnabled
+                    ? (float) app(ExchangeRateService::class)->liveRate()
+                    : (float) app(ExchangeRateService::class)->current();
+            }
+
+            if ($conversionRate <= 0) {
+                throw ValidationException::withMessages([
+                    'usd_conversion_enabled' => 'No se pudo obtener una tasa de cambio válida para convertir precios y productos.',
+                ]);
+            }
+        }
 
         if ($previousCurrency !== $localCurrency) {
             if (Sale::query()->exists() || Closing::query()->exists() || Loan::query()->exists() || LoanPayment::query()->exists()) {
@@ -76,20 +105,46 @@ class SettingController extends Controller
             app(ExchangeRateService::class)->forgetAll();
         }
 
-        $this->settings->setMany([
-            'shop_name' => $data['shop_name'],
-            'shop_rif' => $data['shop_rif'] ?? '',
-            'shop_phone' => $data['shop_phone'] ?? '',
-            'shop_address' => $data['shop_address'] ?? '',
-            'commission_rate' => $data['commission_rate'],
-            'payment_methods' => $data['payment_methods'] ?? '',
-            'local_currency' => $localCurrency,
-            'dolar_api_source' => $data['dolar_api_source'],
-            'exchange_rate_manual' => $data['exchange_rate_manual'] ?? '',
-            'exchange_rate_fallback' => $data['exchange_rate_fallback'] ?? '',
-            'single_barber_mode' => $request->boolean('single_barber_mode') ? '1' : '0',
-            'retentions_enabled' => $request->boolean('retentions_enabled') ? '1' : '0',
-        ]);
+        DB::transaction(function () use ($data, $localCurrency, $request, $conversionEnabled, $conversionChanged, $conversionRate) {
+            $this->settings->setMany([
+                'shop_name' => $data['shop_name'],
+                'shop_rif' => $data['shop_rif'] ?? '',
+                'shop_phone' => $data['shop_phone'] ?? '',
+                'shop_address' => $data['shop_address'] ?? '',
+                'commission_rate' => $data['commission_rate'],
+                'payment_methods' => $data['payment_methods'] ?? '',
+                'local_currency' => $localCurrency,
+                'dolar_api_source' => $data['dolar_api_source'] ?? $this->settings->get('dolar_api_source', 'oficial'),
+                'exchange_rate_manual' => $data['exchange_rate_manual'] ?? $this->settings->get('exchange_rate_manual', ''),
+                'exchange_rate_fallback' => $data['exchange_rate_fallback'] ?? $this->settings->get('exchange_rate_fallback', ''),
+                'usd_conversion_enabled' => $conversionEnabled ? '1' : '0',
+                'single_barber_mode' => $request->boolean('single_barber_mode') ? '1' : '0',
+                'retentions_enabled' => $request->boolean('retentions_enabled') ? '1' : '0',
+            ]);
+
+            if ($conversionChanged) {
+                $factor = $conversionEnabled ? 1 / $conversionRate : $conversionRate;
+
+                Service::query()->each(function (Service $service) use ($factor) {
+                    $service->update(['price' => round((float) $service->price * $factor, 2)]);
+                });
+
+                Product::query()->each(function (Product $product) use ($factor) {
+                    $product->update([
+                        'price' => round((float) $product->price * $factor, 2),
+                        'cost' => round((float) $product->cost * $factor, 2),
+                    ]);
+                });
+
+                Retention::query()->each(function (Retention $retention) use ($factor) {
+                    $retention->update(['amount_usd' => round((float) $retention->amount_usd * $factor, 2)]);
+                });
+
+                if (! $conversionEnabled) {
+                    $this->settings->set('usd_conversion_reference_rate', (string) $conversionRate);
+                }
+            }
+        });
 
         if ($company && $company->name !== $data['shop_name']) {
             $company->update(['name' => $data['shop_name']]);

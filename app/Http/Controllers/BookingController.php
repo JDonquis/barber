@@ -48,7 +48,7 @@ class BookingController extends Controller
                 'name' => $service->name,
                 'description' => $service->description,
                 'duration' => (int) ($service->duration_minutes ?? 30),
-                'price' => usd($service->price),
+                'price' => price_money($service->price),
             ])->values(),
             'barbersData' => $barbers->map(fn (User $barber) => [
                 'id' => (string) $barber->id,

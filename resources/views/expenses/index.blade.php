@@ -44,16 +44,16 @@
                         <p class="text-[11px] text-rose-700">{{ $stats['filteredCount'] }} registro(s)</p>
                     </div>
                 </div>
-                <span class="shrink-0 text-2xl font-extrabold tracking-tight text-rose-700">{{ usd($stats['filtered']) }}</span>
+                <span class="shrink-0 text-2xl font-extrabold tracking-tight text-rose-700">{{ price_money($stats['filtered']) }}</span>
             </div>
 
             <div class="rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
                 <span class="text-xs text-slate-400">Gastos de hoy</span>
-                <p class="mt-1 text-lg font-extrabold tracking-tight text-slate-800">{{ usd($stats['today']) }}</p>
+                <p class="mt-1 text-lg font-extrabold tracking-tight text-slate-800">{{ price_money($stats['today']) }}</p>
             </div>
             <div class="rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
                 <span class="text-xs text-slate-400">Gastos del mes</span>
-                <p class="mt-1 text-lg font-extrabold tracking-tight text-slate-800">{{ usd($stats['month']) }}</p>
+                <p class="mt-1 text-lg font-extrabold tracking-tight text-slate-800">{{ price_money($stats['month']) }}</p>
             </div>
         </div>
 
@@ -91,7 +91,7 @@
         <section class="space-y-2.5">
             <div class="flex items-center justify-between px-1">
                 <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Gastos registrados</span>
-                <span class="text-[11px] font-semibold text-brand-600">Moneda: USD ($)</span>
+                <span class="text-[11px] font-semibold text-brand-600">Moneda: {{ $usdConversionEnabled ? 'USD ($)' : local_currency() }}</span>
             </div>
 
             <div class="space-y-2">
@@ -119,7 +119,7 @@
                             </div>
                         </div>
                         <div class="flex shrink-0 flex-col items-end gap-1.5">
-                            <span class="text-sm font-extrabold text-rose-600">- {{ usd($expense->amount_usd) }}</span>
+                            <span class="text-sm font-extrabold text-rose-600">- {{ money($expense->amount_usd, $expense->localAmount()) }}</span>
                             <div class="flex items-center gap-1">
                                 <a href="{{ route('expenses.edit', $expense) }}"
                                    class="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-500 transition hover:bg-slate-200" title="Editar">

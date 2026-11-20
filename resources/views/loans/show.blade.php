@@ -70,26 +70,28 @@
             <div class="mt-4 grid grid-cols-3 gap-2">
                 <div class="rounded-xl bg-slate-50 p-2.5 text-center ring-1 ring-slate-100">
                     <span class="block text-[10px] font-bold uppercase tracking-wide text-slate-400">Prestado</span>
-                    <span class="mt-0.5 block text-sm font-extrabold text-slate-800">{{ usd($loan->amount_usd) }}</span>
-                    <span class="block text-[10px] text-slate-400">{{ ves($loan->amount_ves) }}</span>
+                    <span class="mt-0.5 block text-sm font-extrabold text-slate-800">{{ money($loan->amount_usd, $loan->localAmount()) }}</span>
+                    @if ($usdConversionEnabled)
+                        <span class="block text-[10px] text-slate-400">{{ ves($loan->amount_ves) }}</span>
+                    @endif
                 </div>
                 <div class="rounded-xl bg-emerald-50 p-2.5 text-center ring-1 ring-emerald-100">
                     <span class="block text-[10px] font-bold uppercase tracking-wide text-emerald-700">Pagado</span>
-                    <span class="mt-0.5 block text-sm font-extrabold text-emerald-700">{{ usd($loan->paid_usd) }}</span>
+                    <span class="mt-0.5 block text-sm font-extrabold text-emerald-700">{{ money($loan->paid_usd, $loan->localPaid()) }}</span>
                 </div>
                 <div class="rounded-xl bg-brand-50 p-2.5 text-center ring-1 ring-brand-100">
                     <span class="block text-[10px] font-bold uppercase tracking-wide text-brand-700">Saldo</span>
-                    <span class="mt-0.5 block text-sm font-extrabold text-brand-700">{{ usd($loan->balance_usd) }}</span>
+                    <span class="mt-0.5 block text-sm font-extrabold text-brand-700">{{ money($loan->balance_usd, $loan->localBalance()) }}</span>
                 </div>
             </div>
 
             <div class="mt-3">
                 <div class="flex items-center justify-between text-[11px] text-slate-400">
                     <span>Progreso de pago</span>
-                    <span>{{ $loan->progress }}%</span>
+                    <span>{{ $usdConversionEnabled ? $loan->progress : $loan->localProgress() }}%</span>
                 </div>
                 <div class="mt-1 h-2 overflow-hidden rounded-full bg-slate-100">
-                    <div class="h-full rounded-full bg-brand-500 transition-all" style="width: {{ $loan->progress }}%"></div>
+                    <div class="h-full rounded-full bg-brand-500 transition-all" style="width: {{ $usdConversionEnabled ? $loan->progress : $loan->localProgress() }}%"></div>
                 </div>
             </div>
 
@@ -99,12 +101,13 @@
         </section>
 
         <!-- Registrar pago -->
-        @if ($loan->balance_usd > 0)
+        @if (($usdConversionEnabled ? $loan->balance_usd : $loan->localBalance()) > 0)
             <section id="registrar-pago" class="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200"
                      x-data="{
                         entry: {{ $paymentAmount }},
-                        currency: 'USD',
-                        rate: {{ (float) $currentRate }},
+                        conversionEnabled: {{ $usdConversionEnabled ? 'true' : 'false' }},
+                        currency: @js(usd_conversion_enabled() ? 'USD' : local_currency()),
+                        rate: {{ $usdConversionEnabled ? (float) $currentRate : 1 }},
                         localCode: @js(local_currency()),
                         localSymbol: @js(local_currency_symbol()),
                         formatVes(value) {
@@ -132,7 +135,7 @@
                     </span>
                     <div>
                         <h3 class="text-sm font-bold text-slate-800">Registrar pago</h3>
-                        <p class="text-xs text-slate-400">Saldo pendiente: {{ usd($loan->balance_usd) }}</p>
+                        <p class="text-xs text-slate-400">Saldo pendiente: {{ money($loan->balance_usd, $loan->localBalance()) }}</p>
                     </div>
                 </div>
 
@@ -141,8 +144,8 @@
 
                     <div class="space-y-1.5">
                         <div class="flex items-center justify-between">
-                            <x-input-label for="payment_amount" value="Monto del pago *" />
-                            <div class="inline-flex rounded-lg bg-slate-100 p-0.5">
+                            <x-input-label for="payment_amount" :value="usd_conversion_enabled() ? 'Monto del pago *' : 'Monto del pago en '.local_currency().' *'" />
+                            <div class="inline-flex rounded-lg bg-slate-100 p-0.5" x-show="conversionEnabled" x-cloak>
                                 <button type="button" @click="setCurrency('USD')"
                                         :class="currency === 'USD' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500'"
                                         class="rounded-md px-3 py-1 text-xs font-bold uppercase tracking-wide transition">USD</button>
@@ -153,7 +156,7 @@
                         </div>
 
                         <input type="hidden" name="amount_usd" :value="usdValue.toFixed(2)">
-                        <input type="hidden" name="exchange_rate" value="{{ (float) $currentRate }}">
+                        <input type="hidden" name="exchange_rate" value="{{ $usdConversionEnabled ? (float) $currentRate : (float) $loan->exchange_rate }}">
 
                         <div class="relative flex items-center rounded-xl border border-slate-200 bg-slate-50 px-3 transition focus-within:border-brand-500 focus-within:bg-white">
                             <span class="select-none pr-2 text-base font-extrabold text-emerald-600" x-text="currency === localCode ? localSymbol : '$'"></span>
@@ -162,7 +165,7 @@
                                    class="h-12 w-full border-0 bg-transparent p-0 text-lg font-extrabold tracking-tight text-slate-800 focus:ring-0" />
                         </div>
 
-                        <div class="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-1.5 ring-1 ring-slate-100">
+                        <div x-show="conversionEnabled" x-cloak class="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-1.5 ring-1 ring-slate-100">
                             <span class="text-[11px] text-slate-400">Equivale a</span>
                             <span class="text-xs font-bold text-emerald-600" x-text="equivalent"></span>
                         </div>
@@ -223,8 +226,10 @@
                 <div class="flex items-start justify-between gap-3 rounded-xl bg-white p-3.5 shadow-sm ring-1 ring-slate-200">
                     <div class="min-w-0">
                         <p class="text-sm font-extrabold text-slate-800">
-                            {{ usd($payment->amount_usd) }}
-                            <span class="ml-1 text-[11px] font-normal text-slate-400">{{ ves($payment->amount_ves) }}</span>
+                            {{ money($payment->amount_usd, $payment->localAmount()) }}
+                            @if ($usdConversionEnabled)
+                                <span class="ml-1 text-[11px] font-normal text-slate-400">{{ ves($payment->amount_ves) }}</span>
+                            @endif
                         </p>
                         <p class="mt-0.5 text-[11px] text-slate-400">
                             {{ $payment->payment_date->format('d/m/Y') }}

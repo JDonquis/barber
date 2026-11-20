@@ -10,6 +10,7 @@
 
     <div class="max-w-2xl mx-auto space-y-4" x-data="{
         commission: {{ (float) old('commission_rate', $values['commission_rate'] ?? 0) }},
+        conversionEnabled: {{ (string) old('usd_conversion_enabled', $values['usd_conversion_enabled'] ?? '1') === '1' ? 'true' : 'false' }},
         localCurrency: @js(old('local_currency', $values['local_currency'] ?? 'VES')),
         methods: @js(old('payment_methods', $values['payment_methods'] ?? '')),
         barberList: @js($barbersData),
@@ -38,7 +39,7 @@
         </div>
 
         <!-- Tasa del dólar -->
-        <section class="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+        <section x-show="conversionEnabled" class="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
             <div class="flex items-start justify-between gap-3">
                 <div class="flex items-center gap-3">
                     <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-100 text-brand-600">
@@ -97,6 +98,21 @@
             </p>
         </section>
 
+        <section x-cloak x-show="! conversionEnabled" class="rounded-xl bg-emerald-50 p-5 shadow-sm ring-1 ring-emerald-200">
+            <div class="flex items-start gap-3">
+                <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600">
+                    <x-icon name="check-circle" class="h-5 w-5" />
+                </span>
+                <div>
+                    <h3 class="text-sm font-bold text-emerald-800">Modo moneda local activo</h3>
+                    <p class="mt-0.5 text-xs leading-relaxed text-emerald-700">
+                        La tasa de cambio está desactivada. Todos los montos, cobros, cálculos y reportes se manejan en
+                        <strong>{{ local_currency_name() }}</strong>. Los registros históricos se muestran en su equivalente local.
+                    </p>
+                </div>
+            </div>
+        </section>
+
         <form method="POST" action="{{ route('settings.update') }}" class="space-y-4">
             @csrf
             @method('PUT')
@@ -126,6 +142,38 @@
                     </label>
                 </div>
                 <x-input-error :messages="$errors->get('single_barber_mode')" />
+            </section>
+
+            <!-- Conversión de dólares -->
+            <section class="space-y-4 rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+                <div class="flex items-center gap-3">
+                    <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600">
+                        <x-icon name="dollar" class="h-5 w-5" />
+                    </span>
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-800">Conversión de dólares</h3>
+                        <p class="text-xs text-slate-400">Activa o desactiva la dualidad USD · {{ local_currency() }}</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between gap-3 rounded-xl bg-slate-50 p-3 ring-1 ring-slate-100">
+                    <div class="pr-3">
+                        <span class="text-sm font-semibold text-slate-700">Permitir conversión y cobros en USD</span>
+                        <span class="block text-xs text-slate-400">
+                            Al desactivarla solo se usarán {{ local_currency_name() }} y los cálculos se harán en esa moneda.
+                        </span>
+                    </div>
+                    <label class="relative inline-flex shrink-0 cursor-pointer items-center">
+                        <input type="hidden" name="usd_conversion_enabled" value="0">
+                        <input type="checkbox" name="usd_conversion_enabled" value="1" class="peer sr-only"
+                               x-model="conversionEnabled">
+                        <span class="relative h-7 w-12 rounded-full bg-slate-200 transition-colors after:absolute after:left-[2px] after:top-[2px] after:h-6 after:w-6 after:rounded-full after:bg-white after:shadow after:transition-all after:content-[''] peer-checked:bg-emerald-500 peer-checked:after:translate-x-full"></span>
+                    </label>
+                </div>
+                <x-input-error :messages="$errors->get('usd_conversion_enabled')" />
+                <p class="text-[11px] leading-relaxed text-slate-400">
+                    Al cambiar de modo, los precios de servicios y productos y las retenciones se convierten automáticamente con la tasa vigente. Si no hay una tasa válida, el cambio se rechazará.
+                </p>
             </section>
 
             <!-- Módulos adicionales -->
@@ -352,15 +400,15 @@
                         <x-icon name="card" class="h-5 w-5" />
                     </span>
                     <div>
-                        <h3 class="text-sm font-bold text-slate-800">Canales de pago y tasa</h3>
-                        <p class="text-xs text-slate-400">Métodos autorizados y respaldo operativo</p>
+                        <h3 class="text-sm font-bold text-slate-800">Canales de pago y moneda</h3>
+                        <p class="text-xs text-slate-400" x-text="conversionEnabled ? 'Métodos autorizados, moneda local y tasa de respaldo' : 'Métodos autorizados y moneda local'"></p>
                     </div>
                 </div>
 
                 <div class="space-y-1.5">
                     <x-input-label for="payment_methods" value="Métodos habilitados para clientes" />
                     <input id="payment_methods" name="payment_methods" type="text" x-model="methods"
-                           placeholder="Efectivo {{ local_currency() }}, Efectivo USD, Pago móvil, Transferencia, Zelle"
+                           placeholder="{{ usd_conversion_enabled() ? 'Efectivo '.local_currency().', Efectivo USD, Pago móvil, Transferencia, Zelle' : 'Efectivo '.local_currency().', Pago móvil, Transferencia' }}"
                            class="block h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-700 placeholder:text-slate-400 focus:border-brand-500 focus:bg-white focus:ring-brand-500" />
                     <div class="flex flex-wrap gap-1.5 rounded-xl bg-slate-50 p-2.5">
                         <template x-for="method in methodList" :key="method">
@@ -399,7 +447,7 @@
                         </button>
                     </div>
 
-                    <p class="text-[11px] text-slate-400">Solo puedes cambiarla mientras no existan ventas, cierres o préstamos. Luego verifica las tasas.</p>
+                    <p class="text-[11px] text-slate-400" x-text="conversionEnabled ? 'Solo puedes cambiarla mientras no existan ventas, cierres o préstamos. Luego verifica las tasas.' : 'Solo puedes cambiarla mientras no existan ventas, cierres o préstamos.'"></p>
                     <x-input-error :messages="$errors->get('local_currency')" />
                 </div>
 
@@ -414,7 +462,7 @@
                     <x-input-error :messages="$errors->get('timezone')" />
                 </div>
 
-                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2" x-show="conversionEnabled" x-cloak>
                     <div class="space-y-1.5" x-show="localCurrency === 'VES'" x-cloak>
                         <x-input-label for="dolar_api_source" value="Proveedor de tasa para bolívares" />
                         <select id="dolar_api_source" name="dolar_api_source"

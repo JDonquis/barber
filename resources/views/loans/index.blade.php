@@ -46,18 +46,20 @@
                     </div>
                 </div>
                 <div class="shrink-0 text-right">
-                    <span class="block text-2xl font-extrabold tracking-tight text-white">{{ usd($stats['outstanding']) }}</span>
-                    <span class="text-[11px] font-medium text-slate-400">{{ ves(to_ves($stats['outstanding'], $currentRate)) }} aprox.</span>
+                    <span class="block text-2xl font-extrabold tracking-tight text-white">{{ price_money($stats['outstanding']) }}</span>
+                    @if ($usdConversionEnabled)
+                        <span class="text-[11px] font-medium text-slate-400">{{ ves(to_ves($stats['outstanding'], $currentRate)) }} aprox.</span>
+                    @endif
                 </div>
             </div>
 
             <div class="rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
                 <span class="text-xs text-slate-400">Total prestado</span>
-                <p class="mt-1 text-lg font-extrabold tracking-tight text-slate-800">{{ usd($stats['lent']) }}</p>
+                <p class="mt-1 text-lg font-extrabold tracking-tight text-slate-800">{{ price_money($stats['lent']) }}</p>
             </div>
             <div class="rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
                 <span class="text-xs text-slate-400">Total recuperado</span>
-                <p class="mt-1 text-lg font-extrabold tracking-tight text-emerald-600">{{ usd($stats['paid']) }}</p>
+                <p class="mt-1 text-lg font-extrabold tracking-tight text-emerald-600">{{ price_money($stats['paid']) }}</p>
             </div>
         </div>
 
@@ -97,7 +99,7 @@
         <section class="space-y-2.5">
             <div class="flex items-center justify-between px-1">
                 <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Préstamos registrados</span>
-                <span class="text-[11px] font-semibold text-brand-600">Moneda: USD ($)</span>
+                <span class="text-[11px] font-semibold text-brand-600">Moneda: {{ $usdConversionEnabled ? 'USD ($)' : local_currency() }}</span>
             </div>
 
             <div class="space-y-2.5">
@@ -132,18 +134,20 @@
                             </div>
 
                             <div class="shrink-0 text-right">
-                                <p class="text-sm font-extrabold text-slate-800">{{ usd($loan->amount_usd) }}</p>
-                                <p class="text-[10px] text-slate-400">{{ ves($loan->amount_ves) }}</p>
+                                <p class="text-sm font-extrabold text-slate-800">{{ money($loan->amount_usd, $loan->localAmount()) }}</p>
+                                @if ($usdConversionEnabled)
+                                    <p class="text-[10px] text-slate-400">{{ ves($loan->amount_ves) }}</p>
+                                @endif
                             </div>
                         </div>
 
                         <div class="mt-3">
                             <div class="flex items-center justify-between text-[11px]">
-                                <span class="text-slate-400">Pagado: <strong class="text-slate-600">{{ usd($loan->paid_usd) }}</strong></span>
-                                <span class="text-slate-400">Saldo: <strong class="{{ $loan->balance_usd > 0 ? 'text-brand-600' : 'text-emerald-600' }}">{{ usd($loan->balance_usd) }}</strong></span>
+                                <span class="text-slate-400">Pagado: <strong class="text-slate-600">{{ money($loan->paid_usd, $loan->localPaid()) }}</strong></span>
+                                <span class="text-slate-400">Saldo: <strong class="{{ ($usdConversionEnabled ? $loan->balance_usd : $loan->localBalance()) > 0 ? 'text-brand-600' : 'text-emerald-600' }}">{{ money($loan->balance_usd, $loan->localBalance()) }}</strong></span>
                             </div>
                             <div class="mt-1 h-2 overflow-hidden rounded-full bg-slate-100">
-                                <div class="h-full rounded-full bg-brand-500 transition-all" style="width: {{ $loan->progress }}%"></div>
+                                <div class="h-full rounded-full bg-brand-500 transition-all" style="width: {{ $usdConversionEnabled ? $loan->progress : $loan->localProgress() }}%"></div>
                             </div>
                         </div>
 
@@ -151,7 +155,7 @@
                             <span class="text-[11px] text-slate-400">{{ $loan->payments_count }} pago(s)</span>
 
                             <div class="flex items-center gap-1.5">
-                                @if ($loan->balance_usd > 0)
+                                @if (($usdConversionEnabled ? $loan->balance_usd : $loan->localBalance()) > 0)
                                     <a href="{{ route('loans.show', $loan) }}#registrar-pago"
                                        class="inline-flex h-9 items-center gap-1 rounded-lg bg-brand-500 px-3 text-xs font-bold text-white transition hover:bg-brand-400">
                                         <x-icon name="plus" class="h-3.5 w-3.5" /> Registrar pago

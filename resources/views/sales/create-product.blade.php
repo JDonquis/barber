@@ -16,12 +16,13 @@
     @endphp
 
     <div class="max-w-2xl mx-auto space-y-4" x-data="{
-        rate: {{ (float) $currentRate }},
+        rate: {{ $usdConversionEnabled ? (float) $currentRate : 1 }},
         localCode: @js(local_currency()),
         localSymbol: @js(local_currency_symbol()),
+        conversionEnabled: {{ $usdConversionEnabled ? 'true' : 'false' }},
         search: '',
         cart: [],
-        paymentCurrency: '{{ old('payment_currency', 'USD') }}',
+        paymentCurrency: @js(old('payment_currency', usd_conversion_enabled() ? 'USD' : local_currency())),
         paymentMethod: '{{ old('payment_method', '') }}',
         productsById: @js($products->mapWithKeys(fn ($p) => [$p->id => ['price' => (float) $p->price, 'name' => $p->name, 'stock' => (int) $p->stock]])),
         productList: @js($products->map(fn ($p) => ['id' => $p->id, 'name' => $p->name, 'sku' => $p->sku, 'price' => (float) $p->price, 'stock' => (int) $p->stock, 'min_stock' => (int) $p->min_stock])->values()),
@@ -51,6 +52,9 @@
         formatVes(value) {
             return this.localSymbol + ' ' + Number(value || 0).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         },
+        formatAmount(value) {
+            return this.conversionEnabled ? '$' + Number(value || 0).toFixed(2) : this.formatVes(value);
+        },
         get units() { return this.cart.reduce((sum, i) => sum + i.quantity, 0); },
         get total() { return this.cart.reduce((sum, i) => sum + this.lineTotal(i), 0); },
         get totalVes() { return this.total * this.rate; }
@@ -72,13 +76,15 @@
                     <span class="block text-xs font-semibold uppercase tracking-wider text-brand-600">Módulo tienda</span>
                     <p class="text-lg font-bold text-slate-800">Venta de Producto</p>
                 </div>
-                <div class="flex items-center gap-2 rounded-full bg-white px-3 py-1.5 shadow-sm ring-1 ring-slate-200">
-                    <span class="h-2 w-2 animate-pulse rounded-full bg-emerald-500"></span>
-                    <div class="text-right leading-tight">
-                        <span class="block text-[10px] font-semibold uppercase tracking-wider text-slate-400">Tasa hoy</span>
-                        <span class="text-xs font-bold text-slate-700">{{ ves($currentRate) }}</span>
+                @if ($usdConversionEnabled)
+                    <div class="flex items-center gap-2 rounded-full bg-white px-3 py-1.5 shadow-sm ring-1 ring-slate-200">
+                        <span class="h-2 w-2 animate-pulse rounded-full bg-emerald-500"></span>
+                        <div class="text-right leading-tight">
+                            <span class="block text-[10px] font-semibold uppercase tracking-wider text-slate-400">Tasa hoy</span>
+                            <span class="text-xs font-bold text-slate-700">{{ ves($currentRate) }}</span>
+                        </div>
                     </div>
-                </div>
+                @endif
             </div>
 
             <!-- 1. Productos en stock -->
@@ -130,8 +136,8 @@
 
                                 <div class="flex shrink-0 items-center gap-2">
                                     <div class="text-right">
-                                        <p class="text-sm font-bold text-slate-800" x-text="'$' + product.price.toFixed(2)"></p>
-                                        <p class="text-[11px] text-slate-400" x-text="formatVes(product.price * rate)"></p>
+                                        <p class="text-sm font-bold text-slate-800" x-text="formatAmount(product.price)"></p>
+                                        <p x-show="conversionEnabled" class="text-[11px] text-slate-400" x-text="formatVes(product.price * rate)"></p>
                                     </div>
 
                                     <button type="button" x-show="! inCart(product.id)" @click="addToCart(product.id)"
@@ -190,7 +196,7 @@
 
                     <div class="flex items-center justify-between pt-1">
                         <span class="text-xs font-medium text-slate-500">Moneda de cobro</span>
-                        <div class="inline-flex rounded-lg bg-slate-100 p-0.5">
+                        <div class="inline-flex rounded-lg bg-slate-100 p-0.5" x-show="conversionEnabled" x-cloak>
                             <button type="button" @click="paymentCurrency = 'USD'"
                                     :class="paymentCurrency === 'USD' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500'"
                                     class="rounded-md px-3 py-1 text-xs font-bold uppercase tracking-wide transition">USD</button>
@@ -219,15 +225,17 @@
                 <div class="p-4 sm:p-5 space-y-3">
                     <div class="flex items-center justify-between">
                         <span class="text-xs font-semibold uppercase tracking-wider text-brand-600">Desglose de facturación</span>
-                        <span class="text-xs text-slate-400">Tasa: {{ ves($currentRate) }} / $1</span>
+                        @if ($usdConversionEnabled)
+                            <span class="text-xs text-slate-400">Tasa: {{ ves($currentRate) }} / $1</span>
+                        @endif
                     </div>
 
                     <div class="flex flex-col gap-1">
                         <div class="flex items-baseline justify-between">
                             <span class="text-sm text-slate-500">Total a pagar:</span>
-                            <span class="text-2xl font-extrabold tracking-tight text-brand-600" x-text="'$ ' + total.toFixed(2) + ' USD'">$ 0.00 USD</span>
+                            <span class="text-2xl font-extrabold tracking-tight text-brand-600" x-text="formatAmount(total)"></span>
                         </div>
-                        <div class="flex items-baseline justify-between">
+                        <div x-show="conversionEnabled" x-cloak class="flex items-baseline justify-between">
                             <span class="text-xs text-slate-400">Equivalente:</span>
                             <span class="text-sm font-bold text-slate-700" x-text="formatVes(totalVes)">0,00</span>
                         </div>
@@ -235,7 +243,7 @@
 
                     <div class="flex items-center justify-between rounded-lg bg-slate-100 px-3 py-2.5">
                         <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Ingreso total barbershop</span>
-                        <span class="text-sm font-bold text-emerald-600" x-text="'$' + total.toFixed(2) + ' USD'">$0.00 USD</span>
+                        <span class="text-sm font-bold text-emerald-600" x-text="formatAmount(total)"></span>
                     </div>
                 </div>
             </x-card>
@@ -245,7 +253,7 @@
                 <button type="submit" :disabled="cart.length === 0"
                         class="flex w-full min-h-[52px] items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-500 to-brand-400 px-6 text-sm font-extrabold uppercase tracking-wide text-white shadow-lg shadow-brand-500/30 transition-all hover:opacity-95 active:scale-[0.985] disabled:cursor-not-allowed disabled:opacity-50">
                     <x-icon name="check" class="h-5 w-5" />
-                    <span>Registrar venta ($<span x-text="total.toFixed(2)"></span> · <span x-text="formatVes(totalVes)"></span>)</span>
+                    <span>Registrar venta (<span x-text="formatAmount(total)"></span><template x-if="conversionEnabled"><span> · <span x-text="formatVes(totalVes)"></span></span></template>)</span>
                 </button>
                 <p class="text-center text-xs text-slate-400" x-show="cart.length === 0" x-cloak>
                     Agrega al menos un producto para registrar la venta.

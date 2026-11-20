@@ -19,10 +19,11 @@
         barberId: '{{ old('barber_id', ($singleBarberMode || auth()->user()->isBarber()) ? auth()->id() : '') }}',
         amountEntry: {{ (float) old('price', 0) }},
         tipEntry: {{ (float) old('tip_usd', 0) }},
-        paymentCurrency: '{{ old('payment_currency', 'USD') }}',
+        paymentCurrency: @js(old('payment_currency', usd_conversion_enabled() ? 'USD' : local_currency())),
         paymentMethod: '{{ old('payment_method', '') }}',
         updateServicePrice: false,
-        rate: {{ (float) $currentRate }},
+        conversionEnabled: {{ $usdConversionEnabled ? 'true' : 'false' }},
+        rate: {{ $usdConversionEnabled ? (float) $currentRate : 1 }},
         localCode: @js(local_currency()),
         localSymbol: @js(local_currency_symbol()),
         commissionRate: {{ $commissionRate }},
@@ -72,6 +73,9 @@
         formatVes(value) {
             return this.localSymbol + ' ' + Number(value || 0).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         },
+        formatAmount(value) {
+            return this.conversionEnabled ? '$' + Number(value || 0).toFixed(2) : this.formatVes(value);
+        },
         get usdPrice() { return this.paymentCurrency === this.localCode ? Number(this.amountEntry || 0) / this.rate : Number(this.amountEntry || 0); },
         get tipUsd() { return this.paymentCurrency === this.localCode ? Number(this.tipEntry || 0) / this.rate : Number(this.tipEntry || 0); },
         get totalUsd() { return this.usdPrice + this.tipUsd; },
@@ -103,13 +107,15 @@
                     <span class="block text-xs font-semibold uppercase tracking-wider text-brand-600">Turno activo</span>
                     <p class="text-lg font-bold text-slate-800">Registrar Corte</p>
                 </div>
-                <div class="flex items-center gap-2 rounded-full bg-white px-3 py-1.5 shadow-sm ring-1 ring-slate-200">
-                    <span class="h-2 w-2 animate-pulse rounded-full bg-emerald-500"></span>
-                    <div class="text-right leading-tight">
-                        <span class="block text-[10px] font-semibold uppercase tracking-wider text-slate-400">Tasa hoy</span>
-                        <span class="text-xs font-bold text-slate-700">{{ ves($currentRate) }}</span>
+                @if ($usdConversionEnabled)
+                    <div class="flex items-center gap-2 rounded-full bg-white px-3 py-1.5 shadow-sm ring-1 ring-slate-200">
+                        <span class="h-2 w-2 animate-pulse rounded-full bg-emerald-500"></span>
+                        <div class="text-right leading-tight">
+                            <span class="block text-[10px] font-semibold uppercase tracking-wider text-slate-400">Tasa hoy</span>
+                            <span class="text-xs font-bold text-slate-700">{{ ves($currentRate) }}</span>
+                        </div>
                     </div>
-                </div>
+                @endif
             </div>
 
             <!-- 1. Barbero -->
@@ -186,7 +192,7 @@
                                         @endif
                                     </div>
                                 </div>
-                                <span class="ml-1 shrink-0 text-sm font-bold text-slate-700">{{ usd($service->price) }}</span>
+                                <span class="ml-1 shrink-0 text-sm font-bold text-slate-700">{{ price_money($service->price) }}</span>
                             </button>
                         @endforeach
                     </div>
@@ -199,7 +205,7 @@
                 <div class="p-4 sm:p-5 space-y-3">
                     <div class="flex items-center justify-between">
                         <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">3. Monto a cobrar</span>
-                        <div class="inline-flex rounded-lg bg-slate-100 p-0.5">
+                        <div class="inline-flex rounded-lg bg-slate-100 p-0.5" x-show="conversionEnabled" x-cloak>
                             <button type="button" @click="setCurrency('USD')"
                                     :class="paymentCurrency === 'USD' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500'"
                                     class="rounded-md px-3 py-1 text-xs font-bold uppercase tracking-wide transition">USD</button>
@@ -217,22 +223,22 @@
                                    class="w-40 border-0 bg-transparent text-center text-3xl font-black text-slate-900 focus:ring-0" />
                             <span class="text-xs font-bold text-slate-400" x-text="paymentCurrency"></span>
                         </div>
-                        <p class="mt-1 text-sm text-slate-500">
+                        <p x-show="conversionEnabled" x-cloak class="mt-1 text-sm text-slate-500">
                             Equivalente:
                             <span class="font-semibold text-emerald-600"
                                   x-text="paymentCurrency === localCode ? '$' + usdPrice.toFixed(2) : formatVes(usdPrice * rate)"></span>
                         </p>
                         <p class="mt-1 text-xs text-slate-400" x-show="hasService" x-cloak>
-                            Precio configurado: <span x-text="'$' + basePrice.toFixed(2)"></span>
+                            Precio configurado: <span x-text="conversionEnabled ? '$' + basePrice.toFixed(2) : formatVes(basePrice)"></span>
                         </p>
                     </div>
                     <x-input-error :messages="$errors->get('price')" />
-                    <p class="text-xs text-slate-400">El total se guarda en dólares.</p>
+                    <p class="text-xs text-slate-400" x-text="conversionEnabled ? 'El total se guarda en dólares.' : 'El total se guarda en ' + localCode + '.'"></p>
 
                     <div class="flex items-center gap-2 pt-0.5">
-                        <button type="button" @click="adjust(1)" class="flex-1 rounded-lg bg-slate-100 py-2 text-[13px] font-bold text-slate-700 transition hover:bg-slate-200 active:scale-95">+$1</button>
-                        <button type="button" @click="adjust(2)" class="flex-1 rounded-lg bg-slate-100 py-2 text-[13px] font-bold text-slate-700 transition hover:bg-slate-200 active:scale-95">+$2</button>
-                        <button type="button" @click="adjust(5)" class="flex-1 rounded-lg bg-slate-100 py-2 text-[13px] font-bold text-slate-700 transition hover:bg-slate-200 active:scale-95">+$5</button>
+                        <button type="button" @click="adjust(1)" class="flex-1 rounded-lg bg-slate-100 py-2 text-[13px] font-bold text-slate-700 transition hover:bg-slate-200 active:scale-95" x-text="conversionEnabled ? '+$1' : '+1 ' + localCode"></button>
+                        <button type="button" @click="adjust(2)" class="flex-1 rounded-lg bg-slate-100 py-2 text-[13px] font-bold text-slate-700 transition hover:bg-slate-200 active:scale-95" x-text="conversionEnabled ? '+$2' : '+2 ' + localCode"></button>
+                        <button type="button" @click="adjust(5)" class="flex-1 rounded-lg bg-slate-100 py-2 text-[13px] font-bold text-slate-700 transition hover:bg-slate-200 active:scale-95" x-text="conversionEnabled ? '+$5' : '+5 ' + localCode"></button>
                         <button type="button" @click="adjust(-1)" class="flex w-11 items-center justify-center rounded-lg bg-slate-100 py-2 text-slate-500 transition hover:bg-slate-200 active:scale-95">
                             <x-icon name="minus" class="h-4 w-4" />
                         </button>
@@ -243,19 +249,19 @@
                             <span class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-emerald-700">
                                 <x-icon name="dollar" class="h-4 w-4" /> Propina (opcional)
                             </span>
-                            <span class="text-[11px] font-semibold text-emerald-700" x-text="'$' + tipUsd.toFixed(2)"></span>
+                            <span class="text-[11px] font-semibold text-emerald-700" x-text="formatAmount(tipUsd)"></span>
                         </div>
                         <div class="flex items-center gap-2">
-                            <span class="text-lg font-bold text-emerald-600" x-text="paymentCurrency === localCode ? localSymbol : '$'"></span>
+                            <span class="text-lg font-bold text-emerald-600" x-text="conversionEnabled && paymentCurrency !== localCode ? '$' : localSymbol"></span>
                             <input id="tip" type="number" step="0.01" min="0" inputmode="decimal"
                                    x-model.number="tipEntry"
                                    class="h-10 w-full rounded-lg border border-emerald-200 bg-white px-3 text-lg font-bold text-slate-800 focus:border-emerald-500 focus:ring-emerald-500" />
                             <span class="text-xs font-bold text-slate-400" x-text="paymentCurrency"></span>
                         </div>
                         <div class="flex items-center gap-2">
-                            <button type="button" @click="adjustTip(1)" class="flex-1 rounded-lg bg-white py-1.5 text-[12px] font-bold text-emerald-700 ring-1 ring-emerald-200 transition hover:bg-emerald-100 active:scale-95">+$1</button>
-                            <button type="button" @click="adjustTip(2)" class="flex-1 rounded-lg bg-white py-1.5 text-[12px] font-bold text-emerald-700 ring-1 ring-emerald-200 transition hover:bg-emerald-100 active:scale-95">+$2</button>
-                            <button type="button" @click="adjustTip(5)" class="flex-1 rounded-lg bg-white py-1.5 text-[12px] font-bold text-emerald-700 ring-1 ring-emerald-200 transition hover:bg-emerald-100 active:scale-95">+$5</button>
+                            <button type="button" @click="adjustTip(1)" class="flex-1 rounded-lg bg-white py-1.5 text-[12px] font-bold text-emerald-700 ring-1 ring-emerald-200 transition hover:bg-emerald-100 active:scale-95" x-text="conversionEnabled ? '+$1' : '+1 ' + localCode"></button>
+                            <button type="button" @click="adjustTip(2)" class="flex-1 rounded-lg bg-white py-1.5 text-[12px] font-bold text-emerald-700 ring-1 ring-emerald-200 transition hover:bg-emerald-100 active:scale-95" x-text="conversionEnabled ? '+$2' : '+2 ' + localCode"></button>
+                            <button type="button" @click="adjustTip(5)" class="flex-1 rounded-lg bg-white py-1.5 text-[12px] font-bold text-emerald-700 ring-1 ring-emerald-200 transition hover:bg-emerald-100 active:scale-95" x-text="conversionEnabled ? '+$5' : '+5 ' + localCode"></button>
                             <button type="button" @click="tipEntry = 0" class="flex w-10 items-center justify-center rounded-lg bg-white py-1.5 text-slate-500 ring-1 ring-emerald-200 transition hover:bg-emerald-100 active:scale-95" title="Quitar propina">
                                 <x-icon name="x" class="h-3.5 w-3.5" />
                             </button>
@@ -270,8 +276,8 @@
                             <span class="text-[11px] text-brand-700/80">Servicio + propina</span>
                         </div>
                         <div class="text-right">
-                            <span class="block text-xl font-extrabold tracking-tight text-brand-700" x-text="'$' + totalUsd.toFixed(2)"></span>
-                            <span class="text-[11px] font-medium text-brand-700/80" x-text="formatVes(totalUsd * rate)"></span>
+                            <span class="block text-xl font-extrabold tracking-tight text-brand-700" x-text="formatAmount(totalUsd)"></span>
+                            <span x-show="conversionEnabled" class="text-[11px] font-medium text-brand-700/80" x-text="formatVes(totalUsd * rate)"></span>
                         </div>
                     </div>
 
@@ -281,7 +287,7 @@
                                 <input type="checkbox" name="update_service_price" value="1" x-model="updateServicePrice"
                                        class="mt-0.5 rounded border-slate-300 text-brand-500 shadow-sm focus:ring-brand-500">
                                 <span class="text-sm text-brand-900">
-                                    Guardar $<span class="font-semibold" x-text="usdPrice.toFixed(2)"></span> como el nuevo precio de
+                                    Guardar <span class="font-semibold" x-text="formatAmount(usdPrice)"></span> como el nuevo precio de
                                     "<span class="font-semibold" x-text="serviceName"></span>" para futuros cortes.
                                     <span class="mt-0.5 block text-xs text-brand-700">
                                         Si no lo marcas, el precio nuevo se aplicará solo a este registro.
@@ -318,24 +324,24 @@
                                 <span class="text-[10px] font-bold uppercase tracking-wider text-brand-600">Estudio (<span x-text="(100 - effectiveCommissionRate).toFixed(0)"></span>%)</span>
                                 <x-icon name="home" class="h-3.5 w-3.5 text-brand-500" />
                             </div>
-                            <p class="text-[17px] font-extrabold text-slate-800" x-text="'$' + studioUsd.toFixed(2)">$0.00</p>
-                            <p class="text-[11px] text-slate-400" x-text="formatVes(studioUsd * rate)">0,00</p>
+                            <p class="text-[17px] font-extrabold text-slate-800" x-text="formatAmount(studioUsd)">0</p>
+                            <p x-show="conversionEnabled" class="text-[11px] text-slate-400" x-text="formatVes(studioUsd * rate)">0,00</p>
                         </div>
                         <div class="rounded-lg bg-slate-50 p-2.5">
                             <div class="mb-1 flex items-center justify-between">
                                 <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-600">Barbero (<span x-text="effectiveCommissionRate.toFixed(0)"></span>%)</span>
                                 <x-icon name="scissors" class="h-3.5 w-3.5 text-emerald-500" />
                             </div>
-                            <p class="text-[17px] font-extrabold text-slate-800" x-text="'$' + barberUsd.toFixed(2)">$0.00</p>
-                            <p class="text-[11px] text-slate-400" x-text="'Comisión · ' + formatVes(barberUsd * rate)">0,00</p>
+                            <p class="text-[17px] font-extrabold text-slate-800" x-text="formatAmount(barberUsd)">0</p>
+                            <p x-show="conversionEnabled" class="text-[11px] text-slate-400" x-text="'Comisión · ' + formatVes(barberUsd * rate)">0,00</p>
                             <div class="mt-1.5 space-y-0.5 border-t border-slate-200 pt-1.5">
                                 <div class="flex items-center justify-between text-[11px]">
                                     <span class="text-slate-500">Propina</span>
-                                    <span class="font-semibold text-emerald-600" x-text="'$' + tipUsd.toFixed(2)"></span>
+                                    <span class="font-semibold text-emerald-600" x-text="formatAmount(tipUsd)"></span>
                                 </div>
                                 <div class="flex items-center justify-between text-[11px]">
                                     <span class="font-semibold text-slate-600">Ganancia total</span>
-                                    <span class="font-extrabold text-emerald-700" x-text="'$' + barberEarningsUsd.toFixed(2)"></span>
+                                    <span class="font-extrabold text-emerald-700" x-text="formatAmount(barberEarningsUsd)"></span>
                                 </div>
                             </div>
                         </div>

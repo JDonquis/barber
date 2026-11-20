@@ -102,7 +102,7 @@
                     </span>
                     <div class="min-w-0">
                         <span class="block text-xs text-slate-400">Recaudado este mes</span>
-                        <span class="block truncate text-sm font-bold tracking-tight text-slate-800">{{ usd($monthRevenue) }}</span>
+                        <span class="block truncate text-sm font-bold tracking-tight text-slate-800">{{ money($monthRevenue) }}</span>
                     </div>
                 </div>
                 <div class="flex items-center gap-3 rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
@@ -111,7 +111,7 @@
                     </span>
                     <div class="min-w-0">
                         <span class="block text-xs text-slate-400">Comisiones + propinas − ret.</span>
-                        <span class="block truncate text-sm font-bold tracking-tight text-brand-600">{{ usd($monthCommission + $monthTips - $monthRetentions) }}</span>
+                        <span class="block truncate text-sm font-bold tracking-tight text-brand-600">{{ money($monthCommission + $monthTips - $monthRetentions) }}</span>
                     </div>
                 </div>
                 <div class="flex items-center gap-3 rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
@@ -120,7 +120,7 @@
                     </span>
                     <div class="min-w-0">
                         <span class="block text-xs text-slate-400">Gastos este mes</span>
-                        <span class="block truncate text-sm font-bold tracking-tight text-rose-600">{{ usd($monthExpenses) }}</span>
+                        <span class="block truncate text-sm font-bold tracking-tight text-rose-600">{{ money($monthExpenses) }}</span>
                     </div>
                 </div>
                 <div class="flex items-center gap-3 rounded-xl bg-emerald-50 p-4 shadow-sm ring-1 ring-emerald-200">
@@ -129,7 +129,7 @@
                     </span>
                     <div class="min-w-0">
                         <span class="block text-xs font-bold text-emerald-700">Ganancia tienda</span>
-                        <span class="block truncate text-sm font-extrabold tracking-tight text-emerald-700">{{ usd($monthShopAmount) }}</span>
+                        <span class="block truncate text-sm font-extrabold tracking-tight text-emerald-700">{{ money($monthShopAmount) }}</span>
                     </div>
                 </div>
             </div>
@@ -286,7 +286,7 @@
         <section class="flex flex-col gap-3">
             <div class="flex items-center justify-between">
                 <h3 class="text-base font-bold text-slate-800">Auditorías registradas</h3>
-                <span class="text-xs text-slate-400">Moneda: USD ($)</span>
+                <span class="text-xs text-slate-400">Moneda: {{ $usdConversionEnabled ? 'USD ($)' : local_currency() }}</span>
             </div>
 
             <template x-for="closing in filteredClosings" :key="closing.id">
@@ -345,7 +345,7 @@
                                 <span class="text-[10px] text-slate-400">Egresos del período</span>
                             </div>
                             <div class="pt-1">
-                                <span class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Total USD</span>
+                                <span class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Total {{ $usdConversionEnabled ? 'USD' : local_currency() }}</span>
                                 <p class="text-xl font-extrabold leading-tight text-brand-600" x-text="formatUsd(closing.total)"></p>
                             </div>
                             <div class="pt-1">

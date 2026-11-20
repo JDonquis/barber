@@ -46,4 +46,21 @@ class SaleItem extends Model
     {
         return $this->belongsTo(Product::class);
     }
+
+    public function localRate(): float
+    {
+        $rate = (float) ($this->sale?->exchange_rate ?? 0);
+
+        return $rate > 0 ? $rate : 1.0;
+    }
+
+    public function localUnitPrice(): float
+    {
+        return round((float) $this->unit_price_usd * $this->localRate(), 2);
+    }
+
+    public function localLineTotal(): float
+    {
+        return round((float) $this->line_total_usd * $this->localRate(), 2);
+    }
 }

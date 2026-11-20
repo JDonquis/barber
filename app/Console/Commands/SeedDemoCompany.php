@@ -251,6 +251,7 @@ class SeedDemoCompany extends Command
         foreach ([
             'commission_rate' => '40',
             'payment_methods' => 'Efectivo Bs, Efectivo USD, Pago móvil, Punto de venta, Transferencia, Zelle',
+            'usd_conversion_enabled' => '1',
             'single_barber_mode' => '0',
         ] as $key => $value) {
             Setting::query()->firstOrCreate(['key' => $key], ['value' => $value]);

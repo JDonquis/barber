@@ -5,9 +5,9 @@
 
     $waText = urlencode(
         "Recibo {$sale->code}\n".
-        $items->map(fn ($item) => "{$item->name} x{$item->quantity}: ".usd($item->line_total_usd))->join("\n").
-        ((float) $sale->tip_usd > 0 ? "\nPropina: ".usd($sale->tip_usd) : '').
-        "\nTotal: ".usd($sale->total_usd).' ('.ves($sale->total_ves).')'
+        $items->map(fn ($item) => "{$item->name} x{$item->quantity}: ".money($item->line_total_usd, $item->localLineTotal()))->join("\n").
+        ((float) $sale->tip_usd > 0 ? "\nPropina: ".money($sale->tip_usd, $sale->localTip()) : '').
+        "\nTotal: ".money($sale->total_usd, $sale->localTotal())
     );
 @endphp
 
@@ -94,9 +94,9 @@
                                             {{ $itemService ? 'Servicio' : 'Producto' }}
                                         </span>
                                     </div>
-                                    <p class="mt-0.5 font-mono text-[11px] text-slate-400">{{ $item->quantity }} × {{ usd($item->unit_price_usd) }}</p>
+                                    <p class="mt-0.5 font-mono text-[11px] text-slate-400">{{ $item->quantity }} × {{ money($item->unit_price_usd, $item->localUnitPrice()) }}</p>
                                 </div>
-                                <span class="shrink-0 font-mono text-sm font-bold text-slate-700">{{ usd($item->line_total_usd) }}</span>
+                                <span class="shrink-0 font-mono text-sm font-bold text-slate-700">{{ money($item->line_total_usd, $item->localLineTotal()) }}</span>
                             </div>
                         @endforeach
                     </div>
@@ -113,47 +113,51 @@
                 <div class="flex items-center justify-between rounded-xl border border-brand-200 bg-brand-50 p-4">
                     <div>
                         <span class="block text-xs font-medium text-brand-700">Total a pagar</span>
-                        <span class="mt-0.5 block text-[11px] text-slate-400">Equivalente tasa aplicada</span>
-                        <span class="font-mono text-[11px] font-medium text-brand-700">{{ ves($sale->total_ves) }}</span>
+                        @if ($usdConversionEnabled)
+                            <span class="mt-0.5 block text-[11px] text-slate-400">Equivalente tasa aplicada</span>
+                            <span class="font-mono text-[11px] font-medium text-brand-700">{{ ves($sale->total_ves) }}</span>
+                        @endif
                     </div>
                     <div class="text-right">
-                        <span class="font-mono text-3xl font-extrabold tracking-tight text-brand-600">{{ usd($sale->total_usd) }}</span>
+                        <span class="font-mono text-3xl font-extrabold tracking-tight text-brand-600">{{ money($sale->total_usd, $sale->localTotal()) }}</span>
                     </div>
                 </div>
 
                 <!-- Desglose -->
                 <div class="space-y-1 pt-1 text-xs">
-                    <div class="flex items-center justify-between py-1">
-                        <span class="flex items-center gap-2 text-slate-400">
-                            <x-icon name="refresh" class="h-4 w-4 shrink-0" /> Tasa aplicada
-                        </span>
-                        <span class="font-mono font-medium text-slate-600">{{ local_currency_symbol() }} {{ number_format($sale->exchange_rate, 2, ',', '.') }} / $1</span>
-                    </div>
+                    @if ($usdConversionEnabled)
+                        <div class="flex items-center justify-between py-1">
+                            <span class="flex items-center gap-2 text-slate-400">
+                                <x-icon name="refresh" class="h-4 w-4 shrink-0" /> Tasa aplicada
+                            </span>
+                            <span class="font-mono font-medium text-slate-600">{{ local_currency_symbol() }} {{ number_format($sale->exchange_rate, 2, ',', '.') }} / $1</span>
+                        </div>
+                    @endif
                     <div class="flex items-center justify-between border-t border-slate-100 py-1">
                         <span class="flex items-center gap-2 text-slate-400">
                             <x-icon name="users" class="h-4 w-4 shrink-0 text-emerald-500" /> Comisión barbero ({{ rtrim(rtrim(number_format($sale->commission_rate, 2, ',', '.'), '0'), ',') }}%)
                         </span>
-                        <span class="font-mono font-bold text-emerald-600">{{ usd($sale->barber_commission_usd) }}</span>
+                        <span class="font-mono font-bold text-emerald-600">{{ money($sale->barber_commission_usd, $sale->localCommission()) }}</span>
                     </div>
                     @if ((float) $sale->tip_usd > 0)
                         <div class="flex items-center justify-between border-t border-slate-100 py-1">
                             <span class="flex items-center gap-2 text-slate-400">
                                 <x-icon name="dollar" class="h-4 w-4 shrink-0 text-emerald-500" /> Propina
                             </span>
-                            <span class="font-mono font-bold text-emerald-600">{{ usd($sale->tip_usd) }}</span>
+                            <span class="font-mono font-bold text-emerald-600">{{ money($sale->tip_usd, $sale->localTip()) }}</span>
                         </div>
                         <div class="flex items-center justify-between border-t border-slate-100 py-1">
                             <span class="flex items-center gap-2 text-slate-400">
                                 <x-icon name="check" class="h-4 w-4 shrink-0 text-emerald-600" /> Ganancia barbero
                             </span>
-                            <span class="font-mono font-bold text-emerald-700">{{ usd($sale->barberEarningsUsd()) }}</span>
+                            <span class="font-mono font-bold text-emerald-700">{{ money($sale->barberEarningsUsd(), $sale->localBarberEarnings()) }}</span>
                         </div>
                     @endif
                     <div class="flex items-center justify-between border-t border-slate-100 py-1">
                         <span class="flex items-center gap-2 text-slate-400">
                             <x-icon name="dollar" class="h-4 w-4 shrink-0 text-brand-500" /> Monto estudio ({{ rtrim(rtrim(number_format($studioPct, 2, ',', '.'), '0'), ',') }}%)
                         </span>
-                        <span class="font-mono font-bold text-brand-600">{{ usd($sale->shop_amount_usd) }}</span>
+                        <span class="font-mono font-bold text-brand-600">{{ money($sale->shop_amount_usd, $sale->localShopAmount()) }}</span>
                     </div>
                 </div>
 

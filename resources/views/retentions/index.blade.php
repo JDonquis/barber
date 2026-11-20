@@ -52,7 +52,7 @@
         <section class="space-y-2.5">
             <div class="flex items-center justify-between px-1">
                 <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Conceptos registrados</span>
-                <span class="text-[11px] font-semibold text-brand-600">Moneda: USD ($)</span>
+                <span class="text-[11px] font-semibold text-brand-600">Moneda: {{ $usdConversionEnabled ? 'USD ($)' : local_currency() }}</span>
             </div>
 
             <div class="space-y-2">
@@ -86,7 +86,7 @@
                             </div>
 
                             <div class="flex shrink-0 flex-col items-end gap-1.5">
-                                <span class="text-sm font-extrabold text-rose-600">- {{ usd($retention->amount_usd) }}</span>
+                                <span class="text-sm font-extrabold text-rose-600">- {{ price_money($retention->amount_usd) }}</span>
                                 <div class="flex items-center gap-1">
                                     <form method="POST" action="{{ route('retentions.toggle', $retention) }}">
                                         @csrf

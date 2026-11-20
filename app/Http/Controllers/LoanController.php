@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Loan;
 use App\Models\User;
+use App\Services\ExchangeRateService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -35,12 +36,22 @@ class LoanController extends Controller
             ->paginate(20)
             ->withQueryString();
 
-        $stats = [
-            'lent' => (float) Loan::query()->sum('amount_usd'),
-            'paid' => (float) Loan::query()->sum('paid_usd'),
-            'outstanding' => (float) Loan::query()->withBalance()->get(['amount_usd', 'paid_usd'])->sum(fn (Loan $loan) => $loan->balance_usd),
-            'active' => Loan::query()->withBalance()->count(),
-        ];
+        if (usd_conversion_enabled()) {
+            $stats = [
+                'lent' => (float) Loan::query()->sum('amount_usd'),
+                'paid' => (float) Loan::query()->sum('paid_usd'),
+                'outstanding' => (float) Loan::query()->withBalance()->get(['amount_usd', 'paid_usd'])->sum(fn (Loan $loan) => $loan->balance_usd),
+                'active' => Loan::query()->withBalance()->count(),
+            ];
+        } else {
+            $allLoans = Loan::query()->with('payments')->get();
+            $stats = [
+                'lent' => round($allLoans->sum(fn (Loan $loan) => $loan->localAmount()), 2),
+                'paid' => round($allLoans->sum(fn (Loan $loan) => $loan->localPaid()), 2),
+                'outstanding' => round($allLoans->sum(fn (Loan $loan) => $loan->localBalance()), 2),
+                'active' => $allLoans->filter(fn (Loan $loan) => $loan->localBalance() > 0)->count(),
+            ];
+        }
 
         return view('loans.index', compact('loans', 'stats', 'status', 'barberId', 'barbers'));
     }
@@ -56,7 +67,7 @@ class LoanController extends Controller
     public function store(Request $request)
     {
         $data = $this->validateLoan($request);
-        $data['amount_ves'] = round((float) $data['amount_usd'] * (float) $data['exchange_rate'], 2);
+        $data = $this->prepareAmounts($data);
         $data['created_by'] = $request->user()->id;
 
         $loan = Loan::create($data);
@@ -89,14 +100,13 @@ class LoanController extends Controller
     public function update(Request $request, Loan $loan)
     {
         $data = $this->validateLoan($request);
+        $data = $this->prepareAmounts($data, $loan);
 
         if ((float) $data['amount_usd'] < (float) $loan->paid_usd) {
             return back()->withInput()->withErrors([
-                'amount_usd' => 'El monto del préstamo no puede ser menor a lo que ya se ha pagado ('.usd($loan->paid_usd).').',
+                'amount_usd' => 'El monto del préstamo no puede ser menor a lo que ya se ha pagado ('.money($loan->paid_usd, $loan->localPaid()).').',
             ]);
         }
-
-        $data['amount_ves'] = round((float) $data['amount_usd'] * (float) $data['exchange_rate'], 2);
 
         $loan->update($data);
 
@@ -129,6 +139,26 @@ class LoanController extends Controller
             'loan_date' => ['required', 'date'],
             'notes' => ['nullable', 'string', 'max:1000'],
         ]);
+    }
+
+    protected function prepareAmounts(array $data, ?Loan $loan = null): array
+    {
+        if (! usd_conversion_enabled()) {
+            $local = round((float) $data['amount_usd'], 2);
+            $rate = $loan && (float) $loan->exchange_rate > 0
+                ? (float) $loan->exchange_rate
+                : app(ExchangeRateService::class)->referenceRate();
+
+            $data['amount_usd'] = $rate > 0 ? round($local / $rate, 2) : $local;
+            $data['amount_ves'] = $local;
+            $data['exchange_rate'] = $rate;
+
+            return $data;
+        }
+
+        $data['amount_ves'] = round((float) $data['amount_usd'] * (float) $data['exchange_rate'], 2);
+
+        return $data;
     }
 
     protected function barbers()

@@ -89,4 +89,38 @@ class Sale extends Model
     {
         return round((float) $this->barber_commission_usd + (float) $this->tip_usd, 2);
     }
+
+    public function localRate(): float
+    {
+        $rate = (float) $this->exchange_rate;
+
+        return $rate > 0 ? $rate : 1.0;
+    }
+
+    public function localTotal(): float
+    {
+        return (float) $this->total_ves > 0
+            ? (float) $this->total_ves
+            : round((float) $this->total_usd * $this->localRate(), 2);
+    }
+
+    public function localCommission(): float
+    {
+        return round((float) $this->barber_commission_usd * $this->localRate(), 2);
+    }
+
+    public function localTip(): float
+    {
+        return round((float) $this->tip_usd * $this->localRate(), 2);
+    }
+
+    public function localShopAmount(): float
+    {
+        return round((float) $this->shop_amount_usd * $this->localRate(), 2);
+    }
+
+    public function localBarberEarnings(): float
+    {
+        return round($this->localCommission() + $this->localTip(), 2);
+    }
 }

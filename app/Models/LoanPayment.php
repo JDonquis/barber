@@ -39,4 +39,18 @@ class LoanPayment extends Model
     {
         return $this->belongsTo(User::class, 'created_by')->withTrashed();
     }
+
+    public function localRate(): float
+    {
+        $rate = (float) $this->exchange_rate;
+
+        return $rate > 0 ? $rate : 1.0;
+    }
+
+    public function localAmount(): float
+    {
+        return (float) $this->amount_ves > 0
+            ? (float) $this->amount_ves
+            : round((float) $this->amount_usd * $this->localRate(), 2);
+    }
 }

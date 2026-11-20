@@ -44,18 +44,20 @@
                     </div>
 
                     <div class="flex items-center gap-3">
-                        <div class="hidden sm:flex items-center gap-2 rounded-full bg-emerald-50 text-emerald-700 px-3 py-1.5 text-sm font-medium">
-                            <x-icon name="dollar" class="h-4 w-4" />
-                            <span>1 $ = {{ ves($currentRate) }}</span>
-                        </div>
-                        @if (auth()->user()->isAdmin())
-                            <form method="POST" action="{{ route('exchange-rate.refresh') }}">
-                                @csrf
-                                <button type="submit" title="Actualizar tasa del dólar"
-                                        class="inline-flex h-9 w-9 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100">
-                                    <x-icon name="refresh" class="h-4 w-4" />
-                                </button>
-                            </form>
+                        @if ($usdConversionEnabled)
+                            <div class="hidden sm:flex items-center gap-2 rounded-full bg-emerald-50 text-emerald-700 px-3 py-1.5 text-sm font-medium">
+                                <x-icon name="dollar" class="h-4 w-4" />
+                                <span>1 $ = {{ ves($currentRate) }}</span>
+                            </div>
+                            @if (auth()->user()->isAdmin())
+                                <form method="POST" action="{{ route('exchange-rate.refresh') }}">
+                                    @csrf
+                                    <button type="submit" title="Actualizar tasa del dólar"
+                                            class="inline-flex h-9 w-9 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100">
+                                        <x-icon name="refresh" class="h-4 w-4" />
+                                    </button>
+                                </form>
+                            @endif
                         @endif
                         <div class="hidden md:block text-right leading-tight">
                             <p class="text-sm font-semibold text-slate-700">{{ auth()->user()->name }}</p>

@@ -109,4 +109,67 @@ class Closing extends Model
     {
         return round($this->barberGrossEarningsUsd() - (float) $this->barber_retentions_usd, 2);
     }
+
+    public function localRate(): float
+    {
+        $rate = (float) $this->average_rate;
+
+        if ($rate <= 0) {
+            $rate = (float) $this->exchange_rate;
+        }
+
+        return $rate > 0 ? $rate : 1.0;
+    }
+
+    public function localTotal(): float
+    {
+        return (float) $this->total_ves > 0
+            ? (float) $this->total_ves
+            : round((float) $this->total_usd * $this->localRate(), 2);
+    }
+
+    public function localServices(): float
+    {
+        return round((float) $this->total_services_usd * $this->localRate(), 2);
+    }
+
+    public function localProducts(): float
+    {
+        return round((float) $this->total_products_usd * $this->localRate(), 2);
+    }
+
+    public function localCommission(): float
+    {
+        return round((float) $this->barber_commission_usd * $this->localRate(), 2);
+    }
+
+    public function localTips(): float
+    {
+        return round((float) $this->barber_tips_usd * $this->localRate(), 2);
+    }
+
+    public function localRetentions(): float
+    {
+        return round((float) $this->barber_retentions_usd * $this->localRate(), 2);
+    }
+
+    public function localExpenses(): float
+    {
+        return round((float) $this->total_expenses_usd * $this->localRate(), 2);
+    }
+
+    public function localShopAmount(): float
+    {
+        return round((float) $this->shop_amount_usd * $this->localRate(), 2);
+    }
+
+    public function localBarberGrossEarnings(): float
+    {
+        return round($this->localCommission() + $this->localTips(), 2);
+    }
+
+    public function localBarberEarnings(): float
+    {
+        return round($this->localBarberGrossEarnings() - $this->localRetentions(), 2);
+    }
 }

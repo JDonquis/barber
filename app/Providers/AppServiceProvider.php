@@ -33,6 +33,7 @@ class AppServiceProvider extends ServiceProvider
             $view->with('shopName', $company?->name ?? setting('shop_name', config('app.name')));
             $view->with('companyLogo', $company?->logo_url ?? asset('logo.jpeg'));
             $view->with('currentRate', $company ? exchange_rate() : 0);
+            $view->with('usdConversionEnabled', $company ? usd_conversion_enabled() : true);
         });
     }
 }

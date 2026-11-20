@@ -1,7 +1,7 @@
 @php
     $loan = $loan ?? null;
     $editing = (bool) ($loan && $loan->exists);
-    $currentAmount = (float) old('amount_usd', $loan?->amount_usd ?? 0);
+    $currentAmount = (float) old('amount_usd', $loan ? (usd_conversion_enabled() ? $loan->amount_usd : $loan->localAmount()) : 0);
     $currentDate = old('loan_date', $loan?->loan_date?->format('Y-m-d') ?? now()->toDateString());
     $currentBarber = old('barber_id', $loan?->barber_id);
 @endphp
@@ -14,8 +14,9 @@
     <div class="mx-auto max-w-2xl space-y-4" x-data="{
         barberId: @js((string) ($currentBarber ?? '')),
         entry: {{ $currentAmount }},
-        currency: 'USD',
-        rate: {{ (float) $currentRate }},
+        conversionEnabled: {{ $usdConversionEnabled ? 'true' : 'false' }},
+        currency: @js(usd_conversion_enabled() ? 'USD' : local_currency()),
+        rate: {{ $usdConversionEnabled ? (float) $currentRate : 1 }},
         localCode: @js(local_currency()),
         localSymbol: @js(local_currency_symbol()),
         selectBarber(id) {
@@ -46,11 +47,13 @@
                class="flex h-11 w-11 items-center justify-center rounded-full bg-white text-slate-600 shadow-sm ring-1 ring-slate-200 transition hover:bg-slate-100 active:scale-95" title="Volver a préstamos">
                 <x-icon name="arrow-left" class="h-5 w-5" />
             </a>
-            <div class="flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 shadow-sm ring-1 ring-slate-200">
-                <span class="h-2 w-2 animate-pulse rounded-full bg-emerald-500"></span>
-                <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">{{ local_currency() }}:</span>
-                <span class="text-[11px] font-bold text-emerald-600">{{ ves($currentRate) }}</span>
-            </div>
+            @if ($usdConversionEnabled)
+                <div class="flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 shadow-sm ring-1 ring-slate-200">
+                    <span class="h-2 w-2 animate-pulse rounded-full bg-emerald-500"></span>
+                    <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">{{ local_currency() }}:</span>
+                    <span class="text-[11px] font-bold text-emerald-600">{{ ves($currentRate) }}</span>
+                </div>
+            @endif
         </div>
 
         <!-- Título -->
@@ -117,8 +120,8 @@
                     <!-- Monto -->
                     <div class="space-y-1.5">
                         <div class="flex items-center justify-between">
-                            <x-input-label for="amount" value="Monto prestado *" />
-                            <div class="inline-flex rounded-lg bg-slate-100 p-0.5">
+                            <x-input-label for="amount" :value="usd_conversion_enabled() ? 'Monto prestado *' : 'Monto prestado en '.local_currency().' *'" />
+                            <div class="inline-flex rounded-lg bg-slate-100 p-0.5" x-show="conversionEnabled" x-cloak>
                                 <button type="button" @click="setCurrency('USD')"
                                         :class="currency === 'USD' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500'"
                                         class="rounded-md px-3 py-1 text-xs font-bold uppercase tracking-wide transition">USD</button>
@@ -142,7 +145,7 @@
                             </button>
                         </div>
 
-                        <div class="mt-1 flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2 ring-1 ring-slate-100">
+                        <div x-show="conversionEnabled" x-cloak class="mt-1 flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2 ring-1 ring-slate-100">
                             <span class="flex items-center gap-1.5 text-xs text-slate-400">
                                 <x-icon name="refresh" class="h-4 w-4 text-emerald-500" /> Equivale a:
                             </span>

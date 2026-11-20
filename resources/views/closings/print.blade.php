@@ -272,39 +272,39 @@
         <div class="kpis">
             <div class="kpi">
                 <div class="label">Servicios</div>
-                <div class="value">{{ usd($closing->total_services_usd) }}</div>
+                <div class="value">{{ money($closing->total_services_usd) }}</div>
                 <div class="hint">{{ $serviceQty }} atenciones</div>
             </div>
             <div class="kpi">
                 <div class="label">Productos</div>
-                <div class="value">{{ usd($closing->total_products_usd) }}</div>
+                <div class="value">{{ money($closing->total_products_usd) }}</div>
                 <div class="hint">{{ $productQty }} artículos</div>
             </div>
             @if ($isBarberClosing)
                 <div class="kpi">
                     <div class="label">Producción</div>
-                    <div class="value">{{ usd((float) $closing->total_services_usd + (float) $closing->total_products_usd) }}</div>
+                    <div class="value">{{ money((float) $closing->total_services_usd + (float) $closing->total_products_usd) }}</div>
                     <div class="hint">{{ $closing->ticket_count }} tickets</div>
                 </div>
                 <div class="kpi highlight">
                     <div class="label">A pagar</div>
-                    <div class="value">{{ usd($barberEarnings) }}</div>
+                    <div class="value">{{ money($barberEarnings) }}</div>
                     <div class="hint">Comisión + propinas − retenciones de {{ $barberName }}</div>
                 </div>
             @else
                 <div class="kpi">
                     <div class="label">Comisiones + propinas − ret.</div>
-                    <div class="value">{{ usd($barberEarnings) }}</div>
-                    <div class="hint">A liquidar staff · Ret. {{ usd($closing->barber_retentions_usd) }}</div>
+                    <div class="value">{{ money($barberEarnings) }}</div>
+                    <div class="hint">A liquidar staff · Ret. {{ money($closing->barber_retentions_usd) }}</div>
                 </div>
                 <div class="kpi">
                     <div class="label">Gastos</div>
-                    <div class="value">{{ usd($closing->total_expenses_usd) }}</div>
+                    <div class="value">{{ money($closing->total_expenses_usd) }}</div>
                     <div class="hint">{{ $expenses->count() }} egresos</div>
                 </div>
                 <div class="kpi highlight">
                     <div class="label">Monto tienda</div>
-                    <div class="value">{{ usd($closing->shop_amount_usd) }}</div>
+                    <div class="value">{{ money($closing->shop_amount_usd) }}</div>
                     <div class="hint">Ventas − comisiones − propinas + retenciones − gastos</div>
                 </div>
             @endif
@@ -326,57 +326,61 @@
                         <td class="muted">Total operaciones</td>
                         <td class="text-right strong">{{ $closing->ticket_count }} tickets</td>
                     </tr>
-                    <tr>
-                        <td class="muted">Tasa promedio del período</td>
-                        <td class="text-right strong">{{ local_currency_symbol() }} {{ number_format($closing->average_rate ?: $closing->exchange_rate, 2, ',', '.') }}</td>
-                    </tr>
-                    <tr>
-                        <td class="muted">Tasa de cierre</td>
-                        <td class="text-right strong">{{ local_currency_symbol() }} {{ number_format($closing->exchange_rate, 2, ',', '.') }}</td>
-                    </tr>
+                    @if ($usdConversionEnabled)
+                        <tr>
+                            <td class="muted">Tasa promedio del período</td>
+                            <td class="text-right strong">{{ local_currency_symbol() }} {{ number_format($closing->average_rate ?: $closing->exchange_rate, 2, ',', '.') }}</td>
+                        </tr>
+                        <tr>
+                            <td class="muted">Tasa de cierre</td>
+                            <td class="text-right strong">{{ local_currency_symbol() }} {{ number_format($closing->exchange_rate, 2, ',', '.') }}</td>
+                        </tr>
+                    @endif
                 </tbody>
             </table>
 
             <div class="totals">
                 <div class="row main">
-                    <span class="muted">Total recaudado (USD)</span>
-                    <span class="amount big">{{ usd($closing->total_usd) }}</span>
+                    <span class="muted">Total recaudado {{ $usdConversionEnabled ? '(USD)' : '('.local_currency().')' }}</span>
+                    <span class="amount big">{{ money($closing->total_usd, $closing->localTotal()) }}</span>
                 </div>
-                <div class="row">
-                    <span class="muted">{{ local_currency() }} cobrados (tasa histórica del período)</span>
-                    <span class="amount emerald">{{ ves($closing->total_ves) }}</span>
-                </div>
-                <div class="row">
-                    <span class="muted">Equivalente a tasa de cierre</span>
-                    <span class="amount">{{ ves($reference) }}</span>
-                </div>
+                @if ($usdConversionEnabled)
+                    <div class="row">
+                        <span class="muted">{{ local_currency() }} cobrados (tasa histórica del período)</span>
+                        <span class="amount emerald">{{ ves($closing->total_ves) }}</span>
+                    </div>
+                    <div class="row">
+                        <span class="muted">Equivalente a tasa de cierre</span>
+                        <span class="amount">{{ ves($reference) }}</span>
+                    </div>
+                @endif
                 <div class="row">
                     <span class="muted">{{ $isBarberClosing ? 'Comisión' : 'Comisiones barberos' }}</span>
-                    <span class="amount">- {{ usd($closing->barber_commission_usd) }}</span>
+                    <span class="amount">- {{ money($closing->barber_commission_usd) }}</span>
                 </div>
                 <div class="row">
                     <span class="muted">{{ $isBarberClosing ? 'Propinas' : 'Propinas barberos' }}</span>
-                    <span class="amount">- {{ usd($closing->barber_tips_usd) }}</span>
+                    <span class="amount">- {{ money($closing->barber_tips_usd) }}</span>
                 </div>
                 <div class="row">
                     <span class="muted">{{ $isBarberClosing ? 'Retenciones' : 'Retenciones barberos' }}</span>
-                    <span class="amount">- {{ usd($closing->barber_retentions_usd) }}</span>
+                    <span class="amount">- {{ money($closing->barber_retentions_usd) }}</span>
                 </div>
                 @if ($isBarberClosing)
                     <div class="row main">
                         <span class="strong">Ganancia total</span>
-                        <span class="amount emerald">{{ usd($barberEarnings) }}</span>
+                        <span class="amount emerald">{{ money($barberEarnings) }}</span>
                     </div>
                 @endif
                 @unless ($isBarberClosing)
                     <div class="row">
                         <span class="muted">Gastos del período</span>
-                        <span class="amount">- {{ usd($closing->total_expenses_usd) }}</span>
+                        <span class="amount">- {{ money($closing->total_expenses_usd) }}</span>
                     </div>
                 @endunless
                 <div class="row main">
                     <span class="strong">{{ $isBarberClosing ? 'Saldo para el estudio' : 'Ganancia neta tienda' }}</span>
-                    <span class="amount emerald">{{ usd($closing->shop_amount_usd) }}</span>
+                    <span class="amount emerald">{{ money($closing->shop_amount_usd) }}</span>
                 </div>
             </div>
         </section>
@@ -391,15 +395,15 @@
                     <tbody>
                         <tr>
                             <td class="muted">Prestado en el período</td>
-                            <td class="text-right strong">{{ usd($loanTotals['issued_usd'] ?? 0) }}</td>
+                            <td class="text-right strong">{{ money($loanTotals['issued_usd'] ?? 0) }}</td>
                         </tr>
                         <tr>
                             <td class="muted">Abonos recibidos en el período</td>
-                            <td class="text-right strong emerald">{{ usd($loanTotals['paid_usd'] ?? 0) }}</td>
+                            <td class="text-right strong emerald">{{ money($loanTotals['paid_usd'] ?? 0) }}</td>
                         </tr>
                         <tr>
                             <td class="muted">Saldo pendiente por cobrar</td>
-                            <td class="text-right strong">{{ usd($loanTotals['outstanding_usd'] ?? 0) }}</td>
+                            <td class="text-right strong">{{ money($loanTotals['outstanding_usd'] ?? 0) }}</td>
                         </tr>
                     </tbody>
                 </table>
@@ -415,9 +419,9 @@
                                     {{ $loan['barber_name'] ?? 'Barbero' }}
                                     <div class="item-unit">{{ $loan['loan_date'] ?? '' }}@unless ($loan['loaned_in_period'] ?? true) · anterior @endunless</div>
                                 </td>
-                                <td class="text-right">{{ usd($loan['amount_usd'] ?? 0) }}</td>
-                                <td class="text-right">{{ usd($loan['paid_usd'] ?? 0) }}</td>
-                                <td class="text-right strong">{{ usd($loan['balance_usd'] ?? 0) }}</td>
+                                <td class="text-right">{{ money($loan['amount_usd'] ?? 0) }}</td>
+                                <td class="text-right">{{ money($loan['paid_usd'] ?? 0) }}</td>
+                                <td class="text-right strong">{{ money($loan['balance_usd'] ?? 0) }}</td>
                                 <td class="text-right">{{ (int) ($loan['progress'] ?? 0) }}%</td>
                             </tr>
                             @if (! empty($loan['payments']))
@@ -425,7 +429,7 @@
                                     <td colspan="5" class="item-unit">
                                         Abonos del período:
                                         @foreach ($loan['payments'] as $payment)
-                                            {{ $payment['date'] ?? '' }} {{ usd($payment['amount_usd'] ?? 0) }}@if (! empty($payment['payment_method'])) ({{ $payment['payment_method'] }})@endif{{ ! $loop->last ? ' · ' : '' }}
+                                            {{ $payment['date'] ?? '' }} {{ money($payment['amount_usd'] ?? 0) }}@if (! empty($payment['payment_method'])) ({{ $payment['payment_method'] }})@endif{{ ! $loop->last ? ' · ' : '' }}
                                         @endforeach
                                     </td>
                                 </tr>
@@ -456,7 +460,7 @@
                                     @endunless
                                 </td>
                                 <td>{{ $row['frequency_label'] ?? '' }}</td>
-                                <td class="text-right strong">- {{ usd($row['applied_usd'] ?? 0) }}</td>
+                                <td class="text-right strong">- {{ money($row['applied_usd'] ?? 0, $row['applied_local'] ?? null) }}</td>
                             </tr>
                         @endforeach
                     </tbody>
@@ -480,7 +484,7 @@
                             <tr>
                                 <td>{{ $row['name'] }}</td>
                                 <td class="text-right">{{ $row['quantity'] }}</td>
-                                <td class="text-right strong">{{ usd($row['total_usd']) }}</td>
+                                <td class="text-right strong">{{ money($row['total_usd']) }}</td>
                             </tr>
                         @empty
                             <tr><td colspan="3" class="empty">Sin servicios.</td></tr>
@@ -503,7 +507,7 @@
                             <tr>
                                 <td>{{ $row['name'] }}</td>
                                 <td class="text-right">{{ $row['quantity'] }}</td>
-                                <td class="text-right strong">{{ usd($row['total_usd']) }}</td>
+                                <td class="text-right strong">{{ money($row['total_usd']) }}</td>
                             </tr>
                         @empty
                             <tr><td colspan="3" class="empty">Sin productos.</td></tr>
@@ -530,10 +534,10 @@
                             <tr>
                                 <td>{{ $row['name'] }}</td>
                                 <td class="text-right">{{ $row['tickets'] }}</td>
-                                <td class="text-right">{{ usd($row['commission_usd']) }}</td>
-                                <td class="text-right">{{ usd($row['tip_usd'] ?? 0) }}</td>
-                                <td class="text-right">{{ usd($row['retentions_usd'] ?? 0) }}</td>
-                                <td class="text-right strong">{{ usd($row['earnings_usd'] ?? ($row['commission_usd'] + ($row['tip_usd'] ?? 0))) }}</td>
+                                <td class="text-right">{{ money($row['commission_usd']) }}</td>
+                                <td class="text-right">{{ money($row['tip_usd'] ?? 0) }}</td>
+                                <td class="text-right">{{ money($row['retentions_usd'] ?? 0) }}</td>
+                                <td class="text-right strong">{{ money($row['earnings_usd'] ?? ($row['commission_usd'] + ($row['tip_usd'] ?? 0))) }}</td>
                             </tr>
                         @empty
                             <tr><td colspan="6" class="empty">Sin datos.</td></tr>
@@ -557,7 +561,7 @@
                             <tr>
                                 <td>{{ $row['name'] }}</td>
                                 <td class="text-right">{{ $row['count'] }}</td>
-                                <td class="text-right strong">{{ usd($row['total_usd']) }}</td>
+                                <td class="text-right strong">{{ money($row['total_usd']) }}</td>
                             </tr>
                         @empty
                             <tr><td colspan="3" class="empty">Sin datos.</td></tr>
@@ -584,7 +588,7 @@
                             <td>{{ $row['date'] }}</td>
                             <td>{{ $row['concept'] }}</td>
                             <td class="muted">{{ $row['notes'] ?? '—' }}</td>
-                            <td class="text-right strong">- {{ usd($row['amount_usd']) }}</td>
+                            <td class="text-right strong">- {{ money($row['amount_usd']) }}</td>
                         </tr>
                     @empty
                         <tr><td colspan="4" class="empty">Sin gastos registrados en este período.</td></tr>

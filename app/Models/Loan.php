@@ -118,4 +118,41 @@ class Loan extends Model
     {
         return $query->whereColumn('paid_usd', '>=', 'amount_usd');
     }
+
+    public function localRate(): float
+    {
+        $rate = (float) $this->exchange_rate;
+
+        return $rate > 0 ? $rate : 1.0;
+    }
+
+    public function localAmount(): float
+    {
+        return (float) $this->amount_ves > 0
+            ? (float) $this->amount_ves
+            : round((float) $this->amount_usd * $this->localRate(), 2);
+    }
+
+    public function localPaid(): float
+    {
+        $paid = $this->payments->sum(fn (LoanPayment $payment) => $payment->localAmount());
+
+        return round((float) $paid, 2);
+    }
+
+    public function localBalance(): float
+    {
+        return max(0, round($this->localAmount() - $this->localPaid(), 2));
+    }
+
+    public function localProgress(): int
+    {
+        $amount = $this->localAmount();
+
+        if ($amount <= 0) {
+            return 0;
+        }
+
+        return max(0, min(100, (int) round(($this->localPaid() / $amount) * 100)));
+    }
 }

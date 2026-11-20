@@ -38,7 +38,7 @@
                         <x-icon name="dollar" class="h-5 w-5" />
                     </span>
                 </div>
-                <span class="text-xl font-extrabold tracking-tight text-slate-800">{{ usd($todayTotal) }}</span>
+                <span class="text-xl font-extrabold tracking-tight text-slate-800">{{ money($todayTotal) }}</span>
                 <span class="mt-0.5 text-[11px] text-slate-400">{{ $todayTickets }} ticket(s) hoy</span>
             </div>
 
@@ -49,8 +49,8 @@
                         <x-icon name="users" class="h-5 w-5" />
                     </span>
                 </div>
-                <span class="text-xl font-extrabold tracking-tight text-slate-800">{{ usd($todayEarnings) }}</span>
-                <span class="mt-0.5 text-[11px] text-brand-600">Comisión {{ usd($todayCommission) }} · Propinas {{ usd($todayTips) }}</span>
+                <span class="text-xl font-extrabold tracking-tight text-slate-800">{{ money($todayEarnings) }}</span>
+                <span class="mt-0.5 text-[11px] text-brand-600">Comisión {{ money($todayCommission) }} · Propinas {{ money($todayTips) }}</span>
             </div>
 
             <div class="flex flex-col justify-between rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
@@ -60,7 +60,7 @@
                         <x-icon name="scissors" class="h-5 w-5" />
                     </span>
                 </div>
-                <span class="text-xl font-extrabold tracking-tight text-slate-800">{{ usd($serviceTotal) }}</span>
+                <span class="text-xl font-extrabold tracking-tight text-slate-800">{{ money($serviceTotal) }}</span>
                 <span class="mt-0.5 text-[11px] text-slate-400">{{ $serviceCount }} realizados</span>
             </div>
 
@@ -71,7 +71,7 @@
                         <x-icon name="bag" class="h-5 w-5" />
                     </span>
                 </div>
-                <span class="text-xl font-extrabold tracking-tight text-slate-800">{{ usd($productTotal) }}</span>
+                <span class="text-xl font-extrabold tracking-tight text-slate-800">{{ money($productTotal) }}</span>
                 <span class="mt-0.5 text-[11px] text-slate-400">{{ $productCount }} unidades</span>
             </div>
         </section>
@@ -85,15 +85,16 @@
                     </span>
                     <div>
                         <p class="text-xs font-bold uppercase tracking-wider text-emerald-700">Ganancia de la tienda hoy</p>
-                        <p class="text-[11px] text-emerald-700">Ventas − comisiones − gastos ({{ usd($todayExpenses) }} en gastos)</p>
-                        <p class="text-[11px] text-emerald-700/80">Mes: {{ usd($monthShopAmount) }} · Gastos del mes: {{ usd($monthExpenses) }}</p>
+                        <p class="text-[11px] text-emerald-700">Ventas − comisiones − gastos ({{ money($todayExpenses) }} en gastos)</p>
+                        <p class="text-[11px] text-emerald-700/80">Mes: {{ money($monthShopAmount) }} · Gastos del mes: {{ money($monthExpenses) }}</p>
                     </div>
                 </div>
-                <span class="shrink-0 text-2xl font-extrabold tracking-tight text-emerald-700">{{ usd($todayShopAmount) }}</span>
+                <span class="shrink-0 text-2xl font-extrabold tracking-tight text-emerald-700">{{ money($todayShopAmount) }}</span>
             </section>
         @endunless
 
         <!-- Tasa del día -->
+        @if ($usdConversionEnabled)
         <section class="relative overflow-hidden rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
             <div class="mb-2 flex items-center justify-between">
                 <span class="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-slate-400">
@@ -118,6 +119,7 @@
                 </form>
             @endif
         </section>
+        @endif
 
         <!-- Últimas ventas -->
         <section class="space-y-2.5">
@@ -157,7 +159,7 @@
                             </div>
                         </div>
                         <div class="flex shrink-0 flex-col items-end">
-                            <span class="text-sm font-extrabold text-slate-800">{{ usd($sale->total_usd) }}</span>
+                            <span class="text-sm font-extrabold text-slate-800">{{ money($sale->total_usd, $sale->localTotal()) }}</span>
                             <span class="text-[11px] {{ $sale->isCancelled() ? 'text-rose-500' : 'text-emerald-600' }}">
                                 {{ $sale->isCancelled() ? 'Anulada' : ($sale->payment_method ?: 'Pagado') }}
                             </span>
@@ -239,9 +241,9 @@
                                     </div>
                                 </div>
                                 <div class="shrink-0 text-right">
-                                    <span class="block text-sm font-extrabold {{ $index === 0 ? 'text-brand-600' : 'text-slate-700' }}">{{ usd($barber->earnings ?? 0) }}</span>
+                                    <span class="block text-sm font-extrabold {{ $index === 0 ? 'text-brand-600' : 'text-slate-700' }}">{{ money($barber->earnings ?? 0) }}</span>
                                     <span class="text-[10px] uppercase tracking-wide text-slate-400">Ganancias</span>
-                                    <span class="block text-[10px] text-slate-400">Comisión {{ usd($barber->commission ?? 0) }} · Propinas {{ usd($barber->tips ?? 0) }}</span>
+                                    <span class="block text-[10px] text-slate-400">Comisión {{ money($barber->commission ?? 0) }} · Propinas {{ money($barber->tips ?? 0) }}</span>
                                 </div>
                             </div>
                             <div class="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
@@ -262,12 +264,12 @@
                 <div class="mt-3 grid grid-cols-2 gap-3">
                     <div class="rounded-lg bg-slate-50 p-3">
                         <span class="block text-xs text-slate-400">Ventas</span>
-                        <span class="text-lg font-bold text-slate-800">{{ usd($monthTotal) }}</span>
+                        <span class="text-lg font-bold text-slate-800">{{ money($monthTotal) }}</span>
                     </div>
                     <div class="rounded-lg bg-slate-50 p-3">
                         <span class="block text-xs text-slate-400">Ganancias</span>
-                        <span class="text-lg font-bold text-emerald-600">{{ usd($monthEarnings) }}</span>
-                        <span class="block text-[10px] text-slate-400">Comisión {{ usd($monthCommission) }} · Propinas {{ usd($monthTips) }}</span>
+                        <span class="text-lg font-bold text-emerald-600">{{ money($monthEarnings) }}</span>
+                        <span class="block text-[10px] text-slate-400">Comisión {{ money($monthCommission) }} · Propinas {{ money($monthTips) }}</span>
                     </div>
                 </div>
             </section>

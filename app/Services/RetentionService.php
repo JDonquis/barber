@@ -47,24 +47,35 @@ class RetentionService
 
         $items = [];
         $total = 0.0;
+        $localMode = ! usd_conversion_enabled();
+        $rate = $localMode ? app(ExchangeRateService::class)->referenceRate() : 1.0;
 
         foreach ($concepts as $concept) {
-            $applied = round((float) $concept->amount_usd * $days / $concept->frequencyDays(), 2);
+            $appliedLocal = round((float) $concept->amount_usd * $days / $concept->frequencyDays(), 2);
 
-            if ($applied <= 0) {
+            if ($appliedLocal <= 0) {
                 continue;
             }
 
-            $total += $applied;
+            $amountBase = $localMode && $rate > 0
+                ? round((float) $concept->amount_usd / $rate, 2)
+                : (float) $concept->amount_usd;
+            $appliedBase = $localMode && $rate > 0
+                ? round($appliedLocal / $rate, 2)
+                : $appliedLocal;
+
+            $total += $appliedBase;
 
             $items[] = [
                 'id' => $concept->id,
                 'name' => $concept->name,
-                'amount_usd' => (float) $concept->amount_usd,
+                'amount_usd' => $amountBase,
+                'amount_local' => $appliedLocal,
                 'frequency' => $concept->frequency,
                 'frequency_label' => $concept->frequency_label,
                 'days' => $days,
-                'applied_usd' => $applied,
+                'applied_usd' => $appliedBase,
+                'applied_local' => $appliedLocal,
                 'barber_id' => $barber->id,
                 'barber_name' => $barber->name,
                 'scope' => $concept->isGlobal() ? 'todos' : 'barbero',

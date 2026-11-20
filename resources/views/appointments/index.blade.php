@@ -120,12 +120,10 @@
                     }
 
                     $price = $appointment->service?->price;
-                    $rate = (float) $currentRate;
-                    $usdAmount = $price !== null ? usd($price) : null;
-                    $vesAmount = ($price !== null && $rate > 0) ? ves(to_ves($price, $rate)) : null;
+                    $priceAmount = $price !== null ? price_money($price) : null;
 
-                    $amountLine = $usdAmount
-                        ? 'El monto a pagar es de '.$usdAmount.($vesAmount ? ', equivalente a '.$vesAmount.' al cambio actual' : '').'. '
+                    $amountLine = $priceAmount
+                        ? 'El monto a pagar es de '.$priceAmount.'. '
                         : '';
 
                     $waMessage = 'Hola '.$appointment->client_name.', le saluda '.$shopName.

@@ -138,7 +138,7 @@ class SaleController extends Controller
             'tip_usd' => ['nullable', 'numeric', 'min:0', 'max:99999.99'],
             'update_service_price' => ['nullable', 'boolean'],
             'payment_method' => ['nullable', 'string', 'max:60'],
-            'payment_currency' => ['required', 'in:USD,VES,COP'],
+            'payment_currency' => ['required', usd_conversion_enabled() ? 'in:USD,VES,COP' : 'in:'.local_currency()],
             'notes' => ['nullable', 'string', 'max:255'],
         ]);
 
@@ -177,7 +177,7 @@ class SaleController extends Controller
             'items.*.product_id' => ['required', Rule::exists('products', 'id')->where('company_id', company_id())],
             'items.*.quantity' => ['required', 'integer', 'min:1'],
             'payment_method' => ['nullable', 'string', 'max:60'],
-            'payment_currency' => ['required', 'in:USD,VES,COP'],
+            'payment_currency' => ['required', usd_conversion_enabled() ? 'in:USD,VES,COP' : 'in:'.local_currency()],
             'notes' => ['nullable', 'string', 'max:255'],
         ]);
 

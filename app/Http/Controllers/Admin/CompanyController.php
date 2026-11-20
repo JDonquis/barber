@@ -237,6 +237,7 @@ class CompanyController extends Controller
             'local_currency' => 'VES',
             'payment_methods' => 'Efectivo Bs, Efectivo USD, Pago móvil, Punto de venta, Transferencia, Zelle',
             'dolar_api_source' => 'oficial',
+            'usd_conversion_enabled' => '1',
             'exchange_rate_manual' => '',
             'exchange_rate_fallback' => '',
         ];

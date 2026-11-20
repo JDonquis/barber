@@ -13,6 +13,8 @@
         price: {{ (float) old('price', $product?->price ?? 0) }},
         rate: {{ (float) $currentRate }},
         localSymbol: @js(local_currency_symbol()),
+        localCode: @js(local_currency()),
+        conversionEnabled: {{ $usdConversionEnabled ? 'true' : 'false' }},
         get margin() { return (this.price || 0) - (this.cost || 0); },
         get marginPct() {
             if ((this.cost || 0) > 0) return ((this.price - this.cost) / this.cost) * 100;
@@ -20,6 +22,9 @@
         },
         formatVes(value) {
             return this.localSymbol + ' ' + Number(value || 0).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        },
+        formatPrice(value) {
+            return this.conversionEnabled ? '$' + Number(value || 0).toFixed(2) : this.formatVes(value);
         }
     }">
         <!-- Subcabecera: volver -->
@@ -71,7 +76,7 @@
 
                         <!-- Costo -->
                         <div class="space-y-1.5">
-                            <x-input-label for="cost" value="Costo (USD)" />
+                            <x-input-label for="cost" :value="usd_conversion_enabled() ? 'Costo (USD)' : 'Costo en '.local_currency()" />
                             <div class="relative">
                                 <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-sm font-bold text-slate-400">$</span>
                                 <input id="cost" name="cost" type="number" step="0.01" min="0" x-model.number="cost"
@@ -82,13 +87,13 @@
 
                         <!-- Precio -->
                         <div class="space-y-1.5">
-                            <x-input-label for="price" value="Precio de venta (USD) *" />
+                            <x-input-label for="price" :value="usd_conversion_enabled() ? 'Precio de venta (USD) *' : 'Precio de venta en '.local_currency().' *'" />
                             <div class="relative">
                                 <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-sm font-bold text-brand-500">$</span>
                                 <input id="price" name="price" type="number" step="0.01" min="0" required x-model.number="price"
                                        class="block h-12 w-full rounded-xl border border-slate-200 bg-slate-50 pl-8 pr-4 text-sm font-semibold text-slate-700 focus:border-brand-500 focus:bg-white focus:ring-brand-500" />
                             </div>
-                            <p class="text-xs text-slate-400">≈ <span x-text="formatVes((price || 0) * rate)"></span></p>
+                            <p x-show="conversionEnabled" class="text-xs text-slate-400">≈ <span x-text="formatVes((price || 0) * rate)"></span></p>
                             <x-input-error :messages="$errors->get('price')" />
                         </div>
 
@@ -116,7 +121,7 @@
                     <div class="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3 ring-1 ring-slate-100">
                         <span class="text-xs text-slate-400">Margen estimado</span>
                         <div class="text-right">
-                            <span class="text-sm font-bold text-emerald-600" x-text="'+$' + margin.toFixed(2)"></span>
+                            <span class="text-sm font-bold text-emerald-600" x-text="'+' + formatPrice(margin)"></span>
                             <span class="ml-1 text-xs font-semibold text-emerald-600" x-text="'+' + marginPct.toFixed(1) + '%'"></span>
                         </div>
                     </div>

@@ -19,6 +19,8 @@
         filter: 'all',
         rate: {{ (float) $currentRate }},
         localSymbol: @js(local_currency_symbol()),
+        localCode: @js(local_currency()),
+        conversionEnabled: {{ $usdConversionEnabled ? 'true' : 'false' }},
         commissionRate: {{ $commissionRate }},
         editing: null,
         priceInput: 0,
@@ -38,6 +40,9 @@
         studioCut(service) { return service.price - this.barberCut(service); },
         formatVes(value) {
             return this.localSymbol + ' ' + Number(value || 0).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        },
+        formatPrice(value) {
+            return this.conversionEnabled ? '$' + Number(value || 0).toFixed(2) : this.formatVes(value);
         },
         openPrice(service) { this.editing = service; this.priceInput = service.price; },
         async savePrice() {
@@ -70,16 +75,17 @@
             }
         }
     }">
-        <!-- Banner: tasa + ajustar -->
-        <div class="flex items-center justify-between">
-            <div class="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 shadow-sm ring-1 ring-slate-200">
-                <span class="h-2 w-2 rounded-full bg-brand-500"></span>
-                <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Tasa USD: 1 USD = {{ ves($currentRate) }}</span>
+        @if ($usdConversionEnabled)
+            <div class="flex items-center justify-between">
+                <div class="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 shadow-sm ring-1 ring-slate-200">
+                    <span class="h-2 w-2 rounded-full bg-brand-500"></span>
+                    <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Tasa USD: 1 USD = {{ ves($currentRate) }}</span>
+                </div>
+                <a href="{{ route('settings.edit') }}" class="flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-xs text-slate-500 shadow-sm ring-1 ring-slate-200 transition hover:text-brand-600">
+                    <x-icon name="cog" class="h-3.5 w-3.5" /> Ajustar tasa
+                </a>
             </div>
-            <a href="{{ route('settings.edit') }}" class="flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-xs text-slate-500 shadow-sm ring-1 ring-slate-200 transition hover:text-brand-600">
-                <x-icon name="cog" class="h-3.5 w-3.5" /> Ajustar tasa
-            </a>
-        </div>
+        @endif
 
         <!-- Título -->
         <div class="flex items-start justify-between gap-3">
@@ -197,11 +203,11 @@
                         <div class="flex flex-col">
                             <span class="text-[10px] font-bold uppercase tracking-wider text-brand-600">Precio cliente</span>
                             <div class="flex items-baseline gap-1.5">
-                                <span class="text-xl font-extrabold text-slate-800" x-text="'$' + service.price.toFixed(2)"></span>
-                                <span class="text-xs text-slate-400">USD</span>
+                                <span class="text-xl font-extrabold text-slate-800" x-text="formatPrice(service.price)"></span>
+                                <span class="text-xs text-slate-400" x-text="conversionEnabled ? 'USD' : localCode"></span>
                             </div>
                         </div>
-                        <div class="flex flex-col items-end">
+                        <div class="flex flex-col items-end" x-show="conversionEnabled">
                             <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Equivalente {{ local_currency() }}</span>
                             <span class="text-sm font-bold text-slate-700" x-text="formatVes(service.price * rate)"></span>
                         </div>
@@ -213,12 +219,12 @@
                             <span class="flex items-center gap-1 text-emerald-600">
                                 <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
                                 Barbero (<span x-text="commissionRate"></span>%):
-                                <strong class="ml-0.5 text-slate-700" x-text="'$' + barberCut(service).toFixed(2)"></strong>
+                                <strong class="ml-0.5 text-slate-700" x-text="formatPrice(barberCut(service))"></strong>
                             </span>
                             <span class="flex items-center gap-1 text-brand-600">
                                 <span class="h-2 w-2 rounded-full bg-brand-500"></span>
                                 Estudio (<span x-text="100 - commissionRate"></span>%):
-                                <strong class="ml-0.5 text-slate-700" x-text="'$' + studioCut(service).toFixed(2)"></strong>
+                                <strong class="ml-0.5 text-slate-700" x-text="formatPrice(studioCut(service))"></strong>
                             </span>
                         </div>
                         <div class="flex h-2 w-full overflow-hidden rounded-full bg-slate-100">
@@ -275,15 +281,15 @@
                 </div>
 
                 <div class="flex flex-col gap-1">
-                    <label class="text-xs font-medium text-slate-500">Precio en dólares (USD)</label>
+                    <label class="text-xs font-medium text-slate-500" x-text="conversionEnabled ? 'Precio en dólares (USD)' : 'Precio en ' + localCode"></label>
                     <div class="relative flex items-center">
-                        <span class="pointer-events-none absolute left-4 text-lg font-bold text-brand-500">$</span>
+                        <span class="pointer-events-none absolute left-4 text-lg font-bold text-brand-500" x-text="conversionEnabled ? '$' : localSymbol"></span>
                         <input type="number" step="0.01" min="0" x-model.number="priceInput"
                                class="h-14 w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-4 text-lg font-bold text-slate-800 focus:border-brand-500 focus:ring-brand-500" />
                     </div>
                 </div>
 
-                <div class="flex items-center justify-between rounded-xl bg-slate-50 p-3">
+                <div x-show="conversionEnabled" class="flex items-center justify-between rounded-xl bg-slate-50 p-3">
                     <span class="text-xs text-slate-500">Equivalente {{ local_currency() }}</span>
                     <span class="text-sm font-bold text-emerald-600" x-text="formatVes((priceInput || 0) * rate)"></span>
                 </div>

@@ -198,14 +198,18 @@
 
         <!-- Tasa + turno -->
         <div class="flex items-center justify-between rounded-xl bg-white px-3 py-2 shadow-sm ring-1 ring-slate-200">
-            <div class="flex items-center gap-2">
-                <span class="relative flex h-2.5 w-2.5">
-                    <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
-                    <span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
-                </span>
-                <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Tasa USD:</span>
-                <span class="text-xs font-bold text-slate-700">{{ ves($currentRate) }} / $1</span>
-            </div>
+            @if ($usdConversionEnabled)
+                <div class="flex items-center gap-2">
+                    <span class="relative flex h-2.5 w-2.5">
+                        <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
+                        <span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
+                    </span>
+                    <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Tasa USD:</span>
+                    <span class="text-xs font-bold text-slate-700">{{ ves($currentRate) }} / $1</span>
+                </div>
+            @else
+                <span class="text-xs font-semibold uppercase tracking-wider text-emerald-600">Operando en {{ local_currency_name() }}</span>
+            @endif
             <span class="flex items-center gap-1 text-xs text-slate-400">
                 <x-icon name="clock" class="h-3.5 w-3.5 text-brand-500" /> Turno activo
             </span>
@@ -239,12 +243,14 @@
                 </div>
                 <p class="mt-1.5 text-xs font-medium text-slate-500">Ventas brutas</p>
                 <div class="mt-0.5 flex items-baseline gap-1.5">
-                    <span class="text-2xl font-extrabold tracking-tight text-brand-600">{{ usd($kpiUsd) }}</span>
-                    <span class="text-[11px] text-slate-400">USD</span>
+                    <span class="text-2xl font-extrabold tracking-tight text-brand-600">{{ money($kpiUsd, $kpiVes) }}</span>
+                    <span class="text-[11px] text-slate-400">{{ $usdConversionEnabled ? 'USD' : local_currency() }}</span>
                 </div>
                 <div class="mt-1 flex items-center justify-between gap-2 text-[11px] text-slate-400">
-                    <span>{{ ves($kpiVes) }}</span>
-                    <span>Ticket {{ usd($avgTicket) }}</span>
+                    @if ($usdConversionEnabled)
+                        <span>{{ ves($kpiVes) }}</span>
+                    @endif
+                    <span>Ticket {{ money($avgTicket) }}</span>
                 </div>
             </div>
 
@@ -259,12 +265,12 @@
                     </div>
                     <p class="mt-1.5 text-xs font-medium text-emerald-700">Ganancia neta tienda</p>
                     <div class="mt-0.5 flex items-baseline gap-1.5">
-                        <span class="text-2xl font-extrabold tracking-tight text-emerald-700">{{ usd($kpiNet) }}</span>
-                        <span class="text-[11px] text-emerald-700/70">USD</span>
+                        <span class="text-2xl font-extrabold tracking-tight text-emerald-700">{{ money($kpiNet) }}</span>
+                        <span class="text-[11px] text-emerald-700/70">{{ $usdConversionEnabled ? 'USD' : local_currency() }}</span>
                     </div>
                     <div class="mt-1 flex items-center justify-between gap-2 text-[11px] text-emerald-700/80">
-                        <span>Com. {{ usd($kpiCommission) }} · Prop. {{ usd($kpiTips) }}</span>
-                        <span>Gastos: {{ usd($kpiExpenses) }}</span>
+                        <span>Com. {{ money($kpiCommission) }} · Prop. {{ money($kpiTips) }}</span>
+                        <span>Gastos: {{ money($kpiExpenses) }}</span>
                     </div>
                 </div>
             @endif
@@ -278,7 +284,7 @@
                     <span class="text-xs font-medium text-slate-400">{{ (int) $summary->service_count }} cortes</span>
                 </div>
                 <span class="mt-2 block text-xs text-slate-400">Servicios</span>
-                <span class="text-base font-bold text-slate-800">{{ usd($summary->service_usd) }}</span>
+                <span class="text-base font-bold text-slate-800">{{ money($summary->service_usd) }}</span>
             </div>
 
             <!-- Retail -->
@@ -290,7 +296,7 @@
                     <span class="text-xs font-medium text-slate-400">{{ (int) $summary->product_count }} arts.</span>
                 </div>
                 <span class="mt-2 block text-xs text-slate-400">Retail</span>
-                <span class="text-base font-bold text-slate-800">{{ usd($summary->product_usd) }}</span>
+                <span class="text-base font-bold text-slate-800">{{ money($summary->product_usd) }}</span>
             </div>
         </div>
 
@@ -437,7 +443,7 @@
                             </div>
                         </div>
                         <div class="shrink-0 text-right">
-                            <span class="block text-sm font-extrabold text-slate-800">{{ usd($sale->total_usd) }}</span>
+                            <span class="block text-sm font-extrabold text-slate-800">{{ money($sale->total_usd, $sale->localTotal()) }}</span>
                             <span class="text-[11px] text-slate-400">{{ ves($sale->total_ves) }}</span>
                         </div>
                     </div>

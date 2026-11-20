@@ -14,6 +14,10 @@ class ExchangeRateController extends Controller
 
     public function refresh()
     {
+        if (! usd_conversion_enabled()) {
+            return back()->with('error', 'La conversión de dólares está desactivada. Actívala en Configuración para actualizar la tasa.');
+        }
+
         $rate = $this->rates->refresh();
 
         if ($rate === null) {

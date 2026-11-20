@@ -502,7 +502,7 @@
                                 </div>
                             </div>
                             <div class="shrink-0 text-right">
-                                <span class="block text-sm font-bold text-slate-800">{{ usd($service->price) }}</span>
+                                <span class="block text-sm font-bold text-slate-800">{{ price_money($service->price) }}</span>
                             </div>
                         </label>
                     @empty
@@ -690,7 +690,7 @@
                           x-text="summaryDate + (selected ? ' • ' + formatTime(selected.time) : ' • Elige hora')"></span>
                     <div class="mt-1 flex items-baseline gap-1">
                         <span class="text-lg font-extrabold leading-none text-slate-800"
-                              x-text="selectedService ? selectedService.price : '$ 0,00'"></span>
+                              x-text="selectedService ? selectedService.price : @js(usd_conversion_enabled() ? '$ 0,00' : local_money(0))"></span>
                         <span class="max-w-[120px] truncate text-[11px] text-slate-400"
                               x-text="selectedService ? selectedService.name : 'Selecciona un servicio'"></span>
                     </div>

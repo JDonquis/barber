@@ -70,6 +70,48 @@ if (! function_exists('usd')) {
     }
 }
 
+if (! function_exists('usd_conversion_enabled')) {
+    function usd_conversion_enabled(): bool
+    {
+        return (string) setting('usd_conversion_enabled', '1') === '1';
+    }
+}
+
+if (! function_exists('usd_conversion_reference_rate')) {
+    function usd_conversion_reference_rate(): float
+    {
+        return app(ExchangeRateService::class)->referenceRate();
+    }
+}
+
+if (! function_exists('money')) {
+    /**
+     * Format a base amount in the shop's active display currency.
+     */
+    function money(float|int|string|null $amountUsd, float|int|string|null $amountLocal = null, bool $symbol = true): string
+    {
+        if (usd_conversion_enabled()) {
+            return usd($amountUsd, $symbol);
+        }
+
+        $local = $amountLocal ?? ((float) $amountUsd * usd_conversion_reference_rate());
+
+        return local_money($local, $symbol);
+    }
+}
+
+if (! function_exists('price_money')) {
+    /**
+     * Format a catalog price, which is stored in the active currency.
+     */
+    function price_money(float|int|string|null $amount, bool $symbol = true): string
+    {
+        return usd_conversion_enabled()
+            ? usd($amount, $symbol)
+            : local_money($amount, $symbol);
+    }
+}
+
 if (! function_exists('company_timezone')) {
     function company_timezone(?Company $company = null): string
     {
@@ -192,7 +234,19 @@ if (! function_exists('payment_methods')) {
             : 'Efectivo Bs, Efectivo USD, Pago móvil, Punto de venta, Transferencia, Zelle';
 
         $raw = setting('payment_methods', $default);
+        $methods = array_values(array_filter(array_map('trim', explode(',', (string) $raw))));
 
-        return array_values(array_filter(array_map('trim', explode(',', (string) $raw))));
+        if (! usd_conversion_enabled()) {
+            $methods = array_values(array_filter($methods, function (string $method) {
+                $value = mb_strtolower($method);
+
+                return ! str_contains($value, 'usd')
+                    && ! str_contains($value, 'dólar')
+                    && ! str_contains($value, 'dolar')
+                    && ! str_contains($value, 'zelle');
+            }));
+        }
+
+        return $methods;
     }
 }

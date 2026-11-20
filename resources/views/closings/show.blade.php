@@ -101,7 +101,7 @@
                         <x-icon name="scissors" class="h-4 w-4" />
                     </span>
                 </div>
-                <span class="truncate text-lg font-bold tracking-tight text-slate-800">{{ usd($closing->total_services_usd) }}</span>
+                <span class="truncate text-lg font-bold tracking-tight text-slate-800">{{ money($closing->total_services_usd) }}</span>
                 <span class="text-[11px] text-slate-400">{{ $serviceQty }} atenciones</span>
             </div>
 
@@ -112,7 +112,7 @@
                         <x-icon name="bag" class="h-4 w-4" />
                     </span>
                 </div>
-                <span class="truncate text-lg font-bold tracking-tight text-slate-800">{{ usd($closing->total_products_usd) }}</span>
+                <span class="truncate text-lg font-bold tracking-tight text-slate-800">{{ money($closing->total_products_usd) }}</span>
                 <span class="text-[11px] text-slate-400">{{ $productQty }} artículos retail</span>
             </div>
 
@@ -123,7 +123,7 @@
                         <x-icon name="users" class="h-4 w-4" />
                     </span>
                 </div>
-                <span class="truncate text-lg font-bold tracking-tight text-slate-800">{{ usd($barberEarnings) }}</span>
+                <span class="truncate text-lg font-bold tracking-tight text-slate-800">{{ money($barberEarnings) }}</span>
                 <span class="text-[11px] font-semibold text-emerald-600">
                     {{ $isBarberClosing ? 'Comisión + propinas − retenciones' : 'A liquidar staff · '.$commissionPct.'%' }}
                 </span>
@@ -137,7 +137,7 @@
                             <x-icon name="minus" class="h-4 w-4" />
                         </span>
                     </div>
-                    <span class="truncate text-lg font-bold tracking-tight text-rose-700">{{ usd($expensesTotal) }}</span>
+                    <span class="truncate text-lg font-bold tracking-tight text-rose-700">{{ money($expensesTotal) }}</span>
                     <span class="text-[11px] text-rose-700">{{ $expenses->count() }} egreso(s) del período</span>
                 </div>
             @endunless
@@ -150,10 +150,10 @@
                         </span>
                         <div>
                             <span class="text-xs font-bold uppercase tracking-wider text-emerald-700">Total a pagar a {{ $barberName }}</span>
-                            <span class="block text-[11px] text-emerald-700">Comisión {{ usd($closing->barber_commission_usd) }} + propinas {{ usd($closing->barber_tips_usd) }} − retenciones {{ usd($closing->barber_retentions_usd) }} · {{ $closing->ticket_count }} ticket(s)</span>
+                            <span class="block text-[11px] text-emerald-700">Comisión {{ money($closing->barber_commission_usd) }} + propinas {{ money($closing->barber_tips_usd) }} − retenciones {{ money($closing->barber_retentions_usd) }} · {{ $closing->ticket_count }} ticket(s)</span>
                         </div>
                     </div>
-                    <span class="shrink-0 text-2xl font-extrabold tracking-tight text-emerald-700">{{ usd($barberEarnings) }}</span>
+                    <span class="shrink-0 text-2xl font-extrabold tracking-tight text-emerald-700">{{ money($barberEarnings) }}</span>
                 </div>
             @else
                 <div class="col-span-2 flex items-center justify-between gap-3 rounded-xl bg-emerald-50 p-4 shadow-sm ring-1 ring-emerald-200">
@@ -166,7 +166,7 @@
                             <span class="block text-[11px] text-emerald-700">Ventas − comisiones − propinas + retenciones − gastos</span>
                         </div>
                     </div>
-                    <span class="shrink-0 text-2xl font-extrabold tracking-tight text-emerald-700">{{ usd($closing->shop_amount_usd) }}</span>
+                    <span class="shrink-0 text-2xl font-extrabold tracking-tight text-emerald-700">{{ money($closing->shop_amount_usd) }}</span>
                 </div>
             @endif
         </section>
@@ -188,61 +188,65 @@
                     <span class="text-slate-500">Total operaciones</span>
                     <span class="font-semibold text-slate-700">{{ $closing->ticket_count }} tickets</span>
                 </div>
-                <div class="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2">
-                    <span class="text-slate-500">Tasa promedio del período</span>
-                    <span class="font-semibold text-brand-600">{{ local_currency_symbol() }} {{ number_format($closing->average_rate ?: $closing->exchange_rate, 2, ',', '.') }}</span>
-                </div>
-                <div class="flex items-center justify-between rounded-lg px-3 py-2">
-                    <span class="text-slate-500">Tasa de cierre</span>
-                    <span class="font-semibold text-slate-600">{{ local_currency_symbol() }} {{ number_format($closing->exchange_rate, 2, ',', '.') }}</span>
-                </div>
+                @if ($usdConversionEnabled)
+                    <div class="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2">
+                        <span class="text-slate-500">Tasa promedio del período</span>
+                        <span class="font-semibold text-brand-600">{{ local_currency_symbol() }} {{ number_format($closing->average_rate ?: $closing->exchange_rate, 2, ',', '.') }}</span>
+                    </div>
+                    <div class="flex items-center justify-between rounded-lg px-3 py-2">
+                        <span class="text-slate-500">Tasa de cierre</span>
+                        <span class="font-semibold text-slate-600">{{ local_currency_symbol() }} {{ number_format($closing->exchange_rate, 2, ',', '.') }}</span>
+                    </div>
+                @endif
                 <div class="mt-1 rounded-lg bg-slate-100 px-3 py-2.5">
                     <div class="flex items-start justify-between">
                         <div>
                             <span class="block text-xs text-slate-400">Total recaudado</span>
                             <span class="text-[10px] font-bold uppercase tracking-wider text-brand-600">Monto consolidado</span>
                         </div>
-                        <span class="text-2xl font-extrabold leading-none text-brand-600">{{ usd($closing->total_usd) }}</span>
+                        <span class="text-2xl font-extrabold leading-none text-brand-600">{{ money($closing->total_usd, $closing->localTotal()) }}</span>
                     </div>
                     <div class="mt-2 space-y-1 border-t border-slate-200 pt-2 text-xs">
-                        <div class="flex items-center justify-between">
-                            <span class="text-slate-500">{{ local_currency() }} cobrados (tasa histórica)</span>
-                            <span class="font-bold text-emerald-600">{{ ves($closing->total_ves) }}</span>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <span class="text-slate-500">Equivalente a tasa de cierre</span>
-                            <span class="font-semibold text-slate-500">{{ ves($closing->total_ves_reference > 0 ? $closing->total_ves_reference : to_ves($closing->total_usd, (float) $closing->exchange_rate)) }}</span>
-                        </div>
+                        @if ($usdConversionEnabled)
+                            <div class="flex items-center justify-between">
+                                <span class="text-slate-500">{{ local_currency() }} cobrados (tasa histórica)</span>
+                                <span class="font-bold text-emerald-600">{{ ves($closing->total_ves) }}</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-slate-500">Equivalente a tasa de cierre</span>
+                                <span class="font-semibold text-slate-500">{{ ves($closing->total_ves_reference > 0 ? $closing->total_ves_reference : to_ves($closing->total_usd, (float) $closing->exchange_rate)) }}</span>
+                            </div>
+                        @endif
                         <div class="flex items-center justify-between border-t border-slate-200 pt-2">
                             <span class="text-slate-500">{{ $isBarberClosing ? 'Comisión' : 'Comisiones barberos' }}</span>
-                            <span class="font-semibold text-brand-600">- {{ usd($closing->barber_commission_usd) }}</span>
+                            <span class="font-semibold text-brand-600">- {{ money($closing->barber_commission_usd) }}</span>
                         </div>
                         <div class="flex items-center justify-between">
                             <span class="text-slate-500">{{ $isBarberClosing ? 'Propinas' : 'Propinas barberos' }}</span>
-                            <span class="font-semibold text-emerald-600">- {{ usd($closing->barber_tips_usd) }}</span>
+                            <span class="font-semibold text-emerald-600">- {{ money($closing->barber_tips_usd) }}</span>
                         </div>
                         <div class="flex items-center justify-between">
                             <span class="text-slate-500">{{ $isBarberClosing ? 'Retenciones' : 'Retenciones barberos' }}</span>
-                            <span class="font-semibold text-rose-600">- {{ usd($closing->barber_retentions_usd) }}</span>
+                            <span class="font-semibold text-rose-600">- {{ money($closing->barber_retentions_usd) }}</span>
                         </div>
                         @if ($isBarberClosing)
                             <div class="flex items-center justify-between border-t border-slate-200 pt-2">
                                 <div>
                                     <span class="font-semibold text-emerald-700">Ganancia total</span>
-                                    <span class="block text-[10px] text-slate-400">Bruto: {{ usd($barberGross) }}</span>
+                                    <span class="block text-[10px] text-slate-400">Bruto: {{ money($barberGross) }}</span>
                                 </div>
-                                <span class="font-extrabold text-emerald-700">{{ usd($barberEarnings) }}</span>
+                                <span class="font-extrabold text-emerald-700">{{ money($barberEarnings) }}</span>
                             </div>
                         @endif
                         @unless ($isBarberClosing)
                             <div class="flex items-center justify-between">
                                 <span class="text-slate-500">Gastos del período</span>
-                                <span class="font-semibold text-rose-600">- {{ usd($closing->total_expenses_usd) }}</span>
+                                <span class="font-semibold text-rose-600">- {{ money($closing->total_expenses_usd) }}</span>
                             </div>
                         @endunless
                         <div class="flex items-center justify-between">
                             <span class="font-bold text-emerald-700">{{ $isBarberClosing ? 'Saldo para el estudio' : 'Ganancia neta tienda' }}</span>
-                            <span class="font-extrabold text-emerald-700">{{ usd($closing->shop_amount_usd) }}</span>
+                            <span class="font-extrabold text-emerald-700">{{ money($closing->shop_amount_usd) }}</span>
                         </div>
                     </div>
                 </div>
@@ -277,15 +281,15 @@
                 <div class="grid grid-cols-3 gap-2">
                     <div class="rounded-lg bg-brand-50 p-2.5 text-center ring-1 ring-brand-100">
                         <span class="block text-[10px] font-bold uppercase tracking-wide text-brand-700">Prestado</span>
-                        <span class="mt-0.5 block text-sm font-extrabold text-brand-700">{{ usd($loanTotals['issued_usd'] ?? 0) }}</span>
+                        <span class="mt-0.5 block text-sm font-extrabold text-brand-700">{{ money($loanTotals['issued_usd'] ?? 0) }}</span>
                     </div>
                     <div class="rounded-lg bg-emerald-50 p-2.5 text-center ring-1 ring-emerald-100">
                         <span class="block text-[10px] font-bold uppercase tracking-wide text-emerald-700">Abonos período</span>
-                        <span class="mt-0.5 block text-sm font-extrabold text-emerald-700">{{ usd($loanTotals['paid_usd'] ?? 0) }}</span>
+                        <span class="mt-0.5 block text-sm font-extrabold text-emerald-700">{{ money($loanTotals['paid_usd'] ?? 0) }}</span>
                     </div>
                     <div class="rounded-lg bg-amber-50 p-2.5 text-center ring-1 ring-amber-100">
                         <span class="block text-[10px] font-bold uppercase tracking-wide text-amber-700">Por cobrar</span>
-                        <span class="mt-0.5 block text-sm font-extrabold text-amber-700">{{ usd($loanTotals['outstanding_usd'] ?? 0) }}</span>
+                        <span class="mt-0.5 block text-sm font-extrabold text-amber-700">{{ money($loanTotals['outstanding_usd'] ?? 0) }}</span>
                     </div>
                 </div>
 
@@ -304,11 +308,11 @@
                                         @endunless
                                     </div>
                                     <p class="mt-1 text-[11px] text-slate-400">
-                                        Prestado {{ usd($loan['amount_usd'] ?? 0) }} · Pagado {{ usd($loan['paid_usd'] ?? 0) }} · Saldo {{ usd($loan['balance_usd'] ?? 0) }}
+                                        Prestado {{ money($loan['amount_usd'] ?? 0) }} · Pagado {{ money($loan['paid_usd'] ?? 0) }} · Saldo {{ money($loan['balance_usd'] ?? 0) }}
                                     </p>
                                 </div>
                                 <span class="shrink-0 text-sm font-extrabold {{ ($loan['balance_usd'] ?? 0) > 0 ? 'text-amber-600' : 'text-emerald-600' }}">
-                                    {{ usd($loan['balance_usd'] ?? 0) }}
+                                    {{ money($loan['balance_usd'] ?? 0) }}
                                 </span>
                             </div>
 
@@ -331,7 +335,7 @@
                                                     · {{ $payment['payment_method'] }}
                                                 @endif
                                             </span>
-                                            <span class="font-semibold text-emerald-600">{{ usd($payment['amount_usd'] ?? 0) }}</span>
+                                            <span class="font-semibold text-emerald-600">{{ money($payment['amount_usd'] ?? 0) }}</span>
                                         </div>
                                     @endforeach
                                 </div>
@@ -348,7 +352,7 @@
                     <span class="flex items-center gap-2 text-sm font-bold text-slate-800">
                         <x-icon name="shield-check" class="h-5 w-5 text-rose-500" /> Retenciones aplicadas
                     </span>
-                    <span class="text-sm font-extrabold text-rose-600">- {{ usd($closing->barber_retentions_usd) }}</span>
+                    <span class="text-sm font-extrabold text-rose-600">- {{ money($closing->barber_retentions_usd) }}</span>
                 </div>
                 <div class="space-y-1.5">
                     @foreach ($retentions as $row)
@@ -359,7 +363,7 @@
                                     {{ $isBarberClosing ? '' : (($row['barber_name'] ?? 'Barbero').' · ') }}{{ $row['frequency_label'] ?? '' }} · {{ $row['days'] ?? '' }} día(s)
                                 </p>
                             </div>
-                            <span class="shrink-0 text-sm font-bold text-rose-600">- {{ usd($row['applied_usd'] ?? 0) }}</span>
+                            <span class="shrink-0 text-sm font-bold text-rose-600">- {{ money($row['applied_usd'] ?? 0, $row['applied_local'] ?? null) }}</span>
                         </div>
                     @endforeach
                 </div>
@@ -384,7 +388,7 @@
                                     <p class="truncate text-sm font-semibold text-slate-700">{{ $row['name'] }}</p>
                                     <p class="text-xs text-slate-400">{{ $row['quantity'] }} atenciones</p>
                                 </div>
-                                <span class="shrink-0 text-sm font-bold text-brand-600">{{ usd($row['total_usd']) }}</span>
+                                <span class="shrink-0 text-sm font-bold text-brand-600">{{ money($row['total_usd']) }}</span>
                             </div>
                         @empty
                             <p class="rounded-lg bg-slate-50 px-3 py-6 text-center text-xs text-slate-400">Sin servicios.</p>
@@ -409,7 +413,7 @@
                                 </div>
                                 <div class="flex shrink-0 items-center gap-3">
                                     <span class="text-xs text-slate-400">{{ $row['quantity'] }} cant</span>
-                                    <span class="text-sm font-bold text-slate-700">{{ usd($row['total_usd']) }}</span>
+                                    <span class="text-sm font-bold text-slate-700">{{ money($row['total_usd']) }}</span>
                                 </div>
                             </div>
                         @empty
@@ -442,13 +446,13 @@
                             <span class="rounded-full bg-white px-2 py-0.5 text-[11px] font-semibold text-slate-500 ring-1 ring-slate-200">{{ $row['tickets'] }} tickets</span>
                         </div>
                         <div class="mt-1.5 flex flex-wrap items-center justify-between gap-1 text-xs">
-                            <span class="text-slate-400">Producción: <strong class="font-bold text-slate-600">{{ usd($row['total_usd']) }}</strong></span>
-                            <span class="font-semibold text-emerald-600">Comisión {{ usd($row['commission_usd']) }}</span>
+                            <span class="text-slate-400">Producción: <strong class="font-bold text-slate-600">{{ money($row['total_usd']) }}</strong></span>
+                            <span class="font-semibold text-emerald-600">Comisión {{ money($row['commission_usd']) }}</span>
                         </div>
                         <div class="mt-1 flex flex-wrap items-center justify-between gap-1 text-xs">
-                            <span class="font-semibold text-emerald-600">Propinas {{ usd($row['tip_usd'] ?? 0) }}</span>
-                            <span class="font-semibold text-rose-600">Retenciones {{ usd($row['retentions_usd'] ?? 0) }}</span>
-                            <span class="font-bold text-emerald-700">Ganancia {{ usd($row['earnings_usd'] ?? ($row['commission_usd'] + ($row['tip_usd'] ?? 0))) }}</span>
+                            <span class="font-semibold text-emerald-600">Propinas {{ money($row['tip_usd'] ?? 0) }}</span>
+                            <span class="font-semibold text-rose-600">Retenciones {{ money($row['retentions_usd'] ?? 0) }}</span>
+                            <span class="font-bold text-emerald-700">Ganancia {{ money($row['earnings_usd'] ?? ($row['commission_usd'] + ($row['tip_usd'] ?? 0))) }}</span>
                         </div>
                     </div>
                 @empty
@@ -474,7 +478,7 @@
                             <span class="text-sm font-medium text-slate-700">{{ $row['name'] }}</span>
                             <span class="rounded bg-white px-1.5 py-0.5 text-[11px] font-semibold text-slate-400 ring-1 ring-slate-200">{{ $row['count'] }}</span>
                         </div>
-                        <span class="text-sm font-bold text-slate-700">{{ usd($row['total_usd']) }}</span>
+                        <span class="text-sm font-bold text-slate-700">{{ money($row['total_usd']) }}</span>
                     </div>
                 @empty
                     <p class="rounded-lg bg-slate-50 px-3 py-6 text-center text-xs text-slate-400">Sin datos.</p>
@@ -498,7 +502,7 @@
                             <p class="truncate text-sm font-semibold text-slate-700">{{ $row['concept'] }}</p>
                             <p class="text-xs text-slate-400">{{ $row['date'] }}@if (! empty($row['notes'])) · {{ $row['notes'] }}@endif</p>
                         </div>
-                        <span class="shrink-0 text-sm font-bold text-rose-600">- {{ usd($row['amount_usd']) }}</span>
+                        <span class="shrink-0 text-sm font-bold text-rose-600">- {{ money($row['amount_usd']) }}</span>
                     </div>
                 @empty
                     <p class="rounded-lg bg-slate-50 px-3 py-6 text-center text-xs text-slate-400">Sin gastos registrados en este período.</p>
@@ -507,7 +511,7 @@
             @if ($expenses->isNotEmpty())
                 <div class="flex items-center justify-between rounded-lg bg-rose-50 px-3 py-2.5 ring-1 ring-rose-100">
                     <span class="text-xs font-bold uppercase tracking-wider text-rose-700">Total gastos</span>
-                    <span class="text-sm font-extrabold text-rose-700">- {{ usd($expensesTotal) }}</span>
+                    <span class="text-sm font-extrabold text-rose-700">- {{ money($expensesTotal) }}</span>
                 </div>
             @endif
         </section>

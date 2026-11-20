@@ -19,14 +19,15 @@ class LoanService
             $locked = Loan::query()->lockForUpdate()->findOrFail($loan->id);
             $amount = round((float) $data['amount_usd'], 2);
             $remaining = round((float) $locked->amount_usd - (float) $locked->paid_usd, 2);
+            $rate = (float) ($data['exchange_rate'] ?? 0);
 
             if ($amount > $remaining) {
+                $remainingLocal = $rate > 0 ? round($remaining * $rate, 2) : $remaining;
+
                 throw ValidationException::withMessages([
-                    'amount_usd' => 'El pago no puede superar el saldo pendiente de '.usd($remaining).'.',
+                    'amount_usd' => 'El pago no puede superar el saldo pendiente de '.money($remaining, $remainingLocal).'.',
                 ]);
             }
-
-            $rate = (float) ($data['exchange_rate'] ?? 0);
 
             $payment = $locked->payments()->create([
                 'amount_usd' => $amount,

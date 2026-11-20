@@ -11,7 +11,8 @@
 
     <div class="max-w-2xl mx-auto space-y-4" x-data="{
         entry: {{ $currentPrice }},
-        currency: 'USD',
+        conversionEnabled: {{ $usdConversionEnabled ? 'true' : 'false' }},
+        currency: @js(usd_conversion_enabled() ? 'USD' : local_currency()),
         rate: {{ (float) $currentRate }},
         localCode: @js(local_currency()),
         localSymbol: @js(local_currency_symbol()),
@@ -40,18 +41,20 @@
                class="flex h-11 w-11 items-center justify-center rounded-full bg-white text-slate-600 shadow-sm ring-1 ring-slate-200 transition hover:bg-slate-100 active:scale-95" title="Volver al catálogo">
                 <x-icon name="arrow-left" class="h-5 w-5" />
             </a>
-            <div class="flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 shadow-sm ring-1 ring-slate-200">
-                <span class="h-2 w-2 animate-pulse rounded-full bg-emerald-500"></span>
-                <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">{{ local_currency() }}:</span>
-                <span class="text-[11px] font-bold text-emerald-600">{{ ves($currentRate) }}</span>
-            </div>
+            @if ($usdConversionEnabled)
+                <div class="flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 shadow-sm ring-1 ring-slate-200">
+                    <span class="h-2 w-2 animate-pulse rounded-full bg-emerald-500"></span>
+                    <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">{{ local_currency() }}:</span>
+                    <span class="text-[11px] font-bold text-emerald-600">{{ ves($currentRate) }}</span>
+                </div>
+            @endif
         </div>
 
         <!-- Título -->
         <div>
             <span class="text-[11px] font-semibold uppercase tracking-wider text-brand-600">Catálogo · {{ $editing ? 'Edición' : 'Registro' }}</span>
             <h2 class="text-xl font-extrabold tracking-tight text-slate-800">{{ $editing ? 'Editar Tipo de Corte' : 'Nuevo Tipo de Corte' }}</h2>
-            <p class="mt-0.5 text-xs text-slate-400">Configuración del servicio, precio en dualidad monetaria y estado.</p>
+            <p class="mt-0.5 text-xs text-slate-400">Configuración del servicio, precio y estado.</p>
         </div>
 
         <form method="POST" action="{{ $editing ? route('services.update', $service) : route('services.store') }}" class="space-y-4">
@@ -97,8 +100,8 @@
                     <!-- Precio -->
                     <div class="space-y-1.5">
                         <div class="flex items-center justify-between">
-                            <x-input-label for="price" value="Precio *" />
-                            <div class="inline-flex rounded-lg bg-slate-100 p-0.5">
+                            <x-input-label for="price" :value="usd_conversion_enabled() ? 'Precio *' : 'Precio en '.local_currency().' *'" />
+                            <div class="inline-flex rounded-lg bg-slate-100 p-0.5" x-show="conversionEnabled" x-cloak>
                                 <button type="button" @click="setCurrency('USD')"
                                         :class="currency === 'USD' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500'"
                                         class="rounded-md px-3 py-1 text-xs font-bold uppercase tracking-wide transition">USD</button>
@@ -122,7 +125,7 @@
                         </div>
 
                         <!-- Equivalencia -->
-                        <div class="mt-1 flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2 ring-1 ring-slate-100">
+                        <div x-show="conversionEnabled" x-cloak class="mt-1 flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2 ring-1 ring-slate-100">
                             <span class="flex items-center gap-1.5 text-xs text-slate-400">
                                 <x-icon name="refresh" class="h-4 w-4 text-emerald-500" /> Equivale a:
                             </span>

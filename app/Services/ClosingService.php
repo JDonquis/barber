@@ -244,7 +244,7 @@ class ClosingService
     {
         [$start, $end] = $this->periodRange($type, $date);
         $summary = $this->summarize($start, $end, $barber);
-        $referenceRate = $this->rates->current();
+        $referenceRate = $this->rates->referenceRate();
         $averageRate = $summary['total_usd'] > 0
             ? round($summary['total_ves'] / $summary['total_usd'], 4)
             : 0;
@@ -285,7 +285,7 @@ class ClosingService
 
         [$start, $end] = [$closing->period_start->copy()->startOfDay(), $closing->period_end->copy()->endOfDay()];
         $summary = $this->summarize($start, $end, $closing->barber);
-        $referenceRate = $this->rates->current();
+        $referenceRate = $this->rates->referenceRate();
         $averageRate = $summary['total_usd'] > 0
             ? round($summary['total_ves'] / $summary['total_usd'], 4)
             : 0;

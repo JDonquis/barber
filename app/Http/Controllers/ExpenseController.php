@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Expense;
+use App\Services\ExchangeRateService;
 use Illuminate\Http\Request;
 
 class ExpenseController extends Controller
@@ -31,11 +32,13 @@ class ExpenseController extends Controller
             ->paginate(20)
             ->withQueryString();
 
+        $amountColumn = usd_conversion_enabled() ? 'amount_usd' : 'amount_local';
+
         $stats = [
-            'filtered' => (float) (clone $query)->sum('amount_usd'),
+            'filtered' => (float) (clone $query)->sum($amountColumn),
             'filteredCount' => (clone $query)->count(),
-            'today' => (float) Expense::query()->whereDate('expense_date', now()->toDateString())->sum('amount_usd'),
-            'month' => (float) Expense::query()->betweenDates(now()->startOfMonth(), now()->endOfMonth())->sum('amount_usd'),
+            'today' => (float) Expense::query()->whereDate('expense_date', now()->toDateString())->sum($amountColumn),
+            'month' => (float) Expense::query()->betweenDates(now()->startOfMonth(), now()->endOfMonth())->sum($amountColumn),
         ];
 
         return view('expenses.index', compact('expenses', 'stats', 'period', 'search'));
@@ -48,7 +51,7 @@ class ExpenseController extends Controller
 
     public function store(Request $request)
     {
-        $data = $this->validateData($request);
+        $data = $this->prepareData($this->validateData($request));
         $data['user_id'] = $request->user()->id;
 
         Expense::create($data);
@@ -63,7 +66,7 @@ class ExpenseController extends Controller
 
     public function update(Request $request, Expense $expense)
     {
-        $expense->update($this->validateData($request));
+        $expense->update($this->prepareData($this->validateData($request)));
 
         return redirect()->route('expenses.index')->with('status', 'Gasto actualizado.');
     }
@@ -98,5 +101,24 @@ class ExpenseController extends Controller
             'expense_date' => ['required', 'date'],
             'notes' => ['nullable', 'string', 'max:500'],
         ]);
+    }
+
+    protected function prepareData(array $data): array
+    {
+        $rate = usd_conversion_enabled()
+            ? app(ExchangeRateService::class)->current()
+            : app(ExchangeRateService::class)->referenceRate();
+
+        if (! usd_conversion_enabled()) {
+            $local = round((float) $data['amount_usd'], 2);
+            $data['amount_local'] = $local;
+            $data['amount_usd'] = $rate > 0 ? round($local / $rate, 2) : $local;
+
+            return $data;
+        }
+
+        $data['amount_local'] = round((float) $data['amount_usd'] * $rate, 2);
+
+        return $data;
     }
 }

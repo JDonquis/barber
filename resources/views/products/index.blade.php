@@ -30,6 +30,8 @@
         base: '{{ url('/products') }}',
         rate: {{ (float) $currentRate }},
         localSymbol: @js(local_currency_symbol()),
+        localCode: @js(local_currency()),
+        conversionEnabled: {{ $usdConversionEnabled ? 'true' : 'false' }},
         get filteredProducts() {
             const q = this.search.toLowerCase().trim();
             return this.products.filter((product) => {
@@ -54,6 +56,9 @@
         },
         formatVes(value) {
             return this.localSymbol + ' ' + Number(value || 0).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        },
+        formatPrice(value) {
+            return this.conversionEnabled ? '$' + Number(value || 0).toFixed(2) : this.formatVes(value);
         },
         openMovement(product, type = 'in', qty = 5) {
             this.movementProduct = product;
@@ -207,17 +212,17 @@
                     <div class="grid grid-cols-3 gap-2 rounded-xl bg-slate-50 p-3">
                         <div>
                             <span class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Costo</span>
-                            <p class="text-sm font-semibold text-slate-700" x-text="'$' + product.cost.toFixed(2)"></p>
-                            <span class="text-[10px] text-slate-400" x-text="formatVes(product.cost * rate)"></span>
+                            <p class="text-sm font-semibold text-slate-700" x-text="formatPrice(product.cost)"></p>
+                            <span x-show="conversionEnabled" class="text-[10px] text-slate-400" x-text="formatVes(product.cost * rate)"></span>
                         </div>
                         <div>
                             <span class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Precio venta</span>
-                            <p class="text-sm font-bold text-brand-600" x-text="'$' + product.price.toFixed(2)"></p>
-                            <span class="text-[10px] text-slate-400" x-text="formatVes(product.price * rate)"></span>
+                            <p class="text-sm font-bold text-brand-600" x-text="formatPrice(product.price)"></p>
+                            <span x-show="conversionEnabled" class="text-[10px] text-slate-400" x-text="formatVes(product.price * rate)"></span>
                         </div>
                         <div class="text-right">
                             <span class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Margen</span>
-                            <p class="text-sm font-bold text-emerald-600" x-text="'+$' + margin(product).toFixed(2)"></p>
+                            <p class="text-sm font-bold text-emerald-600" x-text="'+' + formatPrice(margin(product))"></p>
                             <span class="text-[10px] font-semibold text-emerald-600" x-text="'+' + marginPct(product).toFixed(1) + '%'"></span>
                         </div>
                     </div>

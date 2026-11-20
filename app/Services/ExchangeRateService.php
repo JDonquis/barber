@@ -25,11 +25,20 @@ class ExchangeRateService
         return local_currency();
     }
 
+    public function enabled(): bool
+    {
+        return (string) $this->settings->get('usd_conversion_enabled', '1') === '1';
+    }
+
     /**
      * Current USD to local currency rate.
      */
     public function current(): float
     {
+        if (! $this->enabled()) {
+            return 1.0;
+        }
+
         $manual = $this->settings->get('exchange_rate_manual');
 
         if ($manual !== null && (float) $manual > 0) {
@@ -44,11 +53,41 @@ class ExchangeRateService
     }
 
     /**
-     * Force a fresh value from the API and cache it.
+     * Rate used to keep USD mirrors while the shop works in local currency only.
      */
-    public function refresh(): ?float
+    public function referenceRate(): float
     {
-        Cache::forget($this->cacheKey());
+        if ($this->enabled()) {
+            return $this->current();
+        }
+
+        $snapshot = (float) $this->settings->get('usd_conversion_reference_rate', 0);
+
+        if ($snapshot > 0) {
+            return $snapshot;
+        }
+
+        $manual = $this->settings->get('exchange_rate_manual');
+
+        if ($manual !== null && (float) $manual > 0) {
+            return (float) $manual;
+        }
+
+        $last = $this->lastKnown();
+
+        return $last > 0 ? $last : 1.0;
+    }
+
+    /**
+     * Fetch a real rate even when USD conversion is disabled.
+     */
+    public function liveRate(): ?float
+    {
+        $manual = $this->settings->get('exchange_rate_manual');
+
+        if ($manual !== null && (float) $manual > 0) {
+            return (float) $manual;
+        }
 
         $rate = $this->fetch();
 
@@ -57,6 +96,20 @@ class ExchangeRateService
         }
 
         return $rate;
+    }
+
+    /**
+     * Force a fresh value from the API and cache it.
+     */
+    public function refresh(): ?float
+    {
+        if (! $this->enabled()) {
+            return null;
+        }
+
+        Cache::forget($this->cacheKey());
+
+        return $this->liveRate();
     }
 
     public function usingManual(): bool
